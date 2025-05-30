@@ -1,0 +1,63 @@
+/* src/components/PlanPage/WeeklyChecklist.css */
+.weekly-checklist-card {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 20px; /* Add some space if needed */
+}
+
+.weekly-checklist-card h3 {
+  margin-top: 0;
+  color: #34495e;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 10px;
+  font-size: 1.4em;
+}
+
+.checklist-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.checklist-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex; /* Use flex for better alignment if needed */
+  align-items: center;
+}
+
+.checklist-item:last-child {
+  border-bottom: none;
+}
+
+.checklist-item label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+.checklist-item input[type="checkbox"] {
+  margin-right: 12px;
+  transform: scale(1.2); /* Make checkbox slightly larger */
+  cursor: pointer;
+}
+
+.checklist-item .task-text {
+  color: #555;
+  flex-grow: 1;
+}
+
+.checklist-item.completed .task-text {
+  text-decoration: line-through;
+  color: #95a5a6; /* Lighter color for completed tasks */
+}
+
+.checklist-note {
+  font-size: 0.85em;
+  color: #7f8c8d;
+  margin-top: 15px;
+  text-align: center;
+}

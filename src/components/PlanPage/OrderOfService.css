@@ -1,0 +1,372 @@
+/* src/components/PlanPage/OrderOfService.css */
+.order-of-service-list {
+  margin-top: 10px;
+}
+
+.order-of-service-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.service-item {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.item-number {
+  margin-right: 10px;
+  font-weight: bold;
+  color: #7f8c8d;
+  font-size: 1.1em;
+  padding-top: 2px; /* Align with text */
+}
+
+.item-content {
+  flex-grow: 1;
+}
+
+.item-title {
+  font-size: 1.1em;
+  color: #333;
+}
+
+.item-title strong {
+  color: #2980b9; /* Differentiate item type */
+}
+
+.item-duration {
+  font-size: 0.9em;
+  color: #777;
+  margin-left: 5px;
+}
+
+.item-details {
+  font-size: 0.9em;
+  color: #555;
+  margin-top: 5px;
+  padding-left: 25px; /* Indent details slightly */
+  font-style: italic;
+}
+
+/* src/components/PlanPage/OrderOfService.css */
+/* ... your existing styles ... */
+
+.sortable-item {
+  /* Styles for when an item is being dragged could be applied here or via the isDragging prop */
+  /* For example, if you want a visual change for the placeholder or the item itself */
+  background-color: #f9f9f9; /* Ensure it has a background for opacity to look right */
+  /* Add other styles as needed for your sortable items */
+}
+
+.sortable-item:hover {
+  background-color: #f0f0f0; /* Slight hover effect */
+}
+
+.service-item {
+  /* ... existing styles ... */
+  display: flex; /* Use flex to align drag handle and actions */
+  justify-content: space-between; /* Pushes actions to the right */
+  align-items: center; /* Vertically align items */
+}
+
+.item-drag-handle {
+  display: flex;
+  align-items: center;
+  flex-grow: 1; /* Allows this section to take up available space */
+}
+
+.item-details {
+  /* Adjust if it's outside the drag handle now */
+  padding-left: 0; /* If it was previously indented based on item-number */
+  width: 100%; /* If details should span full width below title/type */
+  margin-left: 25px; /* Or align with item content */
+}
+
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between buttons if you add more */
+  margin-left: 15px; /* Space from the content */
+}
+
+.item-action-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background-color 0.2s ease;
+}
+
+.delete-btn {
+  background-color: #e74c3c; /* Red */
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #c0392b;
+}
+
+/* You might want to style .edit-btn similarly when you add it */
+.edit-btn {
+  background-color: #f39c12; /* Orange */
+  color: white;
+}
+.edit-btn:hover {
+  background-color: #e67e22;
+}
+
+.service-item {
+  /* ... */
+  flex-direction: column; /* Allow details to stack below main info */
+  align-items: stretch; /* Make children take full width */
+}
+
+.item-main-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 5px; /* Space before details */
+}
+
+.item-drag-handle {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  /* margin-right: 10px; /* Give some space before actions if on same line */
+}
+
+.song-artist {
+  font-style: italic;
+  font-size: 0.9em;
+  color: #555;
+  margin-left: 5px;
+}
+
+.item-details { /* This class is now for both general and song details */
+  font-size: 0.9em;
+  color: #555;
+  margin-top: 5px;
+  padding-left: 25px; /* Indent details slightly, matching item-number approx */
+  line-height: 1.5;
+}
+
+.song-extra-details p {
+  margin: 3px 0;
+  word-break: break-all; /* For long URLs */
+}
+
+.song-extra-details strong {
+  color: #333;
+}
+
+.song-extra-details a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+.song-extra-details a:hover {
+  text-decoration: underline;
+}
+
+.song-key-selector {
+  margin-left: 10px; /* Space from other buttons */
+}
+
+.song-key-selector select {
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 0.85em;
+  background-color: #fff;
+}
+
+/* src/components/PlanPage/OrderOfService.css */
+/* ... your existing styles for .service-item, .item-actions, .item-main-info etc. ... */
+
+.service-item {
+  display: flex;
+  flex-direction: column; /* Allows details to stack below main info */
+  align-items: stretch;
+  padding: 10px 12px; /* Consistent padding */
+  margin-bottom: 8px;
+  background-color: #fdfdfd;
+  border: 1px solid #eaeaea;
+  border-radius: 6px;
+}
+
+.item-main-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.item-drag-handle {
+  display: flex;
+  align-items: center;
+  flex-grow: 1; /* Takes available space pushing actions to the right */
+  margin-right: 10px; /* Space before action buttons */
+}
+
+.item-number {
+  margin-right: 8px;
+  color: #888;
+  font-weight: bold;
+}
+
+.item-content {
+  flex-grow: 1;
+}
+
+.item-title {
+  font-size: 1.05em;
+  color: #333;
+  font-weight: 500;
+}
+.item-title a {
+  color: #2980b9;
+  text-decoration: none;
+}
+.item-title a:hover {
+  text-decoration: underline;
+}
+
+.song-artist {
+  font-style: italic;
+  font-size: 0.9em;
+  color: #555;
+  margin-left: 5px;
+}
+
+.item-duration {
+  font-size: 0.85em;
+  color: #777;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.item-action-btn {
+  padding: 4px 8px; /* Slightly smaller buttons */
+  font-size: 0.8em;
+}
+
+.item-details {
+  font-size: 0.9em;
+  color: #555;
+  margin-top: 6px;
+  padding-left: 25px; /* Align with content after number */
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.song-extra-details p {
+  margin: 4px 0;
+}
+.song-extra-details strong {
+  color: #444;
+}
+.song-extra-details a {
+  color: #3498db;
+}
+
+.song-key-selector select {
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 0.85em;
+  background-color: #fff;
+  max-width: 90px; /* Prevent it from being too wide */
+}
+
+/* Divider Specific Styles */
+.item-type-divider {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  padding-top: 15px; /* Space above divider */
+  padding-bottom: 15px; /* Space below divider */
+}
+
+.item-type-divider .item-main-info {
+  align-items: center; /* Center title and line */
+}
+
+.divider-drag-handle {
+  display: flex; /* Use flex to manage title and line */
+  align-items: center;
+  width: 100%;
+  cursor: grab; /* Make sure drag handle is obvious */
+}
+
+.divider-title {
+  color: #777;
+  font-size: 0.9em;
+  font-style: italic;
+  padding: 0 10px; /* Space around the title if present */
+  white-space: nowrap;
+}
+
+.divider-line {
+  flex-grow: 1;
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 0;
+}
+/* Ensure the title is centered if it exists, or the line takes full width
+.divider-drag-handle .divider-title:not(:empty) + .divider-line {
+  If title exists, line takes remaining space
+}
+.divider-drag-handle .divider-title:empty + .divider-line {
+ If no title, line takes full width (flex-grow already does this)
+} */
+
+
+/* Ensure action buttons for divider are accessible */
+.item-type-divider .item-actions {
+  /* position: absolute; */ /* Example: If you want to position them differently */
+  /* right: 10px; */
+  /* top: 50%; */
+  /* transform: translateY(-50%); */
+  padding-left: 10px; /* Add some padding if they are next to the line */
+}
+
+/* src/components/PlanPage/OrderOfService.css */
+/* ... other styles ... */
+
+.item-drag-handle {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  margin-right: 10px;
+  /* Add these lines to prevent text selection */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* Internet Explorer/Edge */
+  user-select: none;         /* Standard */
+}
+
+/* Alternatively, you could apply it to the whole item,
+   but then you might need to re-enable it for text inputs if you had any directly within.
+   For now, the handle is a good place. */
+/*
+.service-item {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+*/
