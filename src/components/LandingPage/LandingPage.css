@@ -1,0 +1,122 @@
+/* src/components/LandingPage/LandingPage.css */
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  font-family: sans-serif;
+}
+
+.landing-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  box-sizing: border-box;
+  background-color: #f8f9fa; /* Light background for header */
+}
+
+.logo {
+  height: 50px; /* Adjust as needed */
+}
+
+.login-btn-header {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+}
+.login-btn-header:hover {
+  background-color: #0056b3;
+}
+
+.landing-main {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.landing-main h1 {
+  font-size: 3em;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.landing-main p {
+  font-size: 1.2em;
+  color: #555;
+  margin-bottom: 40px;
+  max-width: 600px;
+}
+
+.get-started-btn {
+  padding: 15px 30px;
+  font-size: 1.5em;
+  background-color: #28a745; /* Green */
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.get-started-btn:hover {
+  background-color: #218838;
+}
+
+/* Styles for LoginModal (can be in a global modal.css or PlanPage.css if reusing) */
+/* Assuming .modal-overlay, .modal-content, .modal-close-btn are defined as before */
+.auth-modal h2 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+.auth-modal .form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+.auth-modal .form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+.auth-modal .form-group input {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.auth-submit-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1em;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.auth-submit-btn:disabled {
+  background-color: #6c757d;
+}
+.auth-submit-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+.auth-error {
+  color: #dc3545; /* Red */
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+}

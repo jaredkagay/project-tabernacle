@@ -55,3 +55,22 @@
 .add-item-form button[type="submit"]:hover {
   background-color: #2980b9;
 }
+
+.checkbox-group.multi-select-singer-group {
+  max-height: 150px; /* Example max height */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+.checkbox-group.multi-select-singer-group .checkbox-label {
+  display: block; /* Each singer on a new line for clarity */
+  margin-bottom: 5px;
+}
+.no-singers-message {
+    font-size: 0.9em;
+    color: #777;
+    font-style: italic;
+}

@@ -17,7 +17,7 @@ import {
 import { SortableServiceItem } from './SortableServiceItem'; // Import the new component
 import './OrderOfService.css';
 
-const OrderOfService = ({ items, onOrderChange, onDeleteItem, onEditItem, assignedPeople, onUpdateKey }) => { // Receive onOrderChange prop
+const OrderOfService = ({ items, onOrderChange, onDeleteItem, onEditItem, assignedPeople, onUpdateKey, userRole }) => { // Receive onOrderChange prop
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -65,6 +65,7 @@ const OrderOfService = ({ items, onOrderChange, onDeleteItem, onEditItem, assign
                 onEdit={onEditItem}
                 assignedPeople={assignedPeople}
                 onUpdateKey={onUpdateKey}
+                userRole={userRole}       // Pass down
               />
             ))}
           </ul>

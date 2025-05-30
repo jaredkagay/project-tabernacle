@@ -6,6 +6,7 @@ import PlanPage from './components/PlanPage/PlanPage';
 import AllPlansPage from './components/AllPlansPage/AllPlansPage';
 import LandingPage from './components/LandingPage/LandingPage'; // We'll create this
 import StartPage from './components/StartPage/StartPage';     // We'll create this
+import SimpleTestPage from './components/SimpleTestPage';
 import './App.css';
 
 // Component to protect routes
@@ -58,6 +59,11 @@ function App() {
           <Route path="/plan/:planId" element={
             <ProtectedRoute>
               <PlanPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/simple-test" element={
+            <ProtectedRoute>
+              <SimpleTestPage />
             </ProtectedRoute>
           } />
           {/* Redirect any unknown paths, or show a 404 component */}

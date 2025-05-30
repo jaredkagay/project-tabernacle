@@ -1,0 +1,335 @@
+/* src/components/StartPage/StartPage.css */
+.start-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align card to top */
+  min-height: calc(100vh - 80px); /* Adjust if you have a fixed header */
+  padding: 40px 20px;
+  background-color: #f4f7f6; /* Light background for the page */
+  font-family: sans-serif;
+}
+
+.start-page-card {
+  background-color: #fff;
+  padding: 30px 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.start-page-card h1 {
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 2em;
+}
+
+.back-to-home-link {
+  display: block;
+  text-align: left;
+  margin-bottom: 20px;
+  color: #007bff;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+.back-to-home-link:hover {
+  text-decoration: underline;
+}
+
+
+/* Role Selection (Step 1) */
+.role-selection-container h2 {
+  font-size: 1.5em;
+  color: #444;
+  margin-bottom: 25px;
+}
+
+.role-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px; /* Space between buttons */
+  margin-bottom: 25px;
+}
+
+.role-button {
+  padding: 15px 30px;
+  font-size: 1.1em;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.musician-btn {
+  background-color: #3498db; /* Blue */
+  color: white;
+}
+.musician-btn:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
+.organizer-btn {
+  background-color: #2ecc71; /* Green */
+  color: white;
+}
+.organizer-btn:hover {
+  background-color: #27ae60;
+  transform: translateY(-2px);
+}
+
+.role-description {
+  font-size: 0.95em;
+  color: #666;
+  line-height: 1.6;
+  max-width: 450px;
+  margin: 0 auto; /* Center if container is wider */
+}
+
+/* Placeholder for Step 2 & 3 */
+.details-step-container h2 {
+  font-size: 1.5em;
+  color: #444;
+  margin-bottom: 15px;
+}
+.details-step-container p {
+  font-size: 1em;
+  color: #555;
+  margin-bottom: 20px;
+}
+.details-step-container em {
+  color: #777;
+}
+
+.back-btn {
+  padding: 8px 15px;
+  background-color: #6c757d; /* Gray */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-top: 20px;
+}
+.back-btn:hover {
+  background-color: #5a6268;
+}
+
+/* src/components/StartPage/StartPage.css */
+/* ... (existing styles for .start-page-container, .start-page-card, .role-selection-container, etc.) ... */
+
+.progress-steps {
+  margin-bottom: 30px;
+  font-size: 0.9em;
+  color: #777;
+}
+.progress-steps .active-step {
+  font-weight: bold;
+  color: #007bff;
+}
+
+.details-step-container h2,
+.role-specific-form h3 {
+  font-size: 1.4em;
+  color: #333;
+  margin-bottom: 20px;
+}
+.role-specific-form h3 {
+    margin-top: 0; /* Reset margin for h3 inside role-specific-form */
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.role-specific-form p {
+  font-size: 0.95em;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-group label,
+.checkbox-group label:first-child { /* For the main label of checkbox group */
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #444;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"], /* For later step */
+.form-group input[type="password"] /* For later step */
+ {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 1em;
+}
+.form-group small {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 4px;
+    display: block;
+}
+
+
+.checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive columns */
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+  font-size: 0.95em;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+}
+
+.radio-group label {
+  display: block; /* Each radio on new line */
+  margin-bottom: 10px;
+  font-weight: normal;
+  cursor: pointer;
+}
+.radio-group input[type="radio"] {
+  margin-right: 8px;
+}
+
+.step-actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: space-between; /* Back and Next buttons on opposite ends */
+  align-items: center;
+}
+
+.next-btn, .back-btn { /* Shared styles for navigation buttons within steps */
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.next-btn {
+  background-color: #007bff; /* Blue */
+  color: white;
+}
+.next-btn:hover {
+  background-color: #0056b3;
+}
+
+.back-btn {
+  background-color: #6c757d; /* Gray */
+  color: white;
+}
+.back-btn:hover {
+  background-color: #545b62;
+}
+
+.form-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+/* For Step 3 placeholder */
+.account-info-container h2 {
+  font-size: 1.5em;
+  color: #444;
+  margin-bottom: 15px;
+}
+.account-info-container p {
+    font-size: 1em;
+    color: #555;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.account-info-form h3 {
+  font-size: 1.4em;
+  color: #333;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+/* .account-info-form .form-group { */
+  /* Uses existing .form-group styles */
+/* } */
+
+.main-submit-btn { /* To potentially style the final submit button differently */
+  background-color: #28a745; /* Green, like get started */
+  color: white;
+  padding: 12px 25px; /* Slightly larger */
+}
+.main-submit-btn:hover:not(:disabled) {
+  background-color: #218838;
+}
+.main-submit-btn:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+}
+
+/* src/components/StartPage/StartPage.css */
+/* ... (all existing styles) ... */
+
+.signup-success-message {
+  padding: 20px;
+  text-align: center;
+}
+
+.signup-success-message h3 {
+  color: #28a745; /* Green for success */
+  font-size: 1.6em;
+  margin-bottom: 15px;
+}
+
+.signup-success-message p {
+  font-size: 1.1em;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+.back-to-home-btn-success {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.back-to-home-btn-success:hover {
+  background-color: #0056b3;
+}
+
+/* Update progress steps if success message is shown */
+.progress-steps span:last-child.active-step { /* If step 4 is active */
+    font-weight: bold;
+    color: #28a745; /* Green for confirmation step */
+}

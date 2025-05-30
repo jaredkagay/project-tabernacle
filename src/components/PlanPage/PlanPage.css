@@ -256,3 +256,19 @@
   border: 1px solid #e74c3c;
   border-radius: 4px;
 }
+
+/* src/components/PlanPage/AssignedPeople.css */
+/* ... existing styles ... */
+
+.assignment-actions.organizer-actions {
+  margin-top: 8px; /* Or adjust as needed if on same line as musician actions */
+  /* If you want them separate or styled differently */
+}
+
+.rescind-btn {
+  background-color: #7f8c8d; /* A neutral or warning-ish color */
+  color: white;
+}
+.rescind-btn:hover {
+  background-color: #6c7a7d;
+}

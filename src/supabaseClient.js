@@ -1,11 +1,34 @@
 // src/supabaseClient.js
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+console.log('[supabaseClient] Initializing Supabase client...');
 
-const supabaseUrl = 'https://olpsqjeqspqwknowmiux.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9scHNxamVxc3Bxd2tub3dtaXV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1NzQ4MDIsImV4cCI6MjA2NDE1MDgwMn0.vwsVQSEMi5RhCuriJu6Vb9MiMg617zisyE1Qfm4Ez-E'
+// If using .env files (VITE example):
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Supabase URL and Anon Key are required. Did you forget to update them in supabaseClient.js?");
+if (!supabaseUrl || !supabaseAnonKey) {
+  const errorMessage = "[supabaseClient] CRITICAL ERROR: Supabase URL or Anon Key is missing. Ensure they are set (e.g., in .env file with VITE_ prefix for Vite, or hardcoded).";
+  console.error(errorMessage);
+  // It's often better to throw an error to stop the app if the client can't be created.
+  // However, for debugging, we'll let it proceed so we can see if `supabase` is null later.
+  // throw new Error(errorMessage);
+} else {
+  console.log('[supabaseClient] Supabase URL and Anon Key seem to be present.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Create and export the Supabase client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+});
+
+if (supabase) {
+  console.log('[supabaseClient] Supabase client created successfully.');
+  // You can even log a part of the client to see if it looks right, e.g., supabase.auth
+  // console.log('[supabaseClient] supabase.auth object:', supabase.auth);
+} else {
+  console.error('[supabaseClient] CRITICAL ERROR: Supabase client creation failed or resulted in null/undefined.');
+}
