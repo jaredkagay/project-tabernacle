@@ -5,7 +5,7 @@ import { supabase } from '../../supabaseClient'; // Adjust path if needed
 import { useAuth } from '../../contexts/AuthContext'; // For the signup function
 import './StartPage.css';
 
-const INSTRUMENT_OPTIONS = ["Vocals", "Piano", "Acoustic Guitar", "Electric Guitar", "Bass", "Drums/Cajon", "Other"];
+const INSTRUMENT_OPTIONS = ["Vocals", "Piano", "Acoustic", "Electric", "Bass", "Cajon", "Other"];
 
 const StartPage = () => {
   const [currentStep, setCurrentStep] = useState(1);

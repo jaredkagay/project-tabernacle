@@ -89,7 +89,7 @@ const AddItemForm = ({ onAddItem, assignedPeopleForSingerRole }) => {
   };
 
   const showTitleInput = type !== 'Divider';
-  const showDurationAndDetails = type === 'Generic' || type === 'Song';
+  const showDurationAndDetails = type === 'Generic' || type === 'Song' || type === 'Bible Verse';
 
   return (
     <form onSubmit={handleSubmit} className="add-item-form">

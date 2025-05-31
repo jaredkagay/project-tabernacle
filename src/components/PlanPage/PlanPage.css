@@ -55,7 +55,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px; /* Or as needed */
+  margin-left: 10px;
 }
 
 .order-of-service-header h2 {
@@ -63,6 +63,17 @@
 }
 
 .toggle-add-item-form-btn {
+  padding: 8px 15px;
+  background-color: #3498db; /* Blue */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.3s ease;
+}
+
+.invite-member-btn {
   padding: 8px 15px;
   background-color: #3498db; /* Blue */
   color: white;
@@ -94,7 +105,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
 }
 
 .order-of-service-header h2 {

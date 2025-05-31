@@ -2,7 +2,7 @@
 
 .assigned-people-card {
   background-color: #ffffff;
-  padding: 20px;
+  padding: 20px 20px 5px 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-top: 20px; /* Or as needed */
@@ -40,7 +40,7 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-bottom: 6px; /* Spacing between main details and instruments/actions */
+  /* margin-bottom: 6px; Spacing between main details and instruments/actions */
 }
 
 .member-info {
@@ -62,8 +62,7 @@
 .member-instruments {
   font-size: 0.9em;
   color: #3498db; /* Blue for instruments */
-  margin-bottom: 8px; /* Space before actions if they are on new line */
-  padding-left: 5px;
+  margin-top: 8px; /* Space before actions if they are on new line */
 }
 
 /* --- Status Badge Styling --- */
@@ -76,10 +75,7 @@
   white-space: nowrap; /* Prevent wrapping */
   border: 1px solid transparent; /* Base for border */
   text-transform: capitalize; /* e.g. Pending, Accepted */
-}
-
-.member-status-badge .status-text { 
-  /* font-weight: bold; /* Already on parent, can remove if not needed */
+  margin-top: 1px;
 }
 
 /* Consistent styling for different statuses, similar to 'accepted' */

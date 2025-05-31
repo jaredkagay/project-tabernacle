@@ -47,6 +47,11 @@ const DEFAULT_SERVICE_ITEMS = [
     type: 'Generic', title: 'Community Builder', duration: '10 min', details: 'Closing remarks & fellowship.',
     artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null,
     bible_book: null, bible_chapter: null, bible_verse_range: null,
+  },
+  {
+    type: 'Generic', title: 'Dismissal', duration: '0 min', details: 'Go in Peace. Serve the Lord.',
+    artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null,
+    bible_book: null, bible_chapter: null, bible_verse_range: null,
   }
 ];
 

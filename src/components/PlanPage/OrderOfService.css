@@ -1,46 +1,48 @@
 /* src/components/PlanPage/OrderOfService.css */
 
-/* --- General List Structure --- */
+/* --- General List and Item Styling --- */
 .order-of-service-list ul {
   list-style-type: none;
   padding: 0;
   margin: 0;
 }
 
-/* --- Base Service Item Styling (for non-Divider items primarily) --- */
 .service-item {
   margin-bottom: 8px;
-  background-color: #fdfdfd; /* Default item background */
+  background-color: #fdfdfd;
   border: 1px solid #eaeaea;
   border-radius: 6px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   padding: 10px 12px;
-  /* For Song, Generic, BibleVerse items that have an item-main-info and then details below */
-  /* display: flex; /* This might be too general; specific item types will handle their own top-level display */
-  /* flex-direction: column; */
-  /* align-items: stretch; */
 }
 
-/* --- Main Info Area (for Song, Generic, BibleVerse) --- */
+/* Default for non-divider items that have main info and then details */
+.service-item:not(.item-type-divider) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .item-main-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-bottom: 5px; /* Space if details follow for these item types */
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
-.item-drag-handle { /* Draggable area for Song, Generic, BibleVerse items */
+.item-drag-handle {
   display: flex;
   align-items: center;
-  flex-grow: 1; /* Takes up space to push actions to the right */
-  margin-right: 10px; /* Space before action buttons */
+  flex-grow: 1;
+  margin-right: 10px;
   cursor: grab;
-  padding: 5px 0; /* Vertical padding for easier grabbing */
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none;    /* Firefox */
-  -ms-user-select: none;     /* Internet Explorer/Edge */
-  user-select: none;         /* Standard */
+  padding: 0px 5px 0 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 .item-drag-handle:active {
   cursor: grabbing;
@@ -54,10 +56,11 @@
   text-align: right;
 }
 
-.item-content { /* Contains title, artist, duration for Song/Generic/BibleVerse */
+.item-content {
   flex-grow: 1;
   display: flex;
-  flex-direction: column; /* Stack title/artist and then other details if any */
+  flex-direction: column;
+  justify-content: center; /* Helps vertically center title if duration is not present */
 }
 
 .item-title {
@@ -65,8 +68,9 @@
   color: #333;
   font-weight: 500;
   word-break: break-word;
+  padding-left: 10px;
 }
-.item-title a { /* For Bible Verse links */
+.item-title a {
   color: #2980b9;
   text-decoration: none;
 }
@@ -90,12 +94,26 @@
   padding-top: 2px;
 }
 
-/* --- Action Buttons (Common for all items) --- */
+.item-actions-and-time { /* New container for actions and timestamp */
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* Prevent this block from shrinking */
+  margin-left: 10px; /* Space from the main content area */
+}
+
 .item-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-shrink: 0; /* Prevent actions from shrinking */
+  gap: 8px;
+}
+
+.item-start-time {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #2c3e50; /* Dark blue/gray */
+  margin-left: 10px; /* Space from the action buttons */
+  white-space: nowrap;
+  padding: 4px 0; /* Align vertically with action buttons if needed */
 }
 
 .item-action-btn {
@@ -105,147 +123,156 @@
   border-radius: 4px;
   cursor: pointer;
   color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: background-color 0.2s ease;
 }
 .item-action-btn.edit-btn { background-color: #3498db; }
 .item-action-btn.edit-btn:hover { background-color: #2980b9; }
 .item-action-btn.delete-btn { background-color: #e74c3c; }
 .item-action-btn.delete-btn:hover { background-color: #c0392b; }
+.item-action-btn.link-btn { background-color: #5dade2; }
+.item-action-btn.link-btn:hover { background-color: #4a98c8; }
+.item-action-btn.bible-link-btn { background-color: #8e44ad; }
+.item-action-btn.bible-link-btn:hover { background-color: #732d91; }
 
-/* --- Details Section (for Song, Generic) --- */
-.item-details {
+
+/* --- Details & Subtitles --- */
+.item-details { /* Base for general details, song extra details, and bible reference subtitle */
   font-size: 0.9em;
   color: #555;
-  margin-top: 6px;
-  padding-left: 28px; /* Align with item title (after number approx.) */
+  margin-top: 6px; /* Space below the item-main-info or title */
   line-height: 1.4;
   word-break: break-word;
+  margin-bottom: 5px;
 }
 
-.song-extra-details p {
-  margin: 4px 0;
+.general-details,
+.song-extra-details {
+  padding-left: 10px; /* Indent to align after item number for these types */
 }
-.song-extra-details strong {
-  color: #444;
-}
-.song-extra-details a {
-  color: #3498db;
-  text-decoration: none;
-}
-.song-extra-details a:hover {
-  text-decoration: underline;
-}
+.song-extra-details p { margin: 4px 0; }
+.song-extra-details strong { color: #444; }
+.song-extra-details a { color: #3498db; }
+
+/* src/components/PlanPage/OrderOfService.css */
 
 /* --- Musical Key Styling --- */
-.song-key-selector {
-  margin-left: 10px;
-}
 .song-key-selector select {
   padding: 4px 6px;
   border-radius: 4px;
   border: 1px solid #ccc;
   font-size: 0.85em;
   background-color: #fff;
-  max-width: 80px;
+  max-width: 55px; /* Or adjust as needed */
+  justify-content: center;
 }
 
-.song-key-label {
-  margin-left: 10px;
-  padding: 0;
-  border-radius: 50%;
-  background-color: #5dade2; /* Default blue for key display */
-  color: white;
-  font-size: 0.75em;
-  font-weight: bold;
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
-  justify-content: center;
+.song-key-label { /* For Musician's view of the key */
+  display: inline-flex; /* Allows centering and dynamic width */
   align-items: center;
+  justify-content: center;
+  min-width: 26px;      /* Base width, makes it a circle for single characters */
+  height: 26px;         /* Fixed height */
+  padding-left: 8px;    /* Horizontal padding to allow expansion */
+  padding-right: 8px;   /* Horizontal padding to allow expansion */
+  border-radius: 13px;  /* Half of height for rounded ends (pill/circle) */
+  background-color: #5dade2; /* Default blue, as before */
+  color: white;
+  font-size: 0.8em;     /* Adjusted for better fit */
+  font-weight: bold;
   text-align: center;
   box-sizing: border-box;
-  line-height: 1;
+  line-height: 1;         /* Helps center single line text vertically */
+  white-space: nowrap;    /* Prevent key name from wrapping */
+  transition: background-color 0.2s ease, color 0.2s ease; /* Smooth transitions if needed */
 }
-.song-key-label.na-key {
-    background-color: #bdc3c7;
-    color: #7f8c8d;
+
+.song-key-label.na-key { /* Style for when key is N/A */
+  background-color: #bdc3c7; 
+  color: #7f8c8d; /* Or a darker color for better contrast on gray */
+  /* You might want slightly different padding if "N/A" is wider than single keys */
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.song-key-label span { /* The text inside the label */
+  display: block; /* Ensures proper centering with line-height */
+}
+
+.song-title {
+  color:#2980b9;
 }
 
 /* --- Divider Specific Styles --- */
-.item-type-divider { /* The <li> element for dividers */
-  background-color: transparent !important; /* Override .service-item default */
+.item-type-divider {
+  background-color: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  padding: 10px 0px !important; /* Use !important carefully, but for overriding base .service-item */
+  padding: 10px 0px !important;
   margin: 15px 0 !important;
-  display: flex !important;                 /* CRITICAL: Makes the <li> a flex container */
-  justify-content: space-between !important;/* Pushes content and actions apart */
+  display: flex !important;
+  justify-content: space-between !important;
   align-items: center !important;
-  min-height: auto !important;              /* Override any inherited min-height */
-  width: 100%;                              /* Ensure li takes full width */
+  min-height: auto !important;
+  width: 100%;
   box-sizing: border-box;
 }
 
-.divider-draggable-content { /* Contains the line/title, takes up most space */
-  flex-grow: 1;            /* CRITICAL: Allows this to expand and push actions */
+.divider-draggable-content {
+  flex-grow: 1;
   display: flex;
   align-items: center;
-  margin-right: 15px;      /* Space before the action buttons */
-  min-height: 1px;         /* Ensure it has at least some height for the line */
-  cursor: grab;            /* Make this area draggable */
+  margin-right: 15px;
+  min-height: 1px;
+  cursor: grab;
 }
-.divider-draggable-content:active {
-    cursor: grabbing;
-}
+.divider-draggable-content:active { cursor: grabbing; }
 
-/* Case 1: Divider with a title in the middle (line-text-line) */
 .divider-layout-titled {
   display: flex;
   align-items: center;
-  width: 100%; /* Ensure this container takes full width of its parent */
+  width: 100%;
 }
 
-hr.divider-line-segment { /* For lines on either side of the title */
-  flex-grow: 1;         /* Lines expand to fill available space */
+hr.divider-line-segment {
+  flex-grow: 1;
   border: none;
-  border-top: 1px solid #B0B0B0; /* Visible line color */
+  border-top: 1px solid #adb5bd; /* Line color */
   margin: 0;
-  height: 0px; /* border-top provides the visible line's thickness */
+  height: 0px;
 }
 
-span.divider-title-text { /* For the title text between lines */
-  padding: 0 10px;        /* Space between lines and text */
-  color: #495057;       /* Text color */
+span.divider-title-text {
+  padding: 0 10px;
+  color: #495057;
   font-size: 0.9em;
   font-weight: 600;
   white-space: nowrap;
-  flex-shrink: 0;       /* Prevent title from shrinking if space is tight */
-  /* The background blending is achieved by the lines being separate elements */
+  flex-shrink: 0;
 }
 
-/* Case 2: Divider that is just a line (no title, or title was '---') */
 hr.divider-full-line {
   width: 100%;
   border: none;
-  border-top: 1px solid #B0B0B0; /* Visible line color */
-  margin: 0; 
-  height: 0px; /* border-top provides the visible line's thickness */
+  border-top: 1px solid #adb5bd; /* Line color */
+  margin: 0;
+  height: 0px;
 }
 
-.item-type-divider .item-actions { /* Container for Edit/Delete buttons for divider */
-  flex-shrink: 0; /* Prevent this div from shrinking */
-  display: flex;
-  gap: 6px;
+.item-type-divider .item-actions {
+  flex-shrink: 0;
 }
 
-.item-type-divider .edit-btn {
-  background-color: #555;
-  color: white;
-}
+
+
+.item-type-divider .edit-btn { background-color: #555; }
 .item-type-divider .edit-btn:hover { background-color: #333; }
 
-.item-type-divider .delete-btn {
-  background-color: #d9534f; /* Softer red */
-  color: white;
-}
+.service-item .edit-btn { background-color: #555; }
+.service-item .edit-btn:hover { background-color: #333; }
+
+.item-type-divider .delete-btn { background-color: #d9534f; }
 .item-type-divider .delete-btn:hover { background-color: #c9302c; }

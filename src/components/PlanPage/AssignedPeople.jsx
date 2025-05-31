@@ -24,18 +24,16 @@ const AssignedPeople = ({ people, onAccept, onDecline, onRescind, onOpenEditAssi
             <div className="member-details-row">
               <div className="member-info">
                 <span className="member-name"><strong>{person.name}</strong></span>
-                {person.role && <span className="member-role"> ({person.role})</span>}
+                {person.instruments_assigned_for_event && person.instruments_assigned_for_event.length > 0 && (
+                  <div className="member-instruments">
+                    {person.instruments_assigned_for_event.join(', ')}
+                  </div>
+                )}
               </div>
               <div className={`member-status-badge status-${person.status?.toLowerCase()}`}>
-                Status: <span className="status-text">{person.status || 'N/A'}</span>
+                <span className="status-text">{person.status || 'N/A'}</span>
               </div>
             </div>
-
-            {person.instruments_assigned_for_event && person.instruments_assigned_for_event.length > 0 && (
-              <div className="member-instruments">
-                Assigned as: {person.instruments_assigned_for_event.join(', ')}
-              </div>
-            )}
             
             {/* Action Buttons for Musicians with PENDING status */}
             {user && user.id === person.id && person.status === 'PENDING' && (

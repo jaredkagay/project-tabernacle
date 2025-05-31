@@ -16,6 +16,23 @@ import EditAssignmentForm from './EditAssignmentForm';
 
 import './PlanPage.css';
 
+// Helper to parse duration string (e.g., "5 min", "10m") to minutes
+// This is a simple parser; you can make it more robust for "1h 30m", etc.
+const parseDurationToMinutes = (durationStr) => {
+  if (!durationStr || typeof durationStr !== 'string') return 0;
+  const cleanedStr = durationStr.toLowerCase().replace('minutes', '').replace('minute', '').replace('mins', '').replace('min', '').replace('m', '').trim();
+  const minutes = parseInt(cleanedStr, 10);
+  return isNaN(minutes) ? 0 : minutes;
+};
+
+// Helper to format total minutes into HH:MM string
+const formatMinutesToHHMM = (totalMinutes) => {
+  if (isNaN(totalMinutes) || totalMinutes < 0) return "00:00";
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+};
+
 const PREDEFINED_CHECKLIST_TASKS = [
   "Designate Bible verse reader", "Confirm guest speaker (if any)", "Organize worship team members and song list",
   "Prepare sermon/message notes & slides", "Coordinate with sound/AV team", "Plan welcome/greeting team assignments",
@@ -43,6 +60,28 @@ const PlanPage = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isEditAssignmentModalOpen, setIsEditAssignmentModalOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState(null);
+
+  // --- Calculate items with start times using useMemo ---
+  const orderOfServiceWithTimes = React.useMemo(() => {
+    let runningTimeInMinutes = 0;
+    return orderOfService.map(item => {
+      const startTimeFormatted = formatMinutesToHHMM(runningTimeInMinutes);
+      let effectiveDurationMinutes = 0;
+      if (item.type !== 'Divider' && item.duration) {
+        effectiveDurationMinutes = parseDurationToMinutes(item.duration);
+      }
+      
+      const itemWithTime = {
+        ...item,
+        calculatedStartTimeFormatted: startTimeFormatted, // e.g., "00:05"
+        _calculatedStartTimeMinutes: runningTimeInMinutes, // For internal use if needed
+        _effectiveDurationMinutes: effectiveDurationMinutes // For internal use if needed
+      };
+      
+      runningTimeInMinutes += effectiveDurationMinutes;
+      return itemWithTime;
+    });
+  }, [orderOfService]); // Re-calculate when orderOfService changes
 
   const initializeChecklistStatus = (dbStatus) => {
     const initialStatus = {};
@@ -75,9 +114,13 @@ const PlanPage = () => {
       const { data: currentAssignments, error: assignmentsError } = await supabase.from('event_assignments').select(`id, status, instruments_assigned, notes_for_member, user_id, profile:profiles!event_assignments_user_id_fkey (id, first_name, last_name, instruments, role)`).eq('event_id', planId);
       if (assignmentsError) throw new Error(`Assignments error: ${assignmentsError.message}`);
       const formattedAssignments = (currentAssignments || []).map(a => ({
-          id: a.user_id, assignment_id: a.id, name: `${a.profile?.first_name || 'User'} ${a.profile?.last_name || ''}`.trim(),
-          role: a.profile?.role, instruments_played_by_profile: a.profile?.instruments || [],
-          instruments_assigned_for_event: a.instruments_assigned || [], status: a.status, notes: a.notes_for_member
+          id: a.user_id, assignment_id: a.id,
+          name: `${a.profile?.first_name || 'User'} ${a.profile?.last_name || ''}`.trim(),
+          firstName: `${a.profile?.first_name || 'User'}`.trim(),
+          role: a.profile?.role,
+          instruments_played_by_profile: a.profile?.instruments || [],
+          instruments_assigned_for_event: a.instruments_assigned || [],
+          status: a.status, notes: a.notes_for_member
       }));
       setAssignedPeople(formattedAssignments);
 
@@ -564,7 +607,7 @@ const PlanPage = () => {
               )}
             </div>
             <OrderOfService
-              items={orderOfService}
+              items={orderOfServiceWithTimes}
               onOrderChange={handleOrderOfServiceChange}
               onDeleteItem={profile?.role === 'ORGANIZER' ? handleDeleteItem : undefined}
               onEditItem={profile?.role === 'ORGANIZER' ? handleOpenEditModal : undefined} // For Service Items
@@ -584,7 +627,7 @@ const PlanPage = () => {
               onOpenEditAssignment={profile?.role === 'ORGANIZER' ? handleOpenEditAssignmentModal : undefined}
             />
             {profile?.role === 'ORGANIZER' && (
-              <button onClick={toggleInviteModal} className="invite-member-btn page-action-btn" style={{marginTop: '15px', width: '100%'}}>
+              <button onClick={toggleInviteModal} className="invite-member-btn page-action-btn " style={{marginTop: '15px', width: '100%'}}>
                 + Invite/Assign Musician
               </button>
             )}
