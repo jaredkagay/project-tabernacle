@@ -10,6 +10,8 @@ const MUSICAL_KEYS = [
 ];
 
 export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeople, onUpdateKey, userRole }) => {
+  const isOrganizer = userRole === 'ORGANIZER';
+
   const {
     attributes,
     listeners,
@@ -17,7 +19,10 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id });
+  } = useSortable({
+    id: item.id,
+    disabled: !isOrganizer
+  });
 
   const sortableStyle = {
     transform: CSS.Transform.toString(transform),
@@ -73,7 +78,11 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
     const displayTitle = item.title && item.title.trim() !== '' && item.title !== '---' ? item.title.trim() : null;
     return (
       <li ref={setNodeRef} style={sortableStyle} className="service-item sortable-item item-type-divider">
-        <div className="divider-draggable-content" {...attributes} {...listeners}>
+        <div 
+          className={`divider-draggable-content ${isOrganizer ? 'is-draggable' : ''}`}
+          {...(isOrganizer ? attributes : {})} // Only spread drag attributes if organizer
+          {...(isOrganizer ? listeners : {})}  // Only spread drag listeners if organizer
+        >
           {displayTitle ? (
             <div className="divider-layout-titled">
               <hr className="divider-line-segment" />
@@ -98,7 +107,11 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
   return (
     <li ref={setNodeRef} style={sortableStyle} className={`service-item sortable-item item-type-${item.type?.toLowerCase()}`}>
       <div className="item-main-info">
-        <div className="item-drag-handle" {...attributes} {...listeners}>
+        <div 
+          className={`item-drag-handle ${isOrganizer ? 'is-draggable' : ''}`}
+          {...(isOrganizer ? attributes : {})} // Only spread drag attributes if organizer
+          {...(isOrganizer ? listeners : {})}  // Only spread drag listeners if organizer
+        >
           <div className="item-content">
             <span className="item-title">
               <strong>{item.type === 'Song' || item.type === 'Generic' ? '' : (item.type === 'Bible Verse' ? '' : `${item.type}: `)}</strong>

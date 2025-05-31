@@ -37,7 +37,7 @@
   align-items: center;
   flex-grow: 1;
   margin-right: 10px;
-  cursor: grab;
+  /* cursor: grab; */
   padding: 0px 5px 0 0;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -45,7 +45,7 @@
   user-select: none;
 }
 .item-drag-handle:active {
-  cursor: grabbing;
+  /* cursor: grabbing; */
 }
 
 .item-number {
@@ -227,9 +227,9 @@
   align-items: center;
   margin-right: 15px;
   min-height: 1px;
-  cursor: grab;
+  /* cursor: grab; */
 }
-.divider-draggable-content:active { cursor: grabbing; }
+/* .divider-draggable-content:active { cursor: grabbing; } */
 
 .divider-layout-titled {
   display: flex;
@@ -276,3 +276,32 @@ hr.divider-full-line {
 
 .item-type-divider .delete-btn { background-color: #d9534f; }
 .item-type-divider .delete-btn:hover { background-color: #c9302c; }
+
+/* src/components/PlanPage/OrderOfService.css */
+/* ... (all your other existing styles) ... */
+
+.item-drag-handle,
+.divider-draggable-content {
+  /* Default cursor or whatever is appropriate when not draggable */
+  cursor: default; 
+  /* ... other existing styles for these elements ... */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.item-drag-handle.is-draggable, /* Only apply grab cursor if it has this class */
+.divider-draggable-content.is-draggable {
+  cursor: grab;
+}
+.item-drag-handle.is-draggable:active,
+.divider-draggable-content.is-draggable:active {
+  cursor: grabbing;
+}
+
+/* Optional: if you want to visually indicate non-draggable items slightly */
+/* .service-item.non-draggable-item { */
+  /* For example, a very slight change in opacity or no hover effect */
+  /* opacity: 0.95; */
+/* } */
