@@ -6,7 +6,7 @@ import PlanPage from './components/PlanPage/PlanPage';
 import AllPlansPage from './components/AllPlansPage/AllPlansPage';
 import LandingPage from './components/LandingPage/LandingPage'; // We'll create this
 import StartPage from './components/StartPage/StartPage';     // We'll create this
-import SimpleTestPage from './components/SimpleTestPage';
+import SettingsPage from './components/SettingsPage/SettingsPage'; // <--- Import SettingsPage
 import './App.css';
 
 // Component to protect routes
@@ -35,7 +35,8 @@ function App() {
       <div className="App">
         {user && ( // Show nav only if user is logged in
           <nav className="main-nav">
-            <Link to="/plans">All Plans</Link>
+            <Link to="/plans">Plans</Link>
+            <Link to="/settings">Settings</Link>
             <button onClick={logout} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>Logout</button>
           </nav>
         )}
@@ -61,9 +62,9 @@ function App() {
               <PlanPage />
             </ProtectedRoute>
           } />
-          <Route path="/simple-test" element={
+          <Route path="/settings" element={
             <ProtectedRoute>
-              <SimpleTestPage />
+              <SettingsPage />
             </ProtectedRoute>
           } />
           {/* Redirect any unknown paths, or show a 404 component */}

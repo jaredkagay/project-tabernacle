@@ -5,11 +5,18 @@ import './WeeklyChecklist.css';
 // This component now receives tasks, their statuses, and a toggle handler from props
 const WeeklyChecklist = ({ tasks, checkedStatuses, onTaskToggle }) => {
 
+  const handleCheckboxChange = (taskString) => {
+    if (onTaskToggle) { // Check if onTaskToggle is provided (for read-only view for musicians)
+        onTaskToggle(taskString);
+    }
+  };
+
   if (!tasks || tasks.length === 0) {
     return (
       <div className="weekly-checklist-card">
         <h3>Pre-Service Checklist</h3>
-        <p>No checklist tasks defined.</p>
+        <p>No default checklist tasks defined for this organization yet.</p>
+        {/* Organizers can set this in Settings */}
       </div>
     );
   }
@@ -18,23 +25,21 @@ const WeeklyChecklist = ({ tasks, checkedStatuses, onTaskToggle }) => {
     <div className="weekly-checklist-card">
       <h3>Pre-Service Checklist</h3>
       <ul className="checklist-list">
-        {tasks.map((task, index) => (
-          <li key={index} className={`checklist-item ${checkedStatuses[index] ? 'completed' : ''}`}>
+        {tasks.map((taskString, index) => ( // Iterate over tasks from props
+          <li key={taskString + '-' + index} className={`checklist-item ${checkedStatuses[taskString] ? 'completed' : ''}`}>
             <label>
               <input
                 type="checkbox"
-                checked={!!checkedStatuses[index]} // Ensure it's a boolean
-                onChange={() => onTaskToggle(index)} // Call the handler passed from PlanPage
+                checked={!!checkedStatuses[taskString]} // Use taskString as key
+                onChange={() => handleCheckboxChange(taskString)} // Pass taskString
+                disabled={!onTaskToggle} // Disable if no toggle function (read-only for musicians)
               />
-              <span className="task-text">{task}</span>
+              <span className="task-text">{taskString}</span>
             </label>
           </li>
         ))}
       </ul>
-      {/* The note about session-only state can now be removed or updated, as it persists. */}
-      {/* <p className="checklist-note">
-        <em>Note: Checklist state is now saved with the plan.</em>
-      </p> */}
+      {/* The note about session-only state is no longer needed as it's persisted per plan */}
     </div>
   );
 };

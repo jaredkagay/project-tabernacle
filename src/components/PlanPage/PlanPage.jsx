@@ -33,13 +33,6 @@ const formatMinutesToHHMM = (totalMinutes) => {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
 
-const PREDEFINED_CHECKLIST_TASKS = [
-  "Designate Bible verse reader", "Confirm guest speaker (if any)", "Organize worship team members and song list",
-  "Prepare sermon/message notes & slides", "Coordinate with sound/AV team", "Plan welcome/greeting team assignments",
-  "Prepare announcements and collect prayer requests", "Ensure children's ministry is staffed and prepared",
-  "Check supplies (communion elements, bulletins, etc.)", "Review previous week's feedback/notes"
-];
-
 const PlanPage = () => {
   const { planId } = useParams();
   const { user, profile, loading: authIsLoading } = useAuth();
@@ -50,6 +43,7 @@ const PlanPage = () => {
   const [eventDetails, setEventDetails] = useState(null);
   const [orderOfService, setOrderOfService] = useState([]);
   const [assignedPeople, setAssignedPeople] = useState([]);
+  const [currentChecklistTasks, setCurrentChecklistTasks] = useState([]);
   const [checklistStatus, setChecklistStatus] = useState({});
   const [organizationMembers, setOrganizationMembers] = useState([]);
 
@@ -83,11 +77,17 @@ const PlanPage = () => {
     });
   }, [orderOfService]); // Re-calculate when orderOfService changes
 
-  const initializeChecklistStatus = (dbStatus) => {
+  const initializeChecklistStatus = (tasksFromOrg, eventSpecificStatuses) => {
     const initialStatus = {};
-    PREDEFINED_CHECKLIST_TASKS.forEach((task, index) => {
-      initialStatus[index] = dbStatus && dbStatus[index] !== undefined ? dbStatus[index] : false;
+    // console.log("[PlanPage] Initializing checklist. Org tasks:", tasksFromOrg, "Event statuses:", eventSpecificStatuses);
+    (tasksFromOrg || []).forEach(taskString => {
+      // If eventSpecificStatuses exists and has this taskString as a key, use its value
+      // Otherwise, default to false
+      initialStatus[taskString] = eventSpecificStatuses && eventSpecificStatuses[taskString] !== undefined 
+        ? eventSpecificStatuses[taskString] 
+        : false;
     });
+    // console.log("[PlanPage] Initialized checklist status:", initialStatus);
     return initialStatus;
   };
 
@@ -99,13 +99,36 @@ const PlanPage = () => {
     setPlanPageLoading(true); setError(null);
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData.session) throw new Error(sessionError?.message || "Session not available.");
+      if (sessionError || !sessionData.session) {
+        throw new Error(sessionError?.message || "Session not available.");
+      }
 
-      const { data: eventData, error: eventError } = await supabase.from('events').select('*, checklist_status, organization_id').eq('id', planId).eq('organization_id', profile.organization_id).single();
+      // Fetch Event Details AND the organization's default_checklist via a join
+      // This assumes RLS allows reading the linked organization record.
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .select(`
+          *, 
+          checklist_status, 
+          organization_id,
+          organization:organizations (id, name, default_checklist) 
+        `)
+        .eq('id', planId)
+        .eq('organization_id', profile.organization_id)
+        .single();
+
       if (eventError) throw new Error(`Event details error: ${eventError.message}`);
       if (!eventData) throw new Error("Event not found or access denied.");
+      
       setEventDetails(eventData);
-      setChecklistStatus(initializeChecklistStatus(eventData.checklist_status));
+      
+      const orgDefaultTasks = eventData.organization?.default_checklist || [];
+      // console.log("[PlanPage] Fetched organization default tasks:", orgDefaultTasks);
+      setCurrentChecklistTasks(orgDefaultTasks); // Set the tasks for the UI
+      
+      // Initialize checklist status for *this event* using the organization's tasks
+      // and this event's saved checklist_status (which uses task strings as keys)
+      setChecklistStatus(initializeChecklistStatus(orgDefaultTasks, eventData.checklist_status));
 
       const { data: orderData, error: orderError } = await supabase.from('service_items').select('*').eq('event_id', planId).order('sequence_number', { ascending: true });
       if (orderError) throw new Error(`Service items error: ${orderError.message}`);
@@ -631,11 +654,13 @@ const PlanPage = () => {
                 + Invite/Assign Musician
               </button>
             )}
-            <WeeklyChecklist
-              tasks={PREDEFINED_CHECKLIST_TASKS}
-              checkedStatuses={checklistStatus}
-              onTaskToggle={profile?.role === 'ORGANIZER' ? handleChecklistToggle : () => {}}
-            />
+            {profile?.role === 'ORGANIZER' && (
+              <WeeklyChecklist
+                tasks={currentChecklistTasks} // <--- Pass tasks from organization
+                checkedStatuses={checklistStatus} // <--- This now uses task strings as keys
+                onTaskToggle={profile?.role === 'ORGANIZER' ? handleChecklistToggle : () => {}} // Pass the updated handler
+              />
+            )}
           </div>
         </div>
       )}

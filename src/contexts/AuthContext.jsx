@@ -9,44 +9,55 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  const fetchUserProfile = async (currentAuthUser) => {
+    if (!currentAuthUser) {
+      setProfile(null);
+      return null;
+    }
+    try {
+      // console.log("[AuthContext] Fetching profile for ID:", currentAuthUser.id);
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentAuthUser.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('[AuthContext] Error fetching profile:', profileError.message);
+        setProfile(null);
+        return null;
+      }
+      setProfile(userProfile || null);
+      // console.log("[AuthContext] Profile state updated to:", userProfile || null);
+      return userProfile || null;
+    } catch (err) {
+      console.error("[AuthContext] Exception during profile fetch:", err);
+      setProfile(null);
+      return null;
+    }
+  };
+
   useEffect(() => {
     setAuthLoading(true);
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
-
-        setAuthLoading(false); // Core auth state known
-
-        if (currentUser) {
-          try {
-            const { data: userProfile, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', currentUser.id)
-              .single();
-
-            if (profileError && profileError.code !== 'PGRST116') {
-              console.error('[AuthContext] Error fetching profile:', profileError.message);
-              setProfile(null);
-            } else {
-              setProfile(userProfile || null);
-            }
-          } catch (err) {
-            console.error("[AuthContext] Exception during profile fetch:", err);
-            setProfile(null);
-          }
-        } else {
-          setProfile(null);
-        }
+        await fetchUserProfile(currentUser); // Fetch profile after user is set
+        setAuthLoading(false); // Set loading false after user and initial profile attempt
+        // console.log("[AuthContext] onAuthStateChange: Core auth state & profile attempt done. authLoading set to false.");
       }
     );
-
-    return () => {
-      subscription?.unsubscribe();
-    };
+    return () => { subscription?.unsubscribe(); };
   }, []);
+  
+  const refreshProfile = async () => {
+    if (user) {
+      // console.log("[AuthContext] refreshProfile called for user:", user.id);
+      return await fetchUserProfile(user); // Re-fetch and update profile state
+    }
+    return null;
+  };
 
   const value = {
     user,
@@ -59,6 +70,7 @@ export const AuthProvider = ({ children }) => {
         if (error) console.error('[AuthContext] Logout Error:', error.message);
         return { error };
     },
+    refreshProfile
   };
 
   return (

@@ -1,0 +1,465 @@
+/* src/components/SettingsPage/SettingsPage.css */
+.settings-page-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  font-family: sans-serif;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.settings-header h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 2.2em;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.settings-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  font-size: 1.1em;
+  font-weight: 500;
+  color: #555;
+  background-color: transparent;
+  border: none;
+  border-bottom: 3px solid transparent; /* Space for active border */
+  cursor: pointer;
+  margin: 0 10px;
+  margin-bottom: -2px; /* Overlap with parent border-bottom */
+  transition: color 0.3s ease, border-bottom-color 0.3s ease;
+}
+
+.tab-button:hover {
+  color: #007bff;
+}
+
+.tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.settings-content {
+  padding-top: 20px;
+}
+
+.settings-section {
+  margin-bottom: 40px;
+}
+
+.settings-section h2 {
+  font-size: 1.6em;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  border-bottom: 1px dashed #bdc3c7;
+  padding-bottom: 10px;
+}
+
+.page-status { /* For loading/error messages */
+  text-align: center;
+  font-size: 1.2em;
+  margin-top: 40px;
+  padding: 20px;
+}
+
+/* src/components/SettingsPage/SettingsPage.css */
+/* ... (existing .settings-page-container, .settings-header, .settings-tabs, .tab-button, .settings-content, .settings-section styles) ... */
+
+.user-settings-section p {
+  margin-bottom: 10px;
+  color: #333;
+}
+.user-settings-section strong {
+  color: #111;
+}
+
+.settings-form {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+.settings-form:first-child { /* The first form in the section */
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+
+.settings-form h3 {
+  font-size: 1.3em;
+  color: #34495e;
+  margin-top: 0; /* If it's the first element in form */
+  margin-bottom: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #444;
+}
+.form-group input[type="text"],
+.form-group input[type="email"] { /* Add other input types if needed */
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 1em;
+}
+.form-group input:disabled {
+  background-color: #f8f9fa;
+}
+
+
+.checkbox-group.settings-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Adjust for potentially longer instrument names */
+  gap: 12px;
+  padding: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  background-color: #fdfdfd;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+  font-size: 0.95em;
+  cursor: pointer;
+}
+.checkbox-label input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+}
+
+.submit-btn { /* General submit button style */
+  padding: 10px 20px;
+  font-size: 1em;
+  font-weight: bold;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.submit-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+.submit-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.form-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+.form-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.instrument-form {
+    margin-top: 30px; /* Space between name form and instrument form */
+}
+
+/* src/components/SettingsPage/SettingsPage.css */
+/* ... (all existing styles for tabs, user settings forms, messages, etc.) ... */
+
+.organization-settings-section {
+  /* Styles for the overall organization settings area if needed */
+}
+
+.checklist-manager {
+  margin-top: 30px; /* Space from org name form */
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.checklist-manager h3 {
+  font-size: 1.3em;
+  color: #34495e;
+  margin-bottom: 15px;
+}
+
+.checklist-display-list {
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 20px;
+  max-height: 300px; /* Example max height for scroll */
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.checklist-display-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 5px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.checklist-display-item:last-child {
+  border-bottom: none;
+}
+.checklist-display-item span {
+  flex-grow: 1;
+  word-break: break-word;
+}
+
+.delete-task-btn {
+  background-color: transparent;
+  color: #e74c3c; /* Red */
+  border: none;
+  font-size: 1.2em; /* Make 'X' a bit larger */
+  font-weight: bold;
+  cursor: pointer;
+  padding: 2px 5px;
+  line-height: 1;
+  margin-left: 10px;
+}
+.delete-task-btn:hover {
+  color: #c0392b;
+}
+.delete-task-btn:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+
+.add-task-form-group {
+  display: flex;
+  gap: 10px; /* Space between input and button */
+  margin-top: 10px;
+}
+.add-task-form-group input[type="text"] {
+  flex-grow: 1; /* Input takes available space */
+  /* Uses existing .form-group input styles if defined globally or copied */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+}
+.add-task-btn {
+  /* Uses existing .submit-btn styles if class is applied, or define new: */
+  padding: 10px 15px;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: white;
+  background-color: #5cb85c; /* Green for add */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.add-task-btn:hover:not(:disabled) {
+  background-color: #4cae4c;
+}
+.add-task-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* src/components/SettingsPage/SettingsPage.css */
+/* ... (all existing styles) ... */
+
+.pre-approval-manager {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.pre-approval-manager h3 {
+  font-size: 1.3em;
+  color: #34495e;
+  margin-bottom: 10px;
+}
+.pre-approval-manager h4 {
+  font-size: 1.1em;
+  color: #34495e;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.pre-approval-manager > p { /* Paragraph directly under .pre-approval-manager */
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+
+.add-preapproval-form {
+  /* background-color: #f9f9f9; */
+  /* padding: 15px; */
+  /* border-radius: 5px; */
+  /* margin-bottom: 20px; */
+  display: flex;
+  flex-direction: column; /* Stack form groups */
+  gap: 15px;
+}
+
+.add-preapproval-form .form-group {
+  /* Styles already defined for .form-group should apply */
+}
+
+.add-preapproval-form select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 1em;
+}
+
+.add-preapproval-form .add-task-btn { /* Reusing add-task-btn class from checklist */
+  align-self: flex-start; /* Align button to the left if form is column */
+}
+
+.preapproval-list { /* Can reuse .checklist-display-list styles */
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.preapproval-item { /* Can reuse .checklist-display-item styles */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 5px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.preapproval-item:last-child {
+  border-bottom: none;
+}
+.preapproval-item span {
+  flex-grow: 1;
+  word-break: break-word;
+}
+.preapproval-item span strong {
+    color: #333;
+}
+.preapproval-item span em {
+    color: #555;
+    font-style: normal;
+    background-color: #e9ecef;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    margin-left: 5px;
+}
+
+/* src/components/SettingsPage/SettingsPage.css */
+/* ... (all existing styles) ... */
+
+.org-members-manager {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.org-members-manager h3 {
+  font-size: 1.3em;
+  color: #34495e;
+  margin-bottom: 15px;
+}
+
+.org-members-list { /* Reusing .checklist-display-list for base style */
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 20px;
+  max-height: 400px; /* Or adjust */
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.org-member-item { /* Reusing .checklist-display-item for base style */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 5px; /* More padding for member items */
+  border-bottom: 1px solid #f0f0f0;
+}
+.org-member-item:last-child {
+  border-bottom: none;
+}
+
+.org-member-item .member-details {
+  display: flex;
+  flex-direction: column; /* Stack name and role */
+  flex-grow: 1;
+}
+.org-member-item .member-name {
+  font-weight: bold;
+  color: #333;
+  font-size: 1em;
+}
+.org-member-item .member-role-org {
+  font-size: 0.85em;
+  color: #555;
+}
+.org-member-item .member-role-org em {
+  font-style: normal;
+  background-color: #e9ecef;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.remove-member-btn { /* Can reuse .delete-task-btn or style specifically */
+  background-color: transparent;
+  color: #e74c3c;
+  border: 1px solid #e74c3c; /* Add border to make it more button-like */
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.remove-member-btn:hover {
+  background-color: #e74c3c;
+  color: white;
+}
+.remove-member-btn:disabled {
+    color: #ccc;
+    border-color: #ccc;
+    cursor: not-allowed;
+}
+
+.creator-tag {
+    font-size: 0.8em;
+    color: #7f8c8d;
+    margin-left: 10px;
+    font-style: italic;
+}
