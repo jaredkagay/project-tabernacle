@@ -2,9 +2,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../supabaseClient';
-import './SettingsPage.css'; // Ensure this CSS file has all necessary styles
+import './SettingsPage.css'; // Ensure this CSS file is created and styled accordingly
 
 const INSTRUMENT_OPTIONS = ["Vocals", "Piano", "Acoustic", "Electric", "Bass", "Cajon", "Other"];
+
+// --- Join Organization Form (for org-less users) ---
+const JoinOrgForm = ({ onJoin, onCancel, isSubmitting }) => {
+  const [orgCode, setOrgCode] = useState('');
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); onJoin(orgCode); }} className="settings-form" style={{marginTop: '20px'}}>
+      <h4>Join an Organization</h4>
+      <p>Enter the Organization ID/Code. Your email must be pre-approved by an organizer of that organization.</p>
+      {/* Error/Success messages will be handled by orgActionStatus in the parent */}
+      <div className="form-group">
+        <label htmlFor="join-org-code-settings">Organization Code/ID:</label>
+        <input type="text" id="join-org-code-settings" value={orgCode} onChange={(e) => setOrgCode(e.target.value)} required disabled={isSubmitting} />
+      </div>
+      <div className="form-actions">
+        <button type="submit" className="submit-btn" disabled={isSubmitting || !orgCode.trim()}>
+          {isSubmitting ? 'Attempting to Join...' : 'Join Organization'}
+        </button>
+        {onCancel && <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>Cancel</button>}
+      </div>
+    </form>
+  );
+};
+
 
 const SettingsPage = () => {
   const { user, profile, loading: authIsLoading, refreshProfile } = useAuth();
@@ -19,140 +42,87 @@ const SettingsPage = () => {
   const [isUpdatingUserName, setIsUpdatingUserName] = useState(false);
   const [isUpdatingInstruments, setIsUpdatingInstruments] = useState(false);
 
-  // Organization Settings State
-  const [organization, setOrganization] = useState(null); // Full organization object {id, name, default_checklist, created_by}
-  const [orgName, setOrgName] = useState('');
+  // Organization Related State
+  const [organization, setOrganization] = useState(null);
+  const [orgName, setOrgName] = useState(''); // For editing current org's name
   const [orgChecklist, setOrgChecklist] = useState([]);
   const [newChecklistTask, setNewChecklistTask] = useState('');
-  const [orgSettingsMessage, setOrgSettingsMessage] = useState('');
-  const [orgSettingsError, setOrgSettingsError] = useState('');
-  const [isUpdatingOrgName, setIsUpdatingOrgName] = useState(false);
-  const [isUpdatingOrgChecklist, setIsUpdatingOrgChecklist] = useState(false);
-  const [orgLoading, setOrgLoading] = useState(false); // For fetching organization details
-
-  // Pre-Approved Emails State
   const [preApprovedEmails, setPreApprovedEmails] = useState([]);
   const [newPreApprovalEmail, setNewPreApprovalEmail] = useState('');
   const [newPreApprovalRole, setNewPreApprovalRole] = useState('MUSICIAN');
-  const [isManagingPreApprovals, setIsManagingPreApprovals] = useState(false);
-  const [preApprovalMessage, setPreApprovalMessage] = useState('');
-  const [preApprovalError, setPreApprovalError] = useState('');
-
-  // Organization Members State
   const [currentOrgMembersList, setCurrentOrgMembersList] = useState([]);
-  const [orgMembersLoading, setOrgMembersLoading] = useState(false);
-  const [isManagingMembers, setIsManagingMembers] = useState(false); // Specific for member removal action
+  
+  const [orgDetailsLoading, setOrgDetailsLoading] = useState(false); // For fetching initial org details
+  const [orgActionStatus, setOrgActionStatus] = useState({ message: '', error: '', loading: false }); // For ALL org actions
 
-
-  // Populate User form fields when profile data is loaded/changed
+  // Populate User form fields
   useEffect(() => {
     if (profile) {
       setFirstName(profile.first_name || '');
       setLastName(profile.last_name || '');
-      if (profile.role === 'MUSICIAN') {
-        setSelectedInstruments(profile.instruments || []);
-      }
+      setSelectedInstruments(profile.role === 'MUSICIAN' && profile.organization_id ? (profile.instruments || []) : []);
     } else {
-      // Reset if profile becomes null (e.g., after removing self from org and profile refreshes)
-      setFirstName('');
-      setLastName('');
-      setSelectedInstruments([]);
+      setFirstName(''); setLastName(''); setSelectedInstruments([]);
     }
   }, [profile]);
 
-  const fetchOrganizationData = useCallback(async () => {
-    if (profile?.role === 'ORGANIZER' && profile.organization_id) {
-      setOrgLoading(true);
-      setOrgMembersLoading(true); // Also set this when fetching all org data
-      setOrgSettingsError('');
-      setOrgSettingsMessage('');
-      setPreApprovalError('');
-      setPreApprovalMessage('');
-
+  const fetchCurrentOrganizationDetails = useCallback(async () => {
+    if (profile?.organization_id) {
+      setOrgDetailsLoading(true);
+      setOrgActionStatus({ message: '', error: '', loading: false }); // Reset action status
       try {
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .select('id, name, default_checklist, created_by')
           .eq('id', profile.organization_id)
           .single();
-
         if (orgError) throw new Error(`Organization details: ${orgError.message}`);
-        if (orgData) {
-          setOrganization(orgData);
-          setOrgName(orgData.name || '');
-          setOrgChecklist(orgData.default_checklist || []);
-        } else {
-          setOrgSettingsError("Your organization's details could not be found.");
-          setOrganization(null); // Clear organization data
+        if (!orgData) { setOrganization(null); throw new Error("Your current organization's details could not be found."); }
+        
+        setOrganization(orgData); setOrgName(orgData.name || ''); setOrgChecklist(orgData.default_checklist || []);
+
+        if (profile.role === 'ORGANIZER') {
+          const { data: approvalsData, error: approvalsError } = await supabase.from('organization_pre_approvals').select('id, email, role_to_assign, created_at').eq('organization_id', profile.organization_id).order('created_at', { ascending: false });
+          if (approvalsError) throw new Error(`Pre-approved emails: ${approvalsError.message}`);
+          setPreApprovedEmails(approvalsData || []);
+
+          const { data: membersData, error: membersFetchError } = await supabase.from('profiles').select('id, first_name, last_name, email, role').eq('organization_id', profile.organization_id);
+          if (membersFetchError) throw new Error(`Organization members: ${membersFetchError.message}`);
+          setCurrentOrgMembersList(membersData || []);
         }
-
-        const { data: approvalsData, error: approvalsError } = await supabase
-          .from('organization_pre_approvals')
-          .select('id, email, role_to_assign, created_at')
-          .eq('organization_id', profile.organization_id)
-          .order('created_at', { ascending: false });
-        if (approvalsError) throw new Error(`Pre-approved emails: ${approvalsError.message}`);
-        setPreApprovedEmails(approvalsData || []);
-
-        const { data: membersData, error: membersFetchError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, email, role')
-          .eq('organization_id', profile.organization_id);
-        if (membersFetchError) throw new Error(`Organization members: ${membersFetchError.message}`);
-        setCurrentOrgMembersList(membersData || []);
-
       } catch (err) {
-        console.error("Error fetching organization data for settings:", err);
-        setOrgSettingsError(err.message || "Failed to fetch organization data.");
-        setOrganization(null); setOrgChecklist([]); setPreApprovedEmails([]); setCurrentOrgMembersList([]);
+        console.error("Error fetching current organization details:", err);
+        setOrgActionStatus(prev => ({ ...prev, error: err.message, loading: false })); // Update specific status
+        setOrganization(null); setOrgName(''); setOrgChecklist([]); setPreApprovedEmails([]); setCurrentOrgMembersList([]);
       } finally {
-        setOrgLoading(false);
-        setOrgMembersLoading(false);
+        setOrgDetailsLoading(false);
       }
     } else {
-      // Not an organizer or not in an org, clear org specific states
       setOrganization(null); setOrgName(''); setOrgChecklist([]);
       setPreApprovedEmails([]); setCurrentOrgMembersList([]);
-      setOrgLoading(false); setOrgMembersLoading(false);
+      setOrgDetailsLoading(false);
     }
   }, [profile?.organization_id, profile?.role]);
 
   useEffect(() => {
-    if (activeTab === 'organization' && profile?.role === 'ORGANIZER') {
-      fetchOrganizationData();
+    if (activeTab === 'organization' && !authIsLoading && user) {
+      fetchCurrentOrganizationDetails();
     }
-  }, [activeTab, profile?.role, fetchOrganizationData]);
+  }, [activeTab, user, authIsLoading, fetchCurrentOrganizationDetails]);
 
-
-  // --- User Settings Handlers ---
-  const handleInstrumentCheckboxChange = (instrument) => {
-    setSelectedInstruments(prev =>
-      prev.includes(instrument)
-        ? prev.filter(item => item !== instrument)
-        : [...prev, instrument]
-    );
-  };
+  const handleInstrumentCheckboxChange = (instrument) => setSelectedInstruments(prev => prev.includes(instrument) ? prev.filter(i => i !== instrument) : [...prev, instrument]);
 
   const handleUpdateNameSubmit = async (e) => {
     e.preventDefault();
     setUserSettingsMessage(''); setUserSettingsError('');
-    if (!firstName.trim() || !lastName.trim()) {
-      setUserSettingsError("First and last names cannot be empty."); return;
-    }
+    if (!firstName.trim() || !lastName.trim()) { setUserSettingsError("First and last names cannot be empty."); return; }
     setIsUpdatingUserName(true);
     try {
-      const { error } = await supabase.from('profiles').update({ 
-        first_name: firstName.trim(), last_name: lastName.trim(), updated_at: new Date().toISOString() 
-      }).eq('id', user.id);
+      const { error } = await supabase.from('profiles').update({ first_name: firstName.trim(), last_name: lastName.trim(), updated_at: new Date().toISOString() }).eq('id', user.id);
       if (error) throw error;
-      setUserSettingsMessage('Name updated successfully!');
-      await refreshProfile();
-    } catch (error) {
-      console.error("Error updating name:", error);
-      setUserSettingsError(error.message || "Failed to update name.");
-    } finally {
-      setIsUpdatingUserName(false);
-    }
+      setUserSettingsMessage('Name updated successfully!'); await refreshProfile();
+    } catch (err) { console.error("Error updating name:", err); setUserSettingsError(err.message || "Failed to update name."); }
+    finally { setIsUpdatingUserName(false); }
   };
 
   const handleUpdateInstrumentsSubmit = async (e) => {
@@ -160,139 +130,222 @@ const SettingsPage = () => {
     setUserSettingsMessage(''); setUserSettingsError('');
     setIsUpdatingInstruments(true);
     try {
-      const { error } = await supabase.from('profiles').update({ 
-        instruments: selectedInstruments, updated_at: new Date().toISOString() 
-      }).eq('id', user.id);
+      const { error } = await supabase.from('profiles').update({ instruments: selectedInstruments, updated_at: new Date().toISOString() }).eq('id', user.id);
       if (error) throw error;
-      setUserSettingsMessage('Instruments updated successfully!');
-      await refreshProfile();
-    } catch (error) {
-      console.error("Error updating instruments:", error);
-      setUserSettingsError(error.message || "Failed to update instruments.");
-    } finally {
-      setIsUpdatingInstruments(false);
-    }
+      setUserSettingsMessage('Instruments updated successfully!'); await refreshProfile();
+    } catch (err) { console.error("Error updating instruments:", err); setUserSettingsError(err.message || "Failed to update instruments."); }
+    finally { setIsUpdatingInstruments(false); }
   };
 
-  // --- Organization Settings Handlers ---
   const handleUpdateOrgNameSubmit = async (e) => {
     e.preventDefault();
-    if (!orgName.trim()) { setOrgSettingsError("Organization name cannot be empty."); return; }
-    if (!organization?.id) { setOrgSettingsError("Organization data not loaded."); return; }
-    setIsUpdatingOrgName(true); setOrgSettingsMessage(''); setOrgSettingsError('');
+    if (!orgName.trim()) { setOrgActionStatus({loading: false, error:"Organization name cannot be empty.", message:''}); return; }
+    if (!organization?.id) { setOrgActionStatus({loading: false, error:"Organization data not loaded.", message:''}); return; }
+    setOrgActionStatus({loading:true, message:'', error:''});
     try {
       const { error } = await supabase.from('organizations').update({ name: orgName.trim() }).eq('id', organization.id);
       if (error) throw error;
-      setOrgSettingsMessage('Organization name updated!');
       setOrganization(prev => prev ? {...prev, name: orgName.trim()} : null);
-    } catch (error) { console.error("Error updating org name:", error); setOrgSettingsError(error.message); }
-    finally { setIsUpdatingOrgName(false); }
+      setOrgActionStatus({loading:false, message:'Organization name updated!', error:''});
+    } catch (err) { console.error("Error updating org name:", err); setOrgActionStatus({loading:false, message:'', error:err.message}); }
   };
 
   const handleAddChecklistTask = async () => {
-    if (!newChecklistTask.trim()) return;
-    if (!organization?.id) { setOrgSettingsError("Organization data not loaded."); return; }
-    const updatedChecklist = [...orgChecklist, newChecklistTask.trim()];
-    setIsUpdatingOrgChecklist(true); setOrgSettingsMessage(''); setOrgSettingsError('');
+    if (!newChecklistTask.trim() || !organization?.id) return;
+    const updatedList = [...orgChecklist, newChecklistTask.trim()];
+    setOrgActionStatus({loading:true, message:'', error:''});
     try {
-      const { error } = await supabase.from('organizations').update({ default_checklist: updatedChecklist }).eq('id', organization.id);
+      const { error } = await supabase.from('organizations').update({ default_checklist: updatedList }).eq('id', organization.id);
       if (error) throw error;
-      setOrgChecklist(updatedChecklist); setNewChecklistTask('');
-      setOrgSettingsMessage('Checklist task added!');
-    } catch (error) { console.error("Error adding checklist task:", error); setOrgSettingsError(error.message); }
-    finally { setIsUpdatingOrgChecklist(false); }
+      setOrgChecklist(updatedList); setNewChecklistTask('');
+      setOrgActionStatus({loading:false, message:'Checklist task added.', error:''});
+    } catch (err) { console.error("Error adding checklist task:", err); setOrgActionStatus({loading:false, message:'', error:err.message}); }
   };
 
   const handleDeleteChecklistTask = async (taskIndex) => {
-    if (!organization?.id) { setOrgSettingsError("Organization data not loaded."); return; }
-    const updatedChecklist = orgChecklist.filter((_, index) => index !== taskIndex);
-    setIsUpdatingOrgChecklist(true); setOrgSettingsMessage(''); setOrgSettingsError('');
+    if (!organization?.id) return;
+    const updatedList = orgChecklist.filter((_, i) => i !== taskIndex);
+    setOrgActionStatus({loading:true, message:'', error:''});
     try {
-      const { error } = await supabase.from('organizations').update({ default_checklist: updatedChecklist }).eq('id', organization.id);
+      const { error } = await supabase.from('organizations').update({ default_checklist: updatedList }).eq('id', organization.id);
       if (error) throw error;
-      setOrgChecklist(updatedChecklist);
-      setOrgSettingsMessage('Checklist task removed!');
-    } catch (error) { console.error("Error deleting checklist task:", error); setOrgSettingsError(error.message); }
-    finally { setIsUpdatingOrgChecklist(false); }
+      setOrgChecklist(updatedList);
+      setOrgActionStatus({loading:false, message:'Checklist task removed.', error:''});
+    } catch (err) { console.error("Error deleting checklist task:", err); setOrgActionStatus({loading:false, message:'', error:err.message}); }
   };
 
   const handleAddPreApprovedEmail = async (e) => {
     e.preventDefault();
-    if (!newPreApprovalEmail.trim() || !newPreApprovalRole) { setPreApprovalError("Email and role are required."); return; }
-    if (!organization?.id || !user) { setPreApprovalError("Organization data or user session missing."); return; }
-    setIsManagingPreApprovals(true); setPreApprovalMessage(''); setPreApprovalError('');
+    if (!newPreApprovalEmail.trim() || !newPreApprovalRole || !organization?.id || !user) { setOrgActionStatus(prev => ({...prev, error:"Email, role, or org info missing."})); return; }
+    setOrgActionStatus(prev => ({...prev, loading:true, message:'', error:''}));
     try {
-      const { error } = await supabase.from('organization_pre_approvals').insert([{
-        organization_id: organization.id, email: newPreApprovalEmail.trim().toLowerCase(),
-        role_to_assign: newPreApprovalRole, invited_by_user_id: user.id
-      }]).select();
-      if (error) { if (error.code === '23505') throw new Error(`Email ${newPreApprovalEmail.trim().toLowerCase()} is already pre-approved.`); throw error; }
-      setPreApprovalMessage(`Email ${newPreApprovalEmail.trim().toLowerCase()} pre-approved as ${newPreApprovalRole}.`);
-      setNewPreApprovalEmail(''); fetchOrganizationData(); // Refresh list
-    } catch (error) { console.error("Error pre-approving email:", error); setPreApprovalError(error.message); }
-    finally { setIsManagingPreApprovals(false); }
+      await supabase.from('organization_pre_approvals').insert([{ organization_id: organization.id, email: newPreApprovalEmail.trim().toLowerCase(), role_to_assign: newPreApprovalRole, invited_by_user_id: user.id }]);
+      setOrgActionStatus(prev => ({...prev, loading:false, message:`${newPreApprovalEmail.trim().toLowerCase()} pre-approved.`}));
+      setNewPreApprovalEmail(''); fetchCurrentOrganizationDetails();
+    } catch (err) {
+      if (err.message.includes('unique constraint')) { setOrgActionStatus(prev => ({...prev, loading:false, error:`Email ${newPreApprovalEmail.trim().toLowerCase()} is already pre-approved.`}));
+      } else { console.error("Error pre-approving email:", err); setOrgActionStatus(prev => ({...prev, loading:false, error:err.message})); }
+    }
   };
 
   const handleRemovePreApprovedEmail = async (preApprovalId) => {
     if (!window.confirm("Remove this pre-approved email?")) return;
-    setIsManagingPreApprovals(true); setPreApprovalMessage(''); setPreApprovalError('');
+    setOrgActionStatus(prev => ({...prev, loading:true, message:'', error:''}));
     try {
       const { error } = await supabase.from('organization_pre_approvals').delete().eq('id', preApprovalId);
       if (error) throw error;
-      setPreApprovalMessage("Pre-approved email removed."); fetchOrganizationData();
-    } catch (error) { console.error("Error removing pre-approval:", error); setPreApprovalError(error.message); }
-    finally { setIsManagingPreApprovals(false); }
+      setOrgActionStatus(prev => ({...prev, loading:false, message:"Pre-approval removed."}));
+      fetchCurrentOrganizationDetails();
+    } catch (err) { console.error("Error removing pre-approval:", err); setOrgActionStatus(prev => ({...prev, loading:false, error:err.message})); }
   };
-
-  const handleRemoveMemberFromOrg = async (memberProfileIdToRemove, memberName) => {
-    if (!organization?.id || !organization.created_by) { setOrgSettingsError("Org data missing."); return; }
-    if (memberProfileIdToRemove === organization.created_by) { alert("Organization creator cannot be removed."); setOrgSettingsError("Creator cannot be removed."); return; }
-    if (memberProfileIdToRemove === user?.id && profile?.role === 'ORGANIZER') {
-        const otherOrganizers = currentOrgMembersList.filter(m => m.role === 'ORGANIZER' && m.id !== user.id);
-        if (otherOrganizers.length === 0 && user.id !== organization.created_by) {
-            alert("You cannot remove yourself as the only organizer (and not creator). Assign another organizer first."); return;
-        }
+  
+  const unassignUserFromAllOrgItems = async (userIdToUnassign, orgId) => {
+    if (!userIdToUnassign || !orgId) {
+      console.warn("[SettingsPage] unassignUserFromAllOrgItems: Missing userId or orgId.");
+      return;
     }
-    if (!window.confirm(`Remove ${memberName} from "${organization.name}"? They will be unassigned from all plans and their organization affiliation will be removed.`)) return;
-    
-    setIsManagingMembers(true); setOrgSettingsMessage(''); setOrgSettingsError('');
+    console.log(`[SettingsPage] Cleaning up singer assignments for user ${userIdToUnassign} in org ${orgId}`);
     try {
-      const { error: profileUpdateError } = await supabase.from('profiles').update({ organization_id: null, role: null }).eq('id', memberProfileIdToRemove).eq('organization_id', organization.id);
-      if (profileUpdateError) throw new Error(`Profile update failed: ${profileUpdateError.message}`);
+      // 1. Get all event IDs for the organization
+      const { data: eventIdsData, error: eventIdsError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('organization_id', orgId);
 
-      const { data: eventIdsData, error: eventIdsError } = await supabase.from('events').select('id').eq('organization_id', organization.id);
-      if (eventIdsError) throw new Error(`Event ID fetch failed: ${eventIdsError.message}`);
-      if (eventIdsData && eventIdsData.length > 0) {
-        const eventIdsInOrg = eventIdsData.map(e => e.id);
-        const { error: assignmentsError } = await supabase.from('event_assignments').delete().eq('user_id', memberProfileIdToRemove).in('event_id', eventIdsInOrg);
-        if (assignmentsError) console.warn("Warning: removing event assignments failed:", assignmentsError.message);
-
-        const { data: songs, error: songsError } = await supabase.from('service_items').select('id, assigned_singer_ids').in('event_id', eventIdsInOrg).eq('type', 'Song').contains('assigned_singer_ids', [memberProfileIdToRemove]);
-        if (songsError) console.warn("Warning: fetching songs for singer cleanup failed:", songsError.message);
-        else if (songs && songs.length > 0) {
-          const songUpdates = songs.map(s => supabase.from('service_items').update({ assigned_singer_ids: (s.assigned_singer_ids || []).filter(id => id !== memberProfileIdToRemove) }).eq('id', s.id));
-          await Promise.all(songUpdates.map(p => p.catch(e => console.warn("Song singer cleanup sub-update failed", e))));
-        }
+      if (eventIdsError) {
+        console.error("Cleanup Error (fetch events):", eventIdsError.message);
+        throw new Error(`Failed to fetch event IDs for cleanup: ${eventIdsError.message}`);
       }
-      setOrgSettingsMessage(`${memberName} removed from organization.`);
-      fetchOrganizationData(); // Refresh member list
-      if (memberProfileIdToRemove === user?.id) { await refreshProfile(); alert("You have been removed from the organization."); } // Update context if self
-    } catch (error) { console.error("Error removing member:", error); setOrgSettingsError(error.message); }
-    finally { setIsManagingMembers(false); }
+
+      if (!eventIdsData || eventIdsData.length === 0) {
+        console.log("[SettingsPage] No events found for this organization, no singer assignments to clean up.");
+        return;
+      }
+      const eventIdsInOrg = eventIdsData.map(e => e.id);
+
+      // 2. Fetch all 'Song' type service items from these events that have assigned singers
+      console.log("[SettingsPage] Fetching all songs with assigned singers for events:", eventIdsInOrg);
+      const { data: allSongsInEvents, error: songsFetchError } = await supabase
+        .from('service_items')
+        .select('id, assigned_singer_ids')
+        .in('event_id', eventIdsInOrg)
+        .eq('type', 'Song')
+        .neq('assigned_singer_ids', null); // Only get songs where assigned_singer_ids is not null
+
+      if (songsFetchError) {
+        console.error("Error fetching songs for singer cleanup:", songsFetchError.message);
+        // Depending on desired behavior, you might throw here or just log and skip cleanup
+        return; 
+      }
+
+      const songUpdatePromises = [];
+
+      if (allSongsInEvents && allSongsInEvents.length > 0) {
+        allSongsInEvents.forEach(song => {
+          // Check if the user to unassign is in this song's singer list
+          if (song.assigned_singer_ids && Array.isArray(song.assigned_singer_ids) && song.assigned_singer_ids.includes(userIdToUnassign)) {
+            const updatedSingerIds = song.assigned_singer_ids.filter(id => id !== userIdToUnassign);
+            console.log(`[SettingsPage] Updating song ${song.id}, removing singer ${userIdToUnassign}. New singers:`, updatedSingerIds);
+            songUpdatePromises.push(
+              supabase
+                .from('service_items')
+                .update({ assigned_singer_ids: updatedSingerIds.length > 0 ? updatedSingerIds : null }) // Set to null if array becomes empty
+                .eq('id', song.id)
+            );
+          }
+        });
+      }
+
+      if (songUpdatePromises.length > 0) {
+        console.log(`[SettingsPage] Found ${songUpdatePromises.length} songs to update for singer cleanup.`);
+        const results = await Promise.all(songUpdatePromises);
+        results.forEach(result => {
+          if (result.error) {
+            console.error("Error updating a song to remove singer:", result.error.message, result);
+          }
+        });
+        console.log(`[SettingsPage] Processed song updates for singer cleanup.`);
+      } else {
+        console.log(`[SettingsPage] No songs found specifically assigned to user ${userIdToUnassign} in this org's events after client-side check.`);
+      }
+
+    } catch (cleanupError) {
+      console.error("Exception in unassignUserFromAllOrgItems:", cleanupError);
+      // This error won't be directly shown to user via setOrgActionStatus unless re-thrown,
+      // as this function is a helper. The calling function (handleRemoveMember/handleLeave)
+      // will show its own success/error message.
+    }
   };
 
-  // --- RENDER LOGIC ---
+  const handleRemoveMemberFromOrgByOrganizer = async (memberProfileIdToRemove, memberName) => {
+    if (!organization?.id || !organization.created_by || !user) { setOrgActionStatus(prev => ({...prev, error:"Org data missing."})); return; }
+    if (memberProfileIdToRemove === organization.created_by) { alert("Organization creator cannot be removed."); return; }
+    if (memberProfileIdToRemove === user.id) { alert("Use 'Leave Organization' to remove yourself."); return; }
+    if (!window.confirm(`Remove ${memberName} from "${organization.name}"? Their organization affiliation and role will be cleared, and they'll be unassigned from all plans in this org.`)) return;
+    
+    setOrgActionStatus(prev => ({...prev, loading:true, message:'', error:''}));
+    try {
+      await unassignUserFromAllOrgItems(memberProfileIdToRemove, organization.id);
+      const { error: profileUpdateError } = await supabase.from('profiles').update({ organization_id: null, role: null, updated_at: new Date().toISOString() }).eq('id', memberProfileIdToRemove).eq('organization_id', organization.id);
+      if (profileUpdateError) throw profileUpdateError;
+      setOrgActionStatus(prev => ({...prev, loading:false, message:`${memberName} removed from organization.`}));
+      fetchCurrentOrganizationDetails();
+    } catch (err) { console.error("Error removing member:", err); setOrgActionStatus(prev => ({...prev, loading:false, error:err.message})); }
+  };
+
+  const handleLeaveOrganization = async () => {
+    if (!profile?.organization_id || !user?.id || !organization) { alert("Current organization details missing."); return; }
+    if (user.id === organization.created_by) {
+        const otherMembers = currentOrgMembersList.filter(m => m.id !== user.id);
+        if (otherMembers.length > 0) { alert("As org creator with other members, you must transfer ownership or remove others first (feature not yet implemented)."); return; }
+        else if (!window.confirm(`You are the creator and only member. Leaving will make the organization inaccessible. Are you sure you want to leave?`)) return;
+    } else { if (!window.confirm(`Leave "${organization.name}"? You will be unassigned from its plans.`)) return; }
+    
+    setOrgActionStatus(prev => ({...prev, loading:true, message:'', error:''}));
+    try {
+      await unassignUserFromAllOrgItems(user.id, profile.organization_id);
+      const { error: profileUpdateError } = await supabase.from('profiles').update({ organization_id: null, role: null, updated_at: new Date().toISOString() }).eq('id', user.id);
+      if (profileUpdateError) throw profileUpdateError;
+      setOrgActionStatus({loading:false, message:"You have left the organization.", error:''});
+      await refreshProfile();
+    } catch (err) { console.error("Error leaving org:", err); setOrgActionStatus(prev => ({...prev, loading:false, error:err.message}));}
+  };
+
+  const handleJoinOrgSubmit = async (orgCodeToJoin) => {
+    if (!orgCodeToJoin.trim()) { setOrgActionStatus(prev => ({...prev, error:"Org code required."})); return; }
+    if (!user || !user.email) { setOrgActionStatus(prev => ({...prev, error:"User info missing."})); return; }
+    setOrgActionStatus(prev => ({...prev, loading:true, message:'', error:''}));
+    const userEmailToVerify = user.email.toLowerCase();
+    try {
+      const { data: targetOrg, error: findOrgError } = await supabase.from('organizations').select('id, name').or(`id.eq.${orgCodeToJoin.trim()},join_code.eq.${orgCodeToJoin.trim()}`).maybeSingle();
+      if (findOrgError) throw new Error(`Error finding org: ${findOrgError.message}`);
+      if (!targetOrg) throw new Error(`Organization with code "${orgCodeToJoin.trim()}" not found.`);
+
+      const { data: preApproval, error: preApprovalError } = await supabase.from('organization_pre_approvals').select('id, role_to_assign').eq('organization_id', targetOrg.id).eq('email', userEmailToVerify).maybeSingle();
+      if (preApprovalError) throw new Error(`Error checking pre-approval: ${preApprovalError.message}`);
+      if (!preApproval) throw new Error(`Your email (${userEmailToVerify}) is not pre-approved for "${targetOrg.name}".`);
+
+      const { error: profileUpdateError } = await supabase.from('profiles').update({ organization_id: targetOrg.id, role: preApproval.role_to_assign, updated_at: new Date().toISOString() }).eq('id', user.id);
+      if (profileUpdateError) throw new Error(`Error updating profile: ${profileUpdateError.message}`);
+      
+      await supabase.from('organization_pre_approvals').delete().eq('id', preApproval.id);
+      setOrgActionStatus({loading:false, message:`Successfully joined "${targetOrg.name}" as ${preApproval.role_to_assign}!`, error:''});
+      await refreshProfile();
+    } catch (err) { console.error("Error joining org:", err); setOrgActionStatus(prev => ({...prev, loading:false, error:err.message})); }
+  };
+
+  // --- RENDER ---
   if (authIsLoading) return <p className="page-status">Loading user data...</p>;
   if (!user || !profile) return <p className="page-status">User data not available. Please log in again.</p>;
+
+  const isOrgActionInProgress = orgActionStatus.loading;
 
   return (
     <div className="settings-page-container">
       <div className="settings-header"><h1>Settings</h1></div>
       <div className="settings-tabs">
-        <button className={`tab-button ${activeTab === 'user' ? 'active' : ''}`} onClick={() => setActiveTab('user')}>User Settings</button>
-        {profile.role === 'ORGANIZER' && profile.organization_id && ( // Org settings only if in an org
-          <button className={`tab-button ${activeTab === 'organization' ? 'active' : ''}`} onClick={() => setActiveTab('organization')}>Organization Settings</button>
-        )}
+        <button className={`tab-button ${activeTab === 'user' ? 'active' : ''}`} onClick={() => {setActiveTab('user'); setOrgActionStatus({message:'', error:'', loading:false}); }}>User Settings</button>
+        <button className={`tab-button ${activeTab === 'organization' ? 'active' : ''}`} onClick={() => {setActiveTab('organization'); setOrgActionStatus({message:'', error:'', loading:false}); }}>Organization</button>
       </div>
 
       <div className="settings-content">
@@ -302,132 +355,124 @@ const SettingsPage = () => {
             {(userSettingsError || userSettingsMessage) && (<p className={userSettingsError ? "form-error" : "form-success"}>{userSettingsError || userSettingsMessage}</p>)}
             <form onSubmit={handleUpdateNameSubmit} className="settings-form">
               <p><strong>Email:</strong> {user.email} <em style={{fontSize: '0.8em'}}>(cannot be changed here)</em></p>
-              <p><strong>Current Role:</strong> {profile.role || 'N/A'}</p>
-              {profile.organization_id && <p><strong>Organization ID:</strong> {profile.organization_id}</p>}
-              {!profile.organization_id && <p><em>You are not currently part of an organization.</em></p>}
-              <div className="form-group">
-                <label htmlFor="firstName">First Name:</label>
-                <input type="text" id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required disabled={isUpdatingUserName} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="lastName">Last Name:</label>
-                <input type="text" id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required disabled={isUpdatingUserName} />
-              </div>
+              <p><strong>Current Role:</strong> {profile.role || 'N/A'}{profile.organization_id ? ` (in Org: ${profile.organization_id})` : ' (Not in an organization)'}</p>
+              <div className="form-group"><label htmlFor="firstNameS">First Name:</label><input type="text" id="firstNameS" value={firstName} onChange={(e) => setFirstName(e.target.value)} required disabled={isUpdatingUserName} /></div>
+              <div className="form-group"><label htmlFor="lastNameS">Last Name:</label><input type="text" id="lastNameS" value={lastName} onChange={(e) => setLastName(e.target.value)} required disabled={isUpdatingUserName} /></div>
               <button type="submit" className="submit-btn" disabled={isUpdatingUserName}>{isUpdatingUserName ? 'Saving...' : 'Update Name'}</button>
             </form>
             {profile.role === 'MUSICIAN' && (
               <form onSubmit={handleUpdateInstrumentsSubmit} className="settings-form instrument-form">
-                <h3>Your Instruments</h3>
-                <div className="form-group">
-                  <label>Select all instruments you play:</label>
-                  <div className="checkbox-group settings-checkbox-group">
-                    {INSTRUMENT_OPTIONS.map(instrument => (
-                      <label key={instrument} className="checkbox-label">
-                        <input type="checkbox" value={instrument} checked={selectedInstruments.includes(instrument)} onChange={() => handleInstrumentCheckboxChange(instrument)} disabled={isUpdatingInstruments}/>
-                        {instrument}
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                <h3>Your Instruments</h3><div className="form-group"><label>Select all instruments you play:</label><div className="checkbox-group settings-checkbox-group">{INSTRUMENT_OPTIONS.map(inst => (<label key={inst} className="checkbox-label"><input type="checkbox" value={inst} checked={selectedInstruments.includes(inst)} onChange={() => handleInstrumentCheckboxChange(inst)} disabled={isUpdatingInstruments}/>{inst}</label>))}</div></div>
                 <button type="submit" className="submit-btn" disabled={isUpdatingInstruments}>{isUpdatingInstruments ? 'Saving...' : 'Update Instruments'}</button>
               </form>
             )}
           </div>
         )}
 
-        {activeTab === 'organization' && profile.role === 'ORGANIZER' && profile.organization_id && (
+        {activeTab === 'organization' && (
           <div className="settings-section organization-settings-section">
-            <h2>Organization: {organization?.name || 'Details'}</h2>
-            {orgLoading && <p>Loading organization details...</p>}
-            {(orgSettingsError || orgSettingsMessage) && !orgLoading && (<p className={orgSettingsError ? "form-error" : "form-success"}>{orgSettingsError || orgSettingsMessage}</p>)}
-            
-            {organization && !orgLoading && (
+            {orgActionStatus.error && <p className="form-error">{orgActionStatus.error}</p>}
+            {orgActionStatus.message && <p className="form-success">{orgActionStatus.message}</p>}
+
+            {!profile.organization_id && !orgDetailsLoading && !isOrgActionInProgress && (
+              <JoinOrgForm 
+                onJoin={handleJoinOrgSubmit} 
+                isSubmitting={isOrgActionInProgress} 
+                // Pass down orgActionStatus.error/message to JoinOrgForm if it should display them directly
+                // currentError={orgActionStatus.error} 
+                // currentMessage={orgActionStatus.message}
+              />
+            )}
+
+            {profile.organization_id && organization && !orgDetailsLoading && (
               <>
-                <form onSubmit={handleUpdateOrgNameSubmit} className="settings-form">
-                  <div className="form-group">
-                    <label htmlFor="orgName">Organization Name:</label>
-                    <input type="text" id="orgName" value={orgName} onChange={(e) => setOrgName(e.target.value)} required disabled={isUpdatingOrgName}/>
-                  </div>
-                  <button type="submit" className="submit-btn" disabled={isUpdatingOrgName}>{isUpdatingOrgName ? 'Saving...' : 'Update Name'}</button>
-                </form>
+                <h2>Organization: {orgName} <span style={{fontSize: '0.7em', color: '#777'}}>({organization.id})</span></h2>
+                <button onClick={handleLeaveOrganization} className="submit-btn leave-org-btn" disabled={isOrgActionInProgress} style={{backgroundColor: '#e74c3c', marginBottom:'20px', display:'block'}}>
+                    {isOrgActionInProgress ? 'Processing...' : 'Leave This Organization'}
+                </button>
+                <hr style={{margin: "20px 0"}}/>
 
-                <div className="checklist-manager settings-form">
-                  <h3>Default Pre-Service Checklist</h3>
-                  {orgChecklist.length === 0 && <p>No default checklist tasks defined yet.</p>}
-                  <ul className="checklist-display-list">
-                    {orgChecklist.map((task, index) => (
-                      <li key={index} className="checklist-display-item">
-                        <span>{task}</span>
-                        <button onClick={() => handleDeleteChecklistTask(index)} className="delete-task-btn" disabled={isUpdatingOrgChecklist} title="Delete Task">&times;</button>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="add-task-form-group">
-                    <input type="text" value={newChecklistTask} onChange={(e) => setNewChecklistTask(e.target.value)} placeholder="Enter new checklist task" disabled={isUpdatingOrgChecklist}/>
-                    <button type="button" onClick={handleAddChecklistTask} className="add-task-btn" disabled={isUpdatingOrgChecklist || !newChecklistTask.trim()}>+ Add Task</button>
-                  </div>
-                </div>
-                
-                <div className="pre-approval-manager settings-form">
-                  <h3>Manage Pre-Approved Emails</h3>
-                  <p>Add emails of users to allow them to join your organization. They will need your Organization ID/Code ({organization.id}) to complete their signup.</p>
-                  {(preApprovalError || preApprovalMessage) && (<p className={preApprovalError ? "form-error" : "form-success"}>{preApprovalError || preApprovalMessage}</p>)}
-                  <form onSubmit={handleAddPreApprovedEmail} className="add-preapproval-form">
-                    <div className="form-group"><label htmlFor="preApprovalEmail">Email to Pre-Approve:</label><input type="email" id="preApprovalEmail" value={newPreApprovalEmail} onChange={(e) => setNewPreApprovalEmail(e.target.value)} placeholder="user@example.com" required disabled={isManagingPreApprovals}/></div>
-                    <div className="form-group"><label htmlFor="preApprovalRole">Assign Role:</label><select id="preApprovalRole" value={newPreApprovalRole} onChange={(e) => setNewPreApprovalRole(e.target.value)} disabled={isManagingPreApprovals}><option value="MUSICIAN">Musician</option><option value="ORGANIZER">Organizer</option></select></div>
-                    <button type="submit" className="submit-btn add-task-btn" disabled={isManagingPreApprovals || !newPreApprovalEmail.trim()}>{isManagingPreApprovals ? 'Adding...' : '+ Add Pre-Approval'}</button>
-                  </form>
-                  <h4>Currently Pre-Approved:</h4>
-                  {preApprovedEmails.length === 0 && <p>No emails pre-approved yet.</p>}
-                  <ul className="preapproval-list checklist-display-list">
-                    {preApprovedEmails.map(approval => (
-                      <li key={approval.id} className="preapproval-item checklist-display-item">
-                        <span><strong>{approval.email}</strong> as <em>{approval.role_to_assign}</em></span>
-                        <button onClick={() => handleRemovePreApprovedEmail(approval.id)} className="delete-task-btn" disabled={isManagingPreApprovals} title="Remove Pre-approval">&times;</button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {profile.role === 'ORGANIZER' && (
+                  <>
+                    <h3>Manage Organization Details</h3>
+                    <form onSubmit={handleUpdateOrgNameSubmit} className="settings-form">
+                      <div className="form-group"><label htmlFor="orgNameS">Organization Name:</label><input type="text" id="orgNameS" value={orgName} onChange={(e) => setOrgName(e.target.value)} required disabled={isOrgActionInProgress}/></div>
+                      <button type="submit" className="submit-btn" disabled={isOrgActionInProgress}>{isOrgActionInProgress ? 'Saving...' : 'Update Name'}</button>
+                    </form>
 
-                <div className="org-members-manager settings-form">
-                  <h3>Organization Members</h3>
-                  {orgMembersLoading && <p>Loading members...</p>}
-                  {!orgMembersLoading && currentOrgMembersList.length === 0 && <p>No other members found.</p>}
-                  {!orgMembersLoading && currentOrgMembersList.length > 0 && (
-                    <ul className="org-members-list checklist-display-list">
-                      {currentOrgMembersList.map(member => (
-                        <li key={member.id} className="org-member-item checklist-display-item">
-                          <div className="member-details">
-                            <span className="member-name"><strong>{member.first_name} {member.last_name}</strong> ({member.email})</span>
-                            <span className="member-role-org">Role: <em>{member.role}</em></span>
-                          </div>
-                          {member.id !== organization.created_by && member.id !== user.id && (
-                            <button onClick={() => handleRemoveMemberFromOrg(member.id, `${member.first_name} ${member.last_name}`)} className="delete-task-btn remove-member-btn" disabled={isManagingMembers} title="Remove Member from Organization">Remove</button>
-                          )}
-                          {member.id === organization.created_by && (<span className="creator-tag">(Creator)</span>)}
-                          {member.id === user.id && member.id !== organization.created_by && (<span className="creator-tag">(You)</span>)}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                    <div className="checklist-manager settings-form">
+                        <h3>Default Pre-Service Checklist</h3>
+                        {orgChecklist.length === 0 && !isOrgActionInProgress && <p>No default checklist tasks defined yet.</p>}
+                        <ul className="checklist-display-list">
+                        {orgChecklist.map((task, index) => (
+                            <li key={index} className="checklist-display-item">
+                            <span>{task}</span>
+                            <button onClick={() => handleDeleteChecklistTask(index)} className="delete-task-btn" disabled={isOrgActionInProgress} title="Delete Task">&times;</button>
+                            </li>
+                        ))}
+                        </ul>
+                        <div className="add-task-form-group">
+                        <input type="text" value={newChecklistTask} onChange={(e) => setNewChecklistTask(e.target.value)} placeholder="Enter new checklist task" disabled={isOrgActionInProgress}/>
+                        <button type="button" onClick={handleAddChecklistTask} className="add-task-btn" disabled={isOrgActionInProgress || !newChecklistTask.trim()}>+ Add Task</button>
+                        </div>
+                    </div>
+                    
+                    <div className="pre-approval-manager settings-form">
+                        <h3>Manage Pre-Approved Emails</h3>
+                        <p>Add emails to allow users to join your organization ({organization.id}).</p>
+                        <form onSubmit={handleAddPreApprovedEmail} className="add-preapproval-form">
+                            <div className="form-group"><label htmlFor="preApprovalEmailS">Email to Pre-Approve:</label><input type="email" id="preApprovalEmailS" value={newPreApprovalEmail} onChange={(e) => setNewPreApprovalEmail(e.target.value)} placeholder="user@example.com" required disabled={isOrgActionInProgress}/></div>
+                            <div className="form-group"><label htmlFor="preApprovalRoleS">Assign Role:</label><select id="preApprovalRoleS" value={newPreApprovalRole} onChange={(e) => setNewPreApprovalRole(e.target.value)} disabled={isOrgActionInProgress}><option value="MUSICIAN">Musician</option><option value="ORGANIZER">Organizer</option></select></div>
+                            <button type="submit" className="submit-btn add-task-btn" disabled={isOrgActionInProgress || !newPreApprovalEmail.trim()}>{isOrgActionInProgress ? 'Adding...' : '+ Add Pre-Approval'}</button>
+                        </form>
+                        <h4>Currently Pre-Approved:</h4>
+                        {preApprovedEmails.length === 0 && !orgDetailsLoading && <p>No emails pre-approved yet.</p>}
+                        {orgDetailsLoading && <p>Loading pre-approved list...</p>}
+                        {!orgDetailsLoading && preApprovedEmails.length > 0 && (
+                          <ul className="preapproval-list checklist-display-list">
+                            {preApprovedEmails.map(approval => (
+                                <li key={approval.id} className="preapproval-item checklist-display-item">
+                                <span><strong>{approval.email}</strong> as <em>{approval.role_to_assign}</em></span>
+                                <button onClick={() => handleRemovePreApprovedEmail(approval.id)} className="delete-task-btn" disabled={isOrgActionInProgress} title="Remove Pre-approval">&times;</button>
+                                </li>
+                            ))}
+                          </ul>
+                        )}
+                    </div>
+
+                    <div className="org-members-manager settings-form">
+                        <h3>Organization Members</h3>
+                        {orgDetailsLoading && <p>Loading members...</p>}
+                        {!orgDetailsLoading && currentOrgMembersList.length === 0 && <p>No other members found in this organization.</p>}
+                        {!orgDetailsLoading && currentOrgMembersList.length > 0 && (
+                        <ul className="org-members-list checklist-display-list">
+                            {currentOrgMembersList.map(member => (
+                            <li key={member.id} className="org-member-item checklist-display-item">
+                                <div className="member-details">
+                                <span className="member-name"><strong>{member.first_name} {member.last_name}</strong> ({member.email})</span>
+                                <span className="member-role-org">Role: <em>{member.role}</em></span>
+                                </div>
+                                {member.id !== organization.created_by && member.id !== user.id && ( // Can't remove creator or self from this list
+                                <button onClick={() => handleRemoveMemberFromOrgByOrganizer(member.id, `${member.first_name} ${member.last_name}`)} className="delete-task-btn remove-member-btn" disabled={isOrgActionInProgress} title="Remove Member from Organization">Remove</button>
+                                )}
+                                {member.id === organization.created_by && (<span className="creator-tag">(Creator)</span>)}
+                                {member.id === user.id && (<span className="creator-tag">(You)</span>)}
+                            </li>
+                            ))}
+                        </ul>
+                        )}
+                    </div>
+                  </>
+                )}
+                {profile.role === 'MUSICIAN' && (
+                    <p>You are a Musician in this organization. Use the button above if you wish to leave.</p>
+                )}
               </>
             )}
-            {!organization && !orgLoading && !orgSettingsError && profile.organization_id && (<p>Could not load details for organization ID: {profile.organization_id}</p>)}
+            {/* Fallback/loading for initial org details fetch when user IS in an org but details are still loading */}
+            {profile.organization_id && !organization && (orgDetailsLoading || isOrgActionInProgress) && <p>Loading your organization details...</p>}
+            {profile.organization_id && !organization && !orgDetailsLoading && !isOrgActionInProgress && !orgActionStatus.error && (<p className="form-error">Could not load details for your current organization: {profile.organization_id}</p>)}
           </div>
-        )}
-        {/* Message for users not in an org or not organizers trying to see org settings */}
-        {activeTab === 'organization' && (!profile.organization_id || profile.role !== 'ORGANIZER') && (
-            <div className="settings-section">
-                <h2>Organization Settings</h2>
-                <p>
-                    {profile.role !== 'ORGANIZER' 
-                        ? "Only Organizers can manage organization settings." 
-                        : "You are not currently associated with an organization. Organization settings are unavailable."
-                    }
-                </p>
-                {/* Add "Join/Create Org" UI here for org-less users if desired */}
-            </div>
         )}
       </div>
     </div>

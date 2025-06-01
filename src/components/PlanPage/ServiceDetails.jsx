@@ -17,7 +17,7 @@ const ServiceDetails = ({ details }) => {
         day: 'numeric',
       })}</p>
 
-      <p><strong>Time:</strong> {new Date(`1970-01-01T${details.time}Z`).toLocaleTimeString(undefined, {
+      <p><strong>Time:</strong> {new Date(`1970-01-01T${details.time}`).toLocaleTimeString(undefined, {
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
