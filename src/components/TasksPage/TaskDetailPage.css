@@ -235,3 +235,67 @@
   font-style: italic;
   color: #777;
 }
+
+/* Add to TaskDetailPage.css or a relevant shared CSS */
+.task-already-completed {
+  /* ... existing styles ... */
+  border: 1px solid #28a745; /* Green border for completed */
+}
+
+.edit-response-btn {
+  background-color: #007bff; /* Blue for edit */
+  color: white;
+  /* Add other .submit-btn or .action-btn styles if not inheriting */
+  padding: 8px 15px;
+  font-size: 0.95em;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.edit-response-btn:hover {
+  background-color: #0056b3;
+}
+
+.task-closed-message {
+  padding: 20px;
+  background-color: #fff3cd; /* Light yellow warning */
+  border: 1px solid #ffeeba;
+  color: #856404;
+  border-radius: 4px;
+  text-align: center;
+}
+.task-closed-message h3 {
+    margin-top: 0;
+}
+
+.task-status-chip {
+    font-size: 0.8em;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-left: 10px;
+    display: inline-block; /* Or inline-flex */
+    vertical-align: middle;
+}
+.inactive-chip {
+    background-color: #6c757d; /* Gray */
+    color: white;
+}
+.past-due-chip {
+    background-color: #dc3545; /* Red */
+    color: white;
+}
+
+/* Styles for submitted response display (can be shared with ViewTaskResultsModal) */
+.submitted-response-details {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+.submitted-response-details h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.1em;
+}
+/* ... (reuse .availability-response-list.view-only, .raw-slot-list.view-only, .no-response-display from previous ViewTaskResultsModal CSS) ... */

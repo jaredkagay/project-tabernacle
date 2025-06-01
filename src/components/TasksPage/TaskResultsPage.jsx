@@ -137,21 +137,16 @@ const TaskResultsPage = () => {
     return { timeLabels, days: sortedDays, aggregatedSlots, maxAvailability, totalParticipants: participantsWhoResponded };
   }, [task, assignments]);
 
+  // --- Aggregated Event Availability Results ---
   const aggregatedEventAvailability = useMemo(() => {
     if (task?.type !== 'EVENT_AVAILABILITY' || !assignments || !eventDetailsForTask) {
-      return []; // Return empty array if not the right type or data is missing
+      return [];
     }
-
-    // Create a map of eventId to event details for easy lookup
     const eventsMap = new Map();
     eventDetailsForTask.forEach(event => eventsMap.set(event.id, event));
-
-    // Get the order of event_ids from the task_config, or derive from responses if necessary
     const eventIdsInTask = task.task_config?.event_ids || [];
-    
     const resultsByEvent = {};
 
-    // Initialize results structure for each event in the task config
     eventIdsInTask.forEach(eventId => {
       const eventInfo = eventsMap.get(eventId);
       resultsByEvent[eventId] = {
@@ -159,42 +154,38 @@ const TaskResultsPage = () => {
         eventTitle: eventInfo?.title || `Event ID: ${eventId.substring(0,8)}...`,
         eventDate: eventInfo?.date ? new Date(eventInfo.date + 'T00:00:00').toLocaleDateString() : 'N/A',
         eventTime: eventInfo?.time || '',
-        available: [],   // Array of assignee names
-        unavailable: [], // Array of assignee names
-        maybe: [],       // Array of assignee names
-        noResponse: []   // Array of assignee names who haven't completed yet
+        available: [], unavailable: [], maybe: [], noResponse: []
       };
     });
 
-    // Populate responses
+    const respondedAssigneeIds = new Set();
     assignments.forEach(assignment => {
+      const assigneeName = `${assignment.assignee?.first_name || 'User'} ${assignment.assignee?.last_name || ''}`.trim();
       if (assignment.status === 'COMPLETED' && assignment.response_data?.availabilities) {
+        respondedAssigneeIds.add(assignment.assigned_to_user_id);
         Object.entries(assignment.response_data.availabilities).forEach(([eventId, availability]) => {
-          if (resultsByEvent[eventId]) { // Ensure the eventId from response is part of the task
-            const assigneeName = `${assignment.assignee?.first_name || 'N/A'} ${assignment.assignee?.last_name || ''}`.trim();
-            if (availability === 'YES') {
-              resultsByEvent[eventId].available.push(assigneeName);
-            } else if (availability === 'NO') {
-              resultsByEvent[eventId].unavailable.push(assigneeName);
-            } else if (availability === 'MAYBE') {
-              resultsByEvent[eventId].maybe.push(assigneeName);
-            }
+          if (resultsByEvent[eventId]) {
+            if (availability === 'YES') resultsByEvent[eventId].available.push(assigneeName);
+            else if (availability === 'NO') resultsByEvent[eventId].unavailable.push(assigneeName);
+            else if (availability === 'MAYBE') resultsByEvent[eventId].maybe.push(assigneeName);
           }
-        });
-      } else if (assignment.status === 'PENDING') {
-        // For PENDING assignments, add assignee to "noResponse" for all events in this task
-        const assigneeName = `${assignment.assignee?.first_name || 'N/A'} ${assignment.assignee?.last_name || ''}`.trim();
-        eventIdsInTask.forEach(eventId => {
-            if (resultsByEvent[eventId]) {
-                resultsByEvent[eventId].noResponse.push(assigneeName);
-            }
         });
       }
     });
+    
+    // Identify those who are PENDING (haven't responded)
+     assignments.forEach(assignment => {
+        if (assignment.status === 'PENDING') {
+             const assigneeName = `${assignment.assignee?.first_name || 'User'} ${assignment.assignee?.last_name || ''}`.trim();
+             eventIdsInTask.forEach(eventId => {
+                 if (resultsByEvent[eventId]) {
+                     resultsByEvent[eventId].noResponse.push(assigneeName);
+                 }
+             });
+        }
+     });
 
-    // Convert the resultsByEvent object to an array, maintaining task config order
     return eventIdsInTask.map(eventId => resultsByEvent[eventId]).filter(Boolean);
-
   }, [task, assignments, eventDetailsForTask]);
 
   // Helper to find event details by ID for EVENT_AVAILABILITY display
@@ -235,14 +226,14 @@ const TaskResultsPage = () => {
         {task.description && <p className="task-page-description"><strong>Description:</strong> {task.description}</p>}
       </div>
 
-      {/* Display Aggregated Event Availability Results */}
+      {/* --- Display Aggregated Event Availability Results --- */}
       {task.type === 'EVENT_AVAILABILITY' && (
-        <div className="aggregated-event-availability task-completion-area">
+        <div className="aggregated-event-availability task-completion-area"> {/* Reuse class for section styling */}
           <h3>Event Availability Summary</h3>
-          {aggregatedEventAvailability.length === 0 && !loading && <p>No availability responses to display or events not configured.</p>}
+          {aggregatedEventAvailability.length === 0 && !loading && <p>No specific events found in this task's configuration or no responses yet.</p>}
           {aggregatedEventAvailability.map(eventResult => (
             <div key={eventResult.eventId} className="event-summary-card">
-              <h4>{eventResult.eventTitle} <span className="event-summary-date">({eventResult.eventDate} {eventResult.eventTime})</span></h4>
+              <h4>{eventResult.eventTitle} <span className="event-summary-date">({eventResult.eventDate} {eventResult.eventTime || ''})</span></h4>
               <div className="availability-category">
                 <strong>Available ({eventResult.available.length}):</strong>
                 <p>{eventResult.available.length > 0 ? eventResult.available.join(', ') : <span className="no-response-italic">None</span>}</p>
@@ -257,7 +248,7 @@ const TaskResultsPage = () => {
               </div>
               <div className="availability-category">
                 <strong>No Response Yet ({eventResult.noResponse.length}):</strong>
-                <p>{eventResult.noResponse.length > 0 ? eventResult.noResponse.join(', ') : <span className="no-response-italic">All responded</span>}</p>
+                <p>{eventResult.noResponse.length > 0 ? eventResult.noResponse.join(', ') : <span className="no-response-italic">All responded or assigned</span>}</p>
               </div>
             </div>
           ))}
