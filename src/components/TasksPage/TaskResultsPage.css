@@ -1,0 +1,149 @@
+/* src/components/TasksPage/TaskResultsPage.css */
+.task-results-page-container { /* Similar to .task-detail-page-container */
+  max-width: 900px; /* Wider for results */
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  font-family: sans-serif;
+}
+
+.task-results-page-container .back-to-tasks-btn {
+    /* Using styles from TaskDetailPage.css implicitly if imported or global */
+}
+
+.task-results-page-container .task-header-details h1 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 2em;
+}
+.task-results-page-container .task-page-type, 
+.task-results-page-container .task-page-description {
+  font-size: 1em;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.rehearsal-poll-results-grid-container,
+.individual-responses-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.rehearsal-poll-results-grid-container h3,
+.individual-responses-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #34495e;
+  font-size: 1.5em;
+}
+.rehearsal-poll-results-grid-container h4 { /* Sub-heading for aggregated results */
+    margin-bottom: 10px;
+    font-size: 1.2em;
+    color: #333;
+}
+
+
+/* Reusing .rehearsal-poll-grid, .results-grid, .poll-result-slot from ViewTaskResultsModal.css / TaskDetailPage.css if applicable */
+/* If not, copy those styles here. Example: */
+.rehearsal-poll-grid.results-grid {
+  border-collapse: collapse; width: 100%; table-layout: fixed; margin-bottom: 20px;
+}
+.rehearsal-poll-grid.results-grid th,
+.rehearsal-poll-grid.results-grid td {
+  border: 1px solid #ccc; padding: 8px 5px; text-align: center; min-width: 50px; height: 30px; font-size: 0.9em;
+}
+.rehearsal-poll-grid.results-grid th { background-color: #f7f7f7; font-size: 0.85em; }
+.rehearsal-poll-grid.results-grid td:first-child { background-color: #f7f7f7; font-size: 0.8em; font-weight: bold; min-width: 60px; }
+.poll-result-slot { background-color: #fdf0f0; color: #aaa; } /* Default for 0 */
+.poll-result-slot.has-availability { color: #fff; font-weight: bold; } /* Background set by inline style */
+
+
+/* Reusing .results-table styles from ViewTaskResultsModal.css */
+.results-table {
+  width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em;
+}
+.results-table th, .results-table td {
+  border: 1px solid #ddd; padding: 8px 10px; text-align: left; vertical-align: top;
+}
+.results-table th { background-color: #f7f7f7; font-weight: bold; color: #444; }
+.results-table tbody tr:nth-child(even) { background-color: #fdfdfd; }
+
+.status-badge-results { /* Copied from ViewTaskResultsModal.css */
+  padding: 3px 7px; border-radius: 10px; font-size: 0.85em; font-weight: bold; color: white; text-transform: capitalize;
+}
+.status-badge-results.status-pending { background-color: #f39c12; }
+.status-badge-results.status-completed { background-color: #2ecc71; }
+.status-badge-results.status-viewed { background-color: #3498db; }
+
+.no-response { color: #999; font-style: italic; }
+.availability-response-list { list-style-type: none; padding-left: 0; margin: 0; }
+.availability-response-list li { margin-bottom: 3px; font-size: 0.9em; }
+.response-value { font-weight: bold; padding: 2px 6px; border-radius: 3px; margin-left: 5px; }
+.availability-yes { color: #27ae60; } .availability-no { color: #c0392b; } .availability-maybe { color: #f39c12; }
+.raw-slot-list { list-style-type: disc; padding-left: 20px; font-size: 0.85em; color: #666; }
+.raw-slot-list li { margin-bottom: 2px; }
+.response-data-raw { white-space: pre-wrap; word-break: break-all; background-color: #f0f0f0; padding: 5px; border-radius: 3px; font-size: 0.85em; max-height: 100px; overflow-y: auto; }
+
+.page-status { text-align: center; font-size: 1.2em; margin-top: 40px; padding: 20px; }
+.page-status.error { color: #e74c3c; }
+
+/* src/components/TasksPage/TaskResultsPage.css */
+/* ... (existing styles for page, other results types, tables, etc.) ... */
+
+.aggregated-event-availability {
+  margin-bottom: 30px;
+}
+
+.aggregated-event-availability h3 {
+  font-size: 1.5em;
+  color: #34495e;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.event-summary-card {
+  background-color: #fdfdfd;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.event-summary-card h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #2c3e50;
+  font-size: 1.2em;
+}
+.event-summary-date {
+    font-weight: normal;
+    font-size: 0.9em;
+    color: #777;
+}
+
+.availability-category {
+  margin-bottom: 8px;
+  font-size: 0.95em;
+}
+
+.availability-category strong {
+  color: #333;
+}
+
+.availability-category p {
+  margin-top: 3px;
+  margin-bottom: 0;
+  padding-left: 15px;
+  color: #555;
+  word-break: break-word;
+}
+
+.no-response-italic {
+  font-style: italic;
+  color: #888;
+}

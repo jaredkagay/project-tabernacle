@@ -7,7 +7,10 @@ import AllPlansPage from './components/AllPlansPage/AllPlansPage';
 import LandingPage from './components/LandingPage/LandingPage'; // We'll create this
 import StartPage from './components/StartPage/StartPage';     // We'll create this
 import SettingsPage from './components/SettingsPage/SettingsPage'; // <--- Import SettingsPage
+import TasksPage from './components/TasksPage/TasksPage';
 import './App.css';
+import TaskDetailPage from './components/TasksPage/TaskDetailPage';
+import TaskResultsPage from './components/TasksPage/TaskResultsPage';
 
 // Component to protect routes
 const ProtectedRoute = ({ children }) => {
@@ -37,6 +40,7 @@ function App() {
           <nav className="main-nav">
             <Link to="/plans">Plans</Link>
             <Link to="/settings">Settings</Link>
+            <Link to="/tasks">Tasks</Link>
             <button onClick={logout} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>Logout</button>
           </nav>
         )}
@@ -60,6 +64,21 @@ function App() {
           <Route path="/plan/:planId" element={
             <ProtectedRoute>
               <PlanPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/tasks" element={
+            <ProtectedRoute>
+              <TasksPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/task/:assignmentId" element={
+            <ProtectedRoute>
+              <TaskDetailPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/task-results/:taskId" element={
+            <ProtectedRoute>
+              <TaskResultsPage />
             </ProtectedRoute>
           } />
           <Route path="/settings" element={
