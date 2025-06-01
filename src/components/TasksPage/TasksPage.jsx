@@ -12,26 +12,25 @@ import '../PlanPage/PlanPage.css'; // For modal styles (consider centralizing)
 const TasksPage = () => {
   const { user, profile, loading: authIsLoading } = useAuth();
   
-  const [createdTasks, setCreatedTasks] = useState([]); 
-  const [pendingTasks, setPendingTasks] = useState([]); 
-  const [completedTasksForMusician, setCompletedTasksForMusician] = useState([]); 
+  const [createdTasks, setCreatedTasks] = useState([]); // For Organizers
+  const [musicianTasks, setMusicianTasks] = useState([]); // For Musicians (combined pending/completed)
   
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [error, setError] = useState('');
 
+  // ... (modal states for create/assign/edit task for Organizers as before) ...
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
-
   const [isAssignTaskModalOpen, setIsAssignTaskModalOpen] = useState(false);
   const [taskToAssign, setTaskToAssign] = useState(null);
   const [organizationMusicians, setOrganizationMusicians] = useState([]);
   const [isAssigningTask, setIsAssigningTask] = useState(false);
-
   const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
+  const [actionInProgress, setActionInProgress] = useState(false);
 
-  const [actionInProgress, setActionInProgress] = useState(false); // General loading for task list actions
+  const [upcomingOrgEvents, setUpcomingOrgEvents] = useState([]);
 
   const fetchOrganizerData = useCallback(async () => {
     if (!profile || profile.role !== 'ORGANIZER' || !profile.organization_id || !user) {
@@ -47,15 +46,15 @@ const TasksPage = () => {
       if (membersError) throw membersError;
       setOrganizationMusicians(membersData || []);
 
-      // Fetch upcoming events for CreateTaskForm (if it needs to select events)
-      // This part was in CreateTaskForm's parent previously (TasksPage).
-      // Ensure CreateTaskForm gets upcomingOrgEvents if it needs them.
-      // For simplicity, I'll assume CreateTaskForm might not directly need this prop for now
-      // unless we are building dynamic event selection within it.
-      // const today = new Date().toISOString().split('T')[0];
-      // const { data: eventsData, error: eventsError } = await supabase.from('events').select('id, title, date').eq('organization_id', profile.organization_id).gte('date', today).order('date', { ascending: true });
-      // if (eventsError) console.warn("Could not fetch upcoming events for task creation:", eventsError);
-      // setUpcomingOrgEvents(eventsData || []); // You'd need useState for upcomingOrgEvents
+      const today = new Date().toISOString().split('T')[0];
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        .select('id, title, date')
+        .eq('organization_id', profile.organization_id)
+        .gte('date', today)
+        .order('date', { ascending: true });
+      if (eventsError) throw eventsError; // Or handle more gracefully
+      setUpcomingOrgEvents(eventsData || []);
 
     } catch (err) {
       console.error("Error fetching organizer data (tasks/musicians):", err);
@@ -68,19 +67,43 @@ const TasksPage = () => {
 
   const fetchMusicianTasks = useCallback(async () => {
     if (!profile || profile.role !== 'MUSICIAN' || !user?.id) {
-        setIsLoadingTasks(false); setPendingTasks([]); setCompletedTasksForMusician([]); return;
+        setIsLoadingTasks(false); setMusicianTasks([]); return;
     }
     setIsLoadingTasks(true); setError('');
     try {
-      const { data, error: fetchError } = await supabase.from('task_assignments').select(`id, status, completed_at, response_data, task:tasks!inner (id, title, type, due_date, description, task_config, is_active)`).eq('assigned_to_user_id', user.id).in('status', ['PENDING', 'COMPLETED']);
+      const { data, error: fetchError } = await supabase
+        .from('task_assignments')
+        .select(`
+          id, 
+          status, 
+          completed_at,
+          task:tasks!inner (id, title, type, due_date, is_active) 
+        `) // Fetch is_active and due_date from the task itself
+        .eq('assigned_to_user_id', user.id)
+        .in('status', ['PENDING', 'COMPLETED']); // Fetch both
+
       if (fetchError) throw fetchError;
-      const allAssignments = data || [];
-      setPendingTasks(allAssignments.filter(a => a.status === 'PENDING' && a.task.is_active && (!a.task.due_date || new Date(a.task.due_date + 'T23:59:59') >= new Date())).sort((a,b) => new Date(a.task.due_date || Infinity) - new Date(b.task.due_date || Infinity) ));
-      setCompletedTasksForMusician(allAssignments.filter(a => a.status === 'COMPLETED').sort((a,b) => new Date(b.completed_at) - new Date(a.completed_at)));
+      
+      // Sort tasks: pending tasks first, then by due date (soonest first for pending)
+      // then completed tasks (most recent first)
+      const sortedTasks = (data || []).sort((a, b) => {
+        if (a.status === 'PENDING' && b.status === 'COMPLETED') return -1;
+        if (a.status === 'COMPLETED' && b.status === 'PENDING') return 1;
+        if (a.status === 'PENDING') { // Both pending, sort by due date (nulls last)
+            const dueDateA = a.task.due_date ? new Date(a.task.due_date) : new Date('9999-12-31');
+            const dueDateB = b.task.due_date ? new Date(b.task.due_date) : new Date('9999-12-31');
+            return dueDateA - dueDateB;
+        }
+        if (a.status === 'COMPLETED') { // Both completed, sort by completed_at descending
+            return new Date(b.completed_at) - new Date(a.completed_at);
+        }
+        return 0;
+      });
+      setMusicianTasks(sortedTasks);
     } catch (err) {
       console.error("Error fetching musician tasks:", err);
       setError(err.message || "Failed to fetch assigned tasks.");
-      setPendingTasks([]); setCompletedTasksForMusician([]);
+      setMusicianTasks([]);
     } finally {
       setIsLoadingTasks(false);
     }
@@ -168,6 +191,22 @@ const TasksPage = () => {
     finally { setActionInProgress(false); }
   };
 
+  const getMusicianTaskAction = (assignment) => {
+    if (!assignment || !assignment.task) return { text: "Error", disabled: true };
+
+    const taskIsOpen = assignment.task.is_active && 
+                       (!assignment.task.due_date || new Date() <= new Date(assignment.task.due_date + 'T23:59:59.999'));
+
+    if (assignment.status === 'PENDING') {
+      return taskIsOpen ? { text: "Complete Task", path: `/task/${assignment.id}`, disabled: false } 
+                        : { text: "Closed", path: `/task/${assignment.id}`, disabled: true, isInfoLink: true };
+    } else if (assignment.status === 'COMPLETED') {
+      return taskIsOpen ? { text: "View/Edit Response", path: `/task/${assignment.id}`, disabled: false } 
+                        : { text: "View Response", path: `/task/${assignment.id}`, disabled: false, isInfoLink: true };
+    }
+    return { text: "View Details", path: `/task/${assignment.id}`, disabled: true, isInfoLink: true }; // Should not happen for PENDING/COMPLETED
+  };
+
   if (authIsLoading) return <p className="page-status">Loading user data...</p>;
   if (!profile) return <p className="page-status">User profile not available. Please try again.</p>;
 
@@ -225,44 +264,35 @@ const TasksPage = () => {
 
       {profile.role === 'MUSICIAN' && (
         <div className="musician-tasks-view">
-          <div className="tasks-section">
-            <h2>Pending Tasks</h2>
-            {isLoadingTasks && pendingTasks.length === 0 && <p className="page-status">Loading pending tasks...</p>}
-            {!isLoadingTasks && pendingTasks.length === 0 && !error && (<p>You have no pending tasks. Great job!</p>)}
-            {!isLoadingTasks && pendingTasks.length > 0 && (
-              <ul className="tasks-list">
-                {pendingTasks.map(assignment => (
-                  assignment.task && 
-                  <li key={assignment.id} className="task-item-card">
-                    <Link to={`/task/${assignment.id}`} className="task-link">
+          {/* No separate Pending/Completed sections anymore, just one list */}
+          {isLoadingTasks && <p className="page-status">Loading your tasks...</p>}
+          {!isLoadingTasks && musicianTasks.length === 0 && !error && (
+            <p>You have no tasks assigned, or all tasks are past due/inactive and completed.</p>
+          )}
+          {!isLoadingTasks && musicianTasks.length > 0 && (
+            <ul className="tasks-list">
+              {musicianTasks.map(assignment => {
+                if (!assignment.task) return null; // Should not happen with inner join
+                const action = getMusicianTaskAction(assignment);
+                return (
+                  <li key={assignment.id} className={`task-item-card status-chip-${assignment.status?.toLowerCase()} ${!assignment.task.is_active ? 'task-inactive-display': ''} ${!action.disabled && !action.isInfoLink ? '' : 'task-closed-display'}`}>
+                    <div className="task-info-musician">
                       <h3>{assignment.task.title}</h3>
                       <p className="task-type">Type: {assignment.task.type.replace('_', ' ')}</p>
                       {assignment.task.due_date && <p className="task-due-date">Due: {new Date(assignment.task.due_date + 'T00:00:00').toLocaleDateString()}</p>}
-                    </Link>
+                      {!assignment.task.is_active && <span className="task-status-chip inactive-chip">(Task Inactive by Organizer)</span>}
+                    </div>
+                    <div className="task-status-and-action">
+                        <span className={`status-badge-task status-${assignment.status?.toLowerCase()}`}>{assignment.status}</span>
+                        <Link to={action.path} className={`action-btn task-action-btn ${action.disabled ? 'disabled' : ''}`}>
+                            {action.text}
+                        </Link>
+                    </div>
                   </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div className="tasks-section completed-tasks-section">
-            <h2>Completed Tasks</h2>
-            {isLoadingTasks && completedTasksForMusician.length === 0 && <p className="page-status">Loading completed tasks...</p>}
-            {!isLoadingTasks && completedTasksForMusician.length === 0 && !error && (<p>You have not completed any tasks yet.</p>)}
-            {!isLoadingTasks && completedTasksForMusician.length > 0 && (
-              <ul className="tasks-list">
-                {completedTasksForMusician.map(assignment => (
-                  assignment.task &&
-                  <li key={assignment.id} className="task-item-card task-completed">
-                    <Link to={`/task/${assignment.id}`} className="task-link">
-                      <h3>{assignment.task.title}</h3>
-                      <p className="task-type">Type: {assignment.task.type.replace('_', ' ')}</p>
-                      {assignment.completed_at && <p className="task-completed-date">Completed: {new Date(assignment.completed_at).toLocaleDateString()}</p>}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                );
+              })}
+            </ul>
+          )}
         </div>
       )}
 
@@ -271,7 +301,7 @@ const TasksPage = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={toggleCreateTaskModal}>&times;</button>
             <CreateTaskForm onCreateTask={handleCreateTask} onCancel={toggleCreateTaskModal} isSubmitting={isSubmittingTask} 
-              // upcomingOrgEvents={upcomingOrgEvents} // Pass if CreateTaskForm needs it for EVENT_AVAILABILITY type creation
+              upcomingOrgEvents={upcomingOrgEvents} // Pass if CreateTaskForm needs it for EVENT_AVAILABILITY type creation
             />
           </div>
         </div>
@@ -301,7 +331,7 @@ const TasksPage = () => {
               onUpdateTask={handleUpdateTask}
               onCancel={closeEditTaskModal}
               isSubmitting={isUpdatingTask}
-              // upcomingOrgEvents={upcomingOrgEvents} // Only if EditTaskForm needs to re-select events
+              upcomingOrgEvents={upcomingOrgEvents} // Only if EditTaskForm needs to re-select events
             />
           </div>
         </div>

@@ -228,9 +228,9 @@ const TaskDetailPage = () => {
     );
   };
 
-  const isTaskOpenForSubmissionOrEdit = useMemo(() => {
+  const isTaskOpenForSubmission = useMemo(() => { // Renamed from isTaskOpenForSubmissionOrEdit
     if (!task) return false;
-    const isActive = task.is_active; // From the 'tasks' table
+    const isActive = task.is_active;
     const now = new Date();
     const dueDate = task.due_date ? new Date(task.due_date + 'T23:59:59.999') : null; 
     return isActive && (!dueDate || now <= dueDate);
@@ -311,7 +311,7 @@ const TaskDetailPage = () => {
   }, [task, allPossibleRehearsalSlots, selectedRehearsalSlots]);
 
   const showCompletionForm = 
-    isTaskOpenForSubmissionOrEdit && 
+    isTaskOpenForSubmission && 
     (assignment.status === 'PENDING' || (assignment.status === 'COMPLETED' && isEditingResponse));
 
   // --- Render Logic ---
@@ -326,7 +326,36 @@ const TaskDetailPage = () => {
     return <p className="page-status">Task details not found. It might have been removed or is no longer assigned to you.</p>;
   }
 
-// This is the return statement part of your TaskDetailPage.jsx
+  // If task is COMPLETED and NO LONGER OPEN FOR EDITING, show read-only response and different message.
+  if (assignment.status === 'COMPLETED' && !isTaskOpenForSubmission) {
+    return (
+      <div className="task-detail-page-container">
+        <Link to="/tasks" className="back-to-tasks-btn" style={{marginBottom: '20px', display: 'inline-block'}}>&larr; Back to My Tasks</Link>
+        <h1>{task.title}</h1>
+        <div className="task-already-completed">
+          <h3 className="form-success">This task was completed.</h3>
+          {assignment.completed_at && <p>Completed on: {new Date(assignment.completed_at).toLocaleString()}</p>}
+          <h4>Your Submitted Response:</h4>
+          {renderSubmittedResponseData(assignment.response_data, task.type, task.task_config, eventDetailsForTask)}
+          <p style={{marginTop: '15px', fontStyle: 'italic', color: '#777'}}>This task is no longer open for new responses or edits.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If task is PENDING but NOT OPEN for submission
+  if (assignment.status === 'PENDING' && !isTaskOpenForSubmission) {
+    return (
+      <div className="task-detail-page-container">
+        <Link to="/tasks" className="back-to-tasks-btn" style={{marginBottom: '20px', display: 'inline-block'}}>&larr; Back to My Tasks</Link>
+        <h1>{task.title}</h1>
+        <div className="task-closed-message">
+            <h3>Task Closed</h3>
+            <p>This task is either past its due date or has been deactivated by the organizer. You can no longer submit a response.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="task-detail-page-container">
@@ -335,7 +364,7 @@ const TaskDetailPage = () => {
       <div className="task-header-details">
         <h1>{task.title}</h1>
         <p className="task-page-type">Type: {task.type.replace('_', ' ')}</p>
-        {task.due_date && <p className="task-page-due-date"><strong>Due:</strong> {new Date(task.due_date + 'T00:00:00').toLocaleDateString()} {!isTaskOpenForSubmissionOrEdit && task.is_active && <span className="task-status-chip past-due-chip">(Past Due)</span>}</p>}
+        {task.due_date && <p className="task-page-due-date"><strong>Due:</strong> {new Date(task.due_date + 'T00:00:00').toLocaleDateString()} {!isTaskOpenForSubmission && task.is_active && <span className="task-status-chip past-due-chip">(Past Due)</span>}</p>}
         {!task.is_active && <p className="task-status-chip inactive-chip">(Task Inactive)</p>}
         {task.description && <p className="task-page-description" style={{whiteSpace: 'pre-wrap'}}><strong>Description:</strong> {task.description}</p>}
       </div>
@@ -352,7 +381,7 @@ const TaskDetailPage = () => {
             {renderSubmittedResponseData(assignment.response_data, task.type, task.task_config, eventDetailsForTask)}
             
             {/* THIS IS THE "Edit Response" BUTTON LOGIC */}
-            {isTaskOpenForSubmissionOrEdit && ( 
+            {isTaskOpenForSubmission && ( 
               <button 
                 onClick={() => {
                   setIsEditingResponse(true);
@@ -371,7 +400,7 @@ const TaskDetailPage = () => {
                 {isCompletingOrEditing ? 'Loading...' : 'Edit Response'}
               </button>
             )}
-            {!isTaskOpenForSubmissionOrEdit && (
+            {!isTaskOpenForSubmission && (
               <p style={{marginTop: '15px', fontStyle: 'italic', color: '#777'}}>
                 This task is no longer open for editing (past due or inactive).
               </p>
@@ -380,7 +409,7 @@ const TaskDetailPage = () => {
         )}
 
         {/* Case 2: Task is PENDING and NOT open for submission */}
-        {assignment.status === 'PENDING' && !isTaskOpenForSubmissionOrEdit && (
+        {assignment.status === 'PENDING' && !isTaskOpenForSubmission && (
             <div className="task-closed-message">
                 <h3>Task Closed</h3>
                 <p>This task is either past its due date or has been deactivated by the organizer. You can no longer submit a response.</p>

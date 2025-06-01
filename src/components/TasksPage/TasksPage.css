@@ -519,3 +519,69 @@
 
 .delete-task-btn { background-color: #dc3545; color: white; border-color: #d43f3a;}
 .delete-task-btn:hover:not(:disabled) { background-color: #c82333; }
+
+/* In TasksPage.css */
+.task-item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* ... other card styles ... */
+}
+
+.task-info-musician {
+  flex-grow: 1;
+}
+
+.task-status-and-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.status-badge-task {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: bold;
+  color: white;
+  min-width: 70px; /* For consistent width */
+  text-align: center;
+  text-transform: capitalize;
+}
+.status-badge-task.status-pending { background-color: #f39c12; /* Orange */ }
+.status-badge-task.status-completed { background-color: #2ecc71; /* Green */ }
+
+.task-action-btn { /* For the Link styled as a button */
+  padding: 6px 12px;
+  font-size: 0.9em;
+  border: 1px solid #007bff;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+.task-action-btn:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+.task-action-btn.disabled {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #ccc;
+  cursor: not-allowed;
+  pointer-events: none; /* Clicks won't go through Link if styled as disabled */
+}
+
+.task-inactive-display .task-info-musician h3,
+.task-inactive-display .task-info-musician p,
+.task-closed-display .task-info-musician h3,
+.task-closed-display .task-info-musician p {
+  color: #999; /* Gray out text for inactive/closed tasks */
+  text-decoration: line-through; /* Optional: line-through */
+}
+.task-inactive-display .task-status-chip { /* Ensure this is visible */
+    color: #6c757d;
+    background-color: #e9ecef;
+}
