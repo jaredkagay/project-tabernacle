@@ -1,0 +1,71 @@
+/* src/components/SongsPage/SongsPage.css */
+.songs-page-container {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 20px;
+  font-family: sans-serif;
+}
+
+.songs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+.songs-header h1 { margin: 0; font-size: 2em; color: #333; }
+.add-song-btn { /* Use styles similar to .create-new-task-btn or .create-new-plan-btn */
+  padding: 10px 15px; font-size: 1em; font-weight: bold; color: white;
+  background-color: #007bff; border: none; border-radius: 5px; cursor: pointer;
+}
+.add-song-btn:hover:not(:disabled) { background-color: #0056b3; }
+.add-song-btn:disabled { background-color: #ccc; }
+
+.songs-section { margin-bottom: 40px; }
+.songs-section h2 { font-size: 1.5em; color: #2c3e50; margin-bottom: 15px; }
+
+.songs-list { list-style-type: none; padding: 0; }
+.song-item-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align items to top if content wraps */
+  gap: 10px;
+}
+.song-info { flex-grow: 1; }
+.song-info h3 { margin-top: 0; margin-bottom: 5px; color: #34495e; }
+.song-info p { margin: 2px 0; font-size: 0.9em; color: #555; }
+.song-artist-display { font-style: italic; }
+.song-key-display { font-weight: bold; }
+
+.song-links {
+  display: flex;
+  flex-direction: column; /* Stack links if needed */
+  gap: 5px;
+  margin: 0 10px;
+  font-size: 0.9em;
+  align-items: flex-start;
+}
+.song-links a { color: #007bff; text-decoration: none; }
+.song-links a:hover { text-decoration: underline; }
+
+.song-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.edit-btn-small, .delete-btn-small { /* Use similar styles to .item-action-btn */
+  padding: 4px 8px; font-size: 0.8em; border-radius: 4px; cursor: pointer; color: white; border: none;
+}
+.edit-btn-small { background-color: #5bc0de; } /* Info blue */
+.edit-btn-small:hover { background-color: #31b0d5; }
+.delete-btn-small { background-color: #d9534f; } /* Soft red */
+.delete-btn-small:hover { background-color: #c9302c; }
+
+/* Page-level error/status as used in other pages */
+.page-status { text-align: center; padding: 20px; font-size: 1.1em; }
+.form-error.page-level-error { margin-bottom: 20px; text-align: center; }
+
+/* Ensure modal styles are available from PlanPage.css or a shared file */

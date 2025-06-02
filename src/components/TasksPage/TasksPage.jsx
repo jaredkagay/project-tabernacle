@@ -237,7 +237,7 @@ const TasksPage = () => {
                   <p className="task-type">Type: {task.type.replace('_', ' ')}</p>
                   {task.description && <p className="task-description">Desc: {task.description}</p>}
                   {task.due_date && <p className="task-due-date">Due: {new Date(task.due_date + 'T00:00:00').toLocaleDateString()}</p>}
-                  {task.type === 'ACKNOWLEDGEMENT' && task.task_config?.body_text && (
+                  {/* {task.type === 'ACKNOWLEDGEMENT' && task.task_config?.body_text && (
                     <div className="task-details-preview">
                         <strong>Acknowledgement Text Preview:</strong>
                         <p className="preview-text">
@@ -245,7 +245,7 @@ const TasksPage = () => {
                             {task.task_config.body_text.length > 100 ? '...' : ''}
                         </p>
                     </div>
-                  )}
+                  )} */}
                   <div className="task-actions">
                     <button onClick={() => openAssignTaskModal(task)} className="assign-task-btn action-btn-placeholder" disabled={actionInProgress || !task.is_active}>Assign</button>
                     <button onClick={() => openEditTaskModal(task)} className="edit-task-btn action-btn-placeholder" disabled={actionInProgress}>Edit Task</button>

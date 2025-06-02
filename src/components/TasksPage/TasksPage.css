@@ -579,7 +579,6 @@
 .task-closed-display .task-info-musician h3,
 .task-closed-display .task-info-musician p {
   color: #999; /* Gray out text for inactive/closed tasks */
-  text-decoration: line-through; /* Optional: line-through */
 }
 .task-inactive-display .task-status-chip { /* Ensure this is visible */
     color: #6c757d;

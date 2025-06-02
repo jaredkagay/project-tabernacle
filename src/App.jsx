@@ -8,6 +8,7 @@ import LandingPage from './components/LandingPage/LandingPage'; // We'll create 
 import StartPage from './components/StartPage/StartPage';     // We'll create this
 import SettingsPage from './components/SettingsPage/SettingsPage'; // <--- Import SettingsPage
 import TasksPage from './components/TasksPage/TasksPage';
+import SongsPage from './components/SongsPage/SongsPage';
 import './App.css';
 import TaskDetailPage from './components/TasksPage/TaskDetailPage';
 import TaskResultsPage from './components/TasksPage/TaskResultsPage';
@@ -39,8 +40,9 @@ function App() {
         {user && ( // Show nav only if user is logged in
           <nav className="main-nav">
             <Link to="/plans">Plans</Link>
-            <Link to="/settings">Settings</Link>
             <Link to="/tasks">Tasks</Link>
+            <Link to="/songs">Songs</Link>
+            <Link to="/settings">Settings</Link>
             <button onClick={logout} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>Logout</button>
           </nav>
         )}
@@ -79,6 +81,11 @@ function App() {
           <Route path="/task-results/:taskId" element={
             <ProtectedRoute>
               <TaskResultsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/songs" element={
+            <ProtectedRoute>
+              <SongsPage />
             </ProtectedRoute>
           } />
           <Route path="/settings" element={
