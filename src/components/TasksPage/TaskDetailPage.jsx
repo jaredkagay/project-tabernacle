@@ -98,6 +98,9 @@ const TaskDetailPage = () => {
   const [selectedRehearsalSlots, setSelectedRehearsalSlots] = useState([]); // Array of slot IDs like "Monday-18:00"
 
   const [isEditingResponse, setIsEditingResponse] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartInfo, setDragStartInfo] = useState(null); // { id: string, initiallySelected: boolean }
+  const [slotsToUpdate, setSlotsToUpdate] = useState(new Set());
 
   const fetchTaskAssignmentDetails = useCallback(async () => {
     if (!assignmentId) {
@@ -310,6 +313,61 @@ const TaskDetailPage = () => {
     return { timeLabels, days: days.sort((a,b) => DAYS_OF_WEEK.indexOf(a) - DAYS_OF_WEEK.indexOf(b)), slotsByTime }; // Sort days for display
   }, [task, allPossibleRehearsalSlots, selectedRehearsalSlots]);
 
+  const handleMouseDownOnSlot = (slot) => {
+    // Don't start drag if the slot is invalid, or if editing/completing
+    if (!slot || isCompletingOrEditing) {
+      return;
+    }
+
+    setIsDragging(true);
+    setDragStartInfo({ id: slot.id, initiallySelected: slot.selected });
+    setSlotsToUpdate(new Set([slot.id])); // Start with the clicked slot
+
+    // Prevent default text selection behavior while dragging
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleMouseEnterSlot = (slot) => {
+    if (!isDragging || !slot || isCompletingOrEditing) {
+      return;
+    }
+    // Add the slot to the set of slots to be updated
+    setSlotsToUpdate(prevSlots => new Set(prevSlots).add(slot.id));
+  };
+
+  const handleMouseUpGlobal = useCallback(() => {
+    if (!isDragging || !dragStartInfo) {
+      return;
+    }
+
+    const selectMode = !dragStartInfo.initiallySelected; // If started on unselected, we select. If on selected, we deselect.
+
+    // Call your primary slot update function for all affected slots
+    // This assumes handleSlotSelection(slotId, targetState) exists
+    // and updates your main pollGrid data, triggering a re-render.
+    slotsToUpdate.forEach(slotId => {
+      // You might need to fetch the full slot object if handleSlotSelection needs it,
+      // or adapt handleSlotSelection to work with just the ID and target state.
+      handleSlotSelection(slotId, selectMode); // Pass true to select, false to deselect
+    });
+
+    setIsDragging(false);
+    setDragStartInfo(null);
+    setSlotsToUpdate(new Set());
+    document.body.style.userSelect = ''; // Re-enable text selection
+  }, [isDragging, dragStartInfo, slotsToUpdate, handleSlotSelection]); // Include dependencies
+
+  useEffect(() => {
+    // handleMouseUpGlobal should be wrapped in useCallback or defined
+    // such that its reference is stable if not all dependencies change.
+    window.addEventListener('mouseup', handleMouseUpGlobal);
+
+    return () => {
+      window.removeEventListener('mouseup', handleMouseUpGlobal);
+      document.body.style.userSelect = ''; // Cleanup on unmount
+    };
+  }, [handleMouseUpGlobal]); // Dependency array is important here
+
   const showCompletionForm = 
     isTaskOpenForSubmission && 
     (assignment.status === 'PENDING' || (assignment.status === 'COMPLETED' && isEditingResponse));
@@ -377,11 +435,13 @@ const TaskDetailPage = () => {
           <div className="task-already-completed">
             <h3 className="form-success" style={{color: '#155724', marginBottom: '10px'}}>This task was completed!</h3>
             {assignment.completed_at && <p>Completed on: {new Date(assignment.completed_at).toLocaleString()}</p>}
-            <h4 style={{marginTop: '15px', marginBottom: '5px'}}>Your Submitted Response:</h4>
+            
+            {assignment.task.type != 'ACKNOWLEDGEMENT' && (
+            <h4 style={{marginTop: '15px', marginBottom: '5px'}}>Your Submitted Response:</h4>)}
             {renderSubmittedResponseData(assignment.response_data, task.type, task.task_config, eventDetailsForTask)}
             
             {/* THIS IS THE "Edit Response" BUTTON LOGIC */}
-            {isTaskOpenForSubmission && ( 
+            {isTaskOpenForSubmission && assignment.task.type != 'ACKNOWLEDGEMENT' && ( 
               <button 
                 onClick={() => {
                   setIsEditingResponse(true);
@@ -505,15 +565,31 @@ const TaskDetailPage = () => {
                       <tbody>
                         {pollGrid.timeLabels.map(time => (
                           <tr key={time}>
-                            <td>{time}</td>
+                            <td>{new Date(`1970-01-01T${time}Z`).toLocaleTimeString(undefined, {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true,
+                            })}
+                            </td>
                             {pollGrid.days.map(day => {
                               const slot = pollGrid.slotsByTime[time]?.[day];
+                              const isCurrentlyDraggedOver = isDragging && slotsToUpdate.has(slot?.id);
+                              const dragIntentIsToSelect = isDragging && dragStartInfo && !dragStartInfo.initiallySelected;
                               return (
                                 <td 
                                   key={slot?.id || `${day}-${time}-empty`}
-                                  className={`poll-slot ${slot ? (slot.selected ? 'selected' : 'available') : 'unavailable-slot-placeholder'}`}
-                                  onClick={() => slot && !isCompletingOrEditing && handleSlotSelection(slot.id)}
-                                  aria-disabled={isCompletingOrEditing}
+                                  className={`
+                                    poll-slot
+                                    ${slot ? (slot.selected ? 'selected' : 'available') : 'unavailable-slot-placeholder'}
+                                    ${isCurrentlyDraggedOver ? (dragIntentIsToSelect ? 'dragging-to-select' : 'dragging-to-deselect') : ''}
+                                    ${isCompletingOrEditing && !slot?.id ? 'disabled-placeholder' : ''} 
+                                    // Add a class if the slot itself is disabled for dragging
+                                    ${isCompletingOrEditing && slot?.id ? 'disabled-interaction' : ''} 
+                                  `}
+                                  onMouseDown={() => slot && handleMouseDownOnSlot(slot)} // Only allow mousedown on actual slots
+                                  onMouseEnter={() => slot && handleMouseEnterSlot(slot)} // Only track mouseenter on actual slots
+                                  // Keep existing onClick if you want single-click toggle, but ensure it uses the new handleSlotSelection signature
+                                  aria-disabled={isCompletingOrEditing || !slot}
                                 ></td>
                               );
                             })}

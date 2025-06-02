@@ -201,7 +201,7 @@ const TasksPage = () => {
       return taskIsOpen ? { text: "Complete Task", path: `/task/${assignment.id}`, disabled: false } 
                         : { text: "Closed", path: `/task/${assignment.id}`, disabled: true, isInfoLink: true };
     } else if (assignment.status === 'COMPLETED') {
-      return taskIsOpen ? { text: "View/Edit Response", path: `/task/${assignment.id}`, disabled: false } 
+      return taskIsOpen && assignment.task.type != 'ACKNOWLEDGEMENT' ? { text: "View/Edit Response", path: `/task/${assignment.id}`, disabled: false } 
                         : { text: "View Response", path: `/task/${assignment.id}`, disabled: false, isInfoLink: true };
     }
     return { text: "View Details", path: `/task/${assignment.id}`, disabled: true, isInfoLink: true }; // Should not happen for PENDING/COMPLETED
@@ -237,15 +237,6 @@ const TasksPage = () => {
                   <p className="task-type">Type: {task.type.replace('_', ' ')}</p>
                   {task.description && <p className="task-description">Desc: {task.description}</p>}
                   {task.due_date && <p className="task-due-date">Due: {new Date(task.due_date + 'T00:00:00').toLocaleDateString()}</p>}
-                  {/* {task.type === 'ACKNOWLEDGEMENT' && task.task_config?.body_text && (
-                    <div className="task-details-preview">
-                        <strong>Acknowledgement Text Preview:</strong>
-                        <p className="preview-text">
-                            {task.task_config.body_text.substring(0,100)}
-                            {task.task_config.body_text.length > 100 ? '...' : ''}
-                        </p>
-                    </div>
-                  )} */}
                   <div className="task-actions">
                     <button onClick={() => openAssignTaskModal(task)} className="assign-task-btn action-btn-placeholder" disabled={actionInProgress || !task.is_active}>Assign</button>
                     <button onClick={() => openEditTaskModal(task)} className="edit-task-btn action-btn-placeholder" disabled={actionInProgress}>Edit Task</button>
@@ -278,12 +269,19 @@ const TasksPage = () => {
                   <li key={assignment.id} className={`task-item-card status-chip-${assignment.status?.toLowerCase()} ${!assignment.task.is_active ? 'task-inactive-display': ''} ${!action.disabled && !action.isInfoLink ? '' : 'task-closed-display'}`}>
                     <div className="task-info-musician">
                       <h3>{assignment.task.title}</h3>
-                      <p className="task-type">Type: {assignment.task.type.replace('_', ' ')}</p>
+                      {assignment.task.type === 'ACKNOWLEDGEMENT' && (
+                        <p className="task-type">Please acknowledge the expectations that you must abide by as a member of the IV worship team.</p>
+                      )}
+                      {assignment.task.type === 'REHEARSAL_POLL' && (
+                        <p className="task-type">Please let me know when you would be available this week for rehearsal.</p>
+                      )}
+                      {assignment.task.type === 'EVENT_AVAILABILITY' && (
+                        <p className="task-type">Please let me know which of the upcoming weeks you would be available for large group.</p>
+                      )}
                       {assignment.task.due_date && <p className="task-due-date">Due: {new Date(assignment.task.due_date + 'T00:00:00').toLocaleDateString()}</p>}
-                      {!assignment.task.is_active && <span className="task-status-chip inactive-chip">(Task Inactive by Organizer)</span>}
                     </div>
                     <div className="task-status-and-action">
-                        <span className={`status-badge-task status-${assignment.status?.toLowerCase()}`}>{assignment.status}</span>
+                        <span className={`status-badge-task status-${assignment.status?.toLowerCase()}`}>{assignment.status === 'PENDING' ? 'INCOMPLETE' : 'COMPLETE'}</span>
                         <Link to={action.path} className={`action-btn task-action-btn ${action.disabled ? 'disabled' : ''}`}>
                             {action.text}
                         </Link>

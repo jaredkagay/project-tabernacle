@@ -1,4 +1,36 @@
 /* src/components/TasksPage/TaskDetailPage.css */
+
+/* CSS Variables for Rehearsal Poll - easier theming */
+:root {
+  --poll-border-color: #ccc;
+  --poll-header-bg: #f7f7f7;
+  --poll-time-label-bg: #f7f7f7;
+  --poll-time-label-font-size: 0.75em; /* Adjusted for clarity */
+  --poll-header-font-size: 0.9em; /* Adjusted for clarity */
+
+  --poll-slot-min-size: 24px; /* Slightly larger for easier interaction */
+  --poll-slot-padding: 4px; /* Reduced padding inside slot */
+
+  --poll-available-bg: #ffffff;
+  --poll-available-border: #e0e0e0; /* Softer border for available slots */
+  --poll-available-hover-bg: #e6f4ea; /* Softer green hover */
+
+  --poll-selected-bg: #2ecc71; /* Your existing selected green */
+  --poll-selected-border: #27ae60; /* Slightly darker border for selected */
+  --poll-selected-hover-bg: #29b864; /* Slightly lighter hover for selected */
+
+  --poll-unavailable-bg: #f1f1f1;
+  --poll-unavailable-border: #e0e0e0;
+  --poll-unavailable-cursor: not-allowed;
+
+  --poll-dragging-select-bg: rgba(46, 204, 113, 0.45); /* Transparent version of selected green, slightly more opaque */
+  --poll-dragging-select-border: #2ecc71;
+  --poll-dragging-deselect-bg: rgba(231, 76, 60, 0.45); /* Transparent red, slightly more opaque */
+  --poll-dragging-deselect-border: #e74c3c;
+
+  --poll-transition-duration: 0.15s;
+}
+
 .task-detail-page-container {
   max-width: 800px;
   margin: 20px auto;
@@ -86,9 +118,6 @@
 .form-success { background-color: #d4edda; color: #155724; /* ... */ }
 .form-error { background-color: #f8d7da; color: #721c24; /* ... */ }
 
-/* src/components/TasksPage/TaskDetailPage.css */
-/* ... (existing styles for .task-detail-page-container, .task-completion-area, etc.) ... */
-
 .event-availability-form {
   /* Styles for the overall availability section if needed */
 }
@@ -125,65 +154,123 @@
   transform: scale(1.1);
 }
 
-/* src/components/TasksPage/TaskDetailPage.css */
-/* ... (existing styles for page, acknowledgement, event availability) ... */
-
+/* --- REHEARSAL POLL STYLES --- */
 .rehearsal-poll-form {
   /* Styles for the overall poll section if needed */
+  margin-top: 20px; /* Added some top margin */
 }
 
 .rehearsal-poll-grid-container {
   overflow-x: auto; /* Allow horizontal scrolling for many days */
   margin-bottom: 20px;
-  padding-bottom: 10px; /* Space for scrollbar if it appears */
+  border: 1px solid var(--poll-border-color); /* Added border around container */
+  border-radius: 4px; /* Soften container edges */
 }
+
+/* --- REHEARSAL POLL STYLES --- */
+/* ... (your existing poll styles) ... */
+
+/* Prevent text selection within the poll grid and its container */
+.rehearsal-poll-grid-container,
+.rehearsal-poll-grid th,
+.rehearsal-poll-grid td {
+  user-select: none; /* Standard */
+  -webkit-user-select: none; /* Safari, Chrome, Opera */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+}
+
+/* ... (rest of your poll styles like .poll-slot, .dragging-to-select etc.) ... */
 
 .rehearsal-poll-grid {
   border-collapse: collapse;
-  width: 100%; /* Or min-width if you want it to expand */
+  width: 100%; /* Changed from 30% to use container width */
+  min-width: max-content; /* Ensures table expands if content is wider */
   table-layout: fixed; /* Helps with column widths */
 }
 
+/* Consolidated and updated th, td styles */
 .rehearsal-poll-grid th,
 .rehearsal-poll-grid td {
-  border: 1px solid #ccc;
-  padding: 0; /* Remove padding for td, content will fill */
+  border: 1px solid var(--poll-border-color);
+  padding: var(--poll-slot-padding); /* Using variable, consistent padding */
   text-align: center;
-  min-width: 70px; /* Minimum width for day columns */
-  height: 35px; /* Height of time slots */
+  line-height: 1.3; /* Slightly increased for readability */
+  box-sizing: border-box; /* Ensures padding is included in width/height */
 }
 
-.rehearsal-poll-grid th {
-  background-color: #f7f7f7;
-  padding: 8px 5px; /* Padding for headers */
-  font-size: 0.85em;
+.rehearsal-poll-grid th { /* Day headers */
+  background-color: var(--poll-header-bg);
+  font-size: var(--poll-header-font-size);
+  font-weight: bold; /* Ensure headers are bold */
+  padding: 8px var(--poll-slot-padding); /* More vertical padding for headers */
+  min-width: 60px; /* Min width for day columns */
 }
+
 .rehearsal-poll-grid td:first-child { /* Time labels column */
-  background-color: #f7f7f7;
-  font-size: 0.8em;
+  background-color: var(--poll-time-label-bg);
+  font-size: var(--poll-time-label-font-size);
   font-weight: bold;
-  padding: 8px 5px;
-  min-width: 60px;
+  min-width: 70px; /* Slightly wider for time labels like "10:00 AM" */
+  padding: 6px var(--poll-slot-padding); /* Adjusted padding */
 }
 
+/* Poll Slot specific styles */
 .poll-slot {
+  min-width: var(--poll-slot-min-size);
+  height: var(--poll-slot-min-size);
+  padding: 0; /* Remove padding, as content/visuals fill it. Size controlled by height/min-width */
   cursor: pointer;
-  background-color: #e9f7ef; /* Light green for available, unselected */
-  transition: background-color 0.2s ease;
-}
-.poll-slot:not(.unavailable):hover {
-  background-color: #d4efdf; /* Slightly darker green on hover */
-}
-.poll-slot.selected {
-  background-color: #2ecc71; /* Strong green for selected */
-}
-.poll-slot.unavailable { /* If you had logic for unavailable slots */
-    background-color: #f1f1f1;
-    cursor: not-allowed;
+  background-color: var(--poll-available-bg);
+  border: 1px solid var(--poll-available-border); /* Default border for available slots */
+  transition: background-color var(--poll-transition-duration) ease,
+              border-color var(--poll-transition-duration) ease;
+  vertical-align: middle; /* Ensure content (if any) is centered */
 }
 
-/* src/components/TasksPage/TaskDetailPage.css */
-/* ... (existing styles) ... */
+.poll-slot:not(.unavailable-slot-placeholder):hover { /* Hover for available, unselected slots */
+  background-color: var(--poll-available-hover-bg);
+}
+
+.poll-slot.selected {
+  background-color: var(--poll-selected-bg);
+  border-color: var(--poll-selected-border);
+  color: white; /* If you ever put text/icons inside */
+}
+
+.poll-slot.selected:hover {
+  background-color: var(--poll-selected-hover-bg);
+  border-color: var(--poll-selected-border); /* Keep border consistent */
+}
+
+.unavailable-slot-placeholder,
+.poll-slot.disabled-interaction { /* Combined rule for visual consistency */
+  background-color: var(--poll-unavailable-bg);
+  border-color: var(--poll-unavailable-border);
+  cursor: var(--poll-unavailable-cursor);
+}
+
+.unavailable-slot-placeholder:hover, /* Ensure no hover effect on unavailable */
+.poll-slot.disabled-interaction:hover {
+  background-color: var(--poll-unavailable-bg); /* Keep background static */
+}
+
+
+/* Dragging Feedback Styles - Refined */
+.poll-slot.dragging-to-select {
+  background-color: var(--poll-dragging-select-bg) !important;
+  border: 2px dashed var(--poll-dragging-select-border) !important; /* Changed to dashed border for clearer visual */
+  /* box-shadow: inset 0 0 0 2px var(--poll-dragging-select-border) !important; */ /* Alternative visual */
+
+}
+
+.poll-slot.dragging-to-deselect {
+  background-color: var(--poll-dragging-deselect-bg) !important;
+  border: 2px dashed var(--poll-dragging-deselect-border) !important; /* Changed to dashed border */
+  /* box-shadow: inset 0 0 0 2px var(--poll-dragging-deselect-border) !important; */ /* Alternative visual */
+}
+/* --- END OF REHEARSAL POLL STYLES --- */
+
 
 .task-already-completed {
   padding: 20px;
@@ -211,7 +298,17 @@
 
 .submitted-response-details {
   margin-top: 10px;
+  padding: 10px; /* Added padding to submitted response details */
+  background-color: #f9f9f9; /* Added background */
+  border: 1px solid #eee; /* Added border */
+  border-radius: 4px; /* Added border-radius */
 }
+.submitted-response-details h4 { /* Existing style, confirmed */
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
 
 .availability-response-list.view-only { /* For displaying submitted availability */
   list-style-type: none;
@@ -236,20 +333,15 @@
   color: #777;
 }
 
-/* Add to TaskDetailPage.css or a relevant shared CSS */
-.task-already-completed {
-  /* ... existing styles ... */
-  border: 1px solid #28a745; /* Green border for completed */
-}
-
 .edit-response-btn {
   background-color: #007bff; /* Blue for edit */
   color: white;
-  /* Add other .submit-btn or .action-btn styles if not inheriting */
   padding: 8px 15px;
   font-size: 0.95em;
   border-radius: 4px;
   cursor: pointer;
+  border: none; /* Added for consistency */
+  transition: background-color 0.2s ease; /* Added transition */
 }
 .edit-response-btn:hover {
   background-color: #0056b3;
@@ -284,18 +376,3 @@
     background-color: #dc3545; /* Red */
     color: white;
 }
-
-/* Styles for submitted response display (can be shared with ViewTaskResultsModal) */
-.submitted-response-details {
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
-  border-radius: 4px;
-}
-.submitted-response-details h4 {
-  margin-top: 0;
-  margin-bottom: 8px;
-  font-size: 1.1em;
-}
-/* ... (reuse .availability-response-list.view-only, .raw-slot-list.view-only, .no-response-display from previous ViewTaskResultsModal CSS) ... */
