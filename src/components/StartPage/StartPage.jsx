@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient'; // Adjust path if needed
 import './StartPage.css'; // Make sure this CSS file exists and is styled
-
-const INSTRUMENT_OPTIONS = ["Vocals", "Piano", "Acoustic", "Electric", "Bass", "Cajon", "Other"];
+import { INSTRUMENT_OPTIONS  } from '../../constants';
 
 const StartPage = () => {
   const [currentStep, setCurrentStep] = useState(1);

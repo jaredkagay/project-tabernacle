@@ -3,8 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../supabaseClient';
 import './SettingsPage.css'; // Ensure this CSS file is created and styled accordingly
-
-const INSTRUMENT_OPTIONS = ["Vocals", "Piano", "Acoustic", "Electric", "Bass", "Cajon", "Other"];
+import { INSTRUMENT_OPTIONS  } from '../../constants';
 
 // --- Join Organization Form (for org-less users) ---
 const JoinOrgForm = ({ onJoin, onCancel, isSubmitting }) => {

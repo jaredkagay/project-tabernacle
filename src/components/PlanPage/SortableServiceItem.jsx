@@ -4,10 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import './OrderOfService.css'; // All styles will be in this file
 import { FaMusic, FaYoutube, FaBookOpen, FaPencilAlt, FaTrashAlt } from 'react-icons/fa'; // Example from Font Awesome via react-icons
-
-const MUSICAL_KEYS = [
-  'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B',
-];
+import { MUSICAL_KEYS } from '../../constants';
 
 export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeople, onUpdateKey, userRole }) => {
   const isOrganizer = userRole === 'ORGANIZER';

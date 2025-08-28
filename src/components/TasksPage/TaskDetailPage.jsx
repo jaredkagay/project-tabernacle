@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import './TaskDetailPage.css'; // Ensure this CSS file is created and styled
+import { DAYS_OF_WEEK } from '../../constants';
 
 // Helper function to generate time slots
 const generateTimeSlots = (startTimeStr, endTimeStr, intervalMinutes) => {
@@ -288,9 +289,6 @@ const TaskDetailPage = () => {
     const payload = { selected_slots: selectedRehearsalSlots.map(id => { const [day,time] = id.split('-'); return {day,time}; }) };
     await completeTaskAssignment(payload, task.title);
   };
-
-  // Helper for sorting days, ensure DAYS_OF_WEEK is defined similar to CreateTaskForm
-  const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   // Group slots by time for grid display
   const pollGrid = useMemo(() => {

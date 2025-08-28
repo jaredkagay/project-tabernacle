@@ -4,9 +4,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import './TaskResultsPage.css'; // We'll create this CSS file
+import { DAYS_OF_WEEK } from '../../constants';
 
-// Copy these helpers here or move to a shared utils.js and import
-const DAYS_OF_WEEK_ORDER = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const generateTimeSlots = (startTimeStr, endTimeStr, intervalMinutes) => {
   const slots = [];
   if (!startTimeStr || !endTimeStr || !intervalMinutes) return slots;
@@ -120,7 +119,7 @@ const TaskResultsPage = () => {
         return { timeLabels: [], days: [], aggregatedSlots: {}, maxAvailability: 0, totalParticipants: 0 };
     }
     const timeLabels = generateTimeSlots(time_start, time_end, interval_minutes);
-    const sortedDays = Array.isArray(days) ? [...days].sort((a, b) => DAYS_OF_WEEK_ORDER.indexOf(a) - DAYS_OF_WEEK_ORDER.indexOf(b)) : [];
+    const sortedDays = Array.isArray(days) ? [...days].sort((a, b) => DAYS_OF_WEEK.indexOf(a) - DAYS_OF_WEEK.indexOf(b)) : [];
     const aggregatedSlots = {}; let maxAvailability = 0; let participantsWhoResponded = 0;
     assignments.forEach(assignment => {
       if (assignment.status === 'COMPLETED' && assignment.response_data?.selected_slots) {

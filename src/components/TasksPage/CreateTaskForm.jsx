@@ -1,14 +1,13 @@
 // src/components/TasksPage/CreateTaskForm.jsx
 import React, { useState, useEffect } from 'react';
 import '../AllPlansPage/CreatePlanForm.css'; // Example: reusing some styles (ensure classes like form-group, checkbox-group, etc. are styled)
+import { DAYS_OF_WEEK } from '../../constants';
 
 const TASK_TYPES = [
   { value: 'ACKNOWLEDGEMENT', label: 'Expectations Acknowledgement' },
   { value: 'EVENT_AVAILABILITY', label: 'Event Availability Request' },
   { value: 'REHEARSAL_POLL', label: 'Rehearsal Availability Poll' },
 ];
-
-const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 // CreateTaskForm now receives upcomingOrgEvents
 const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvents }) => {
