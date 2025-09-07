@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
     try {
-      // console.log("[AuthContext] Fetching profile for ID:", currentAuthUser.id);
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -28,7 +27,6 @@ export const AuthProvider = ({ children }) => {
         return null;
       }
       setProfile(userProfile || null);
-      // console.log("[AuthContext] Profile state updated to:", userProfile || null);
       return userProfile || null;
     } catch (err) {
       console.error("[AuthContext] Exception during profile fetch:", err);
@@ -42,19 +40,35 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        await fetchUserProfile(currentUser); // Fetch profile after user is set
-        setAuthLoading(false); // Set loading false after user and initial profile attempt
-        // console.log("[AuthContext] onAuthStateChange: Core auth state & profile attempt done. authLoading set to false.");
+        // Only update state if the user has actually changed
+        if (currentUser?.id !== user?.id) {
+          setUser(currentUser);
+          if (currentUser) {
+            await fetchUserProfile(currentUser);
+          } else {
+            setProfile(null);
+          }
+        }
+        setAuthLoading(false);
       }
     );
-    return () => { subscription?.unsubscribe(); };
-  }, []);
+
+    // This handles the session refresh when returning to the tab.
+    // It will trigger the onAuthStateChange listener above if needed.
+    const handleFocus = () => {
+      supabase.auth.getSession();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      subscription?.unsubscribe();
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user]); // Add user to dependency array to get its latest value in the closure.
   
   const refreshProfile = async () => {
     if (user) {
-      // console.log("[AuthContext] refreshProfile called for user:", user.id);
-      return await fetchUserProfile(user); // Re-fetch and update profile state
+      return await fetchUserProfile(user);
     }
     return null;
   };
@@ -76,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={value}>
       {authLoading ? (
-        <div style={{ /* Simple loading spinner or message styles */
+        <div style={{
             display: 'flex', justifyContent: 'center', alignItems: 'center', 
             height: '100vh', fontSize: '1.2em', fontFamily: 'sans-serif' 
         }}>

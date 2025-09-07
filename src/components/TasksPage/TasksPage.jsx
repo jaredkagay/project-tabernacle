@@ -5,20 +5,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../supabaseClient';
 import CreateTaskForm from './CreateTaskForm';
 import AssignTaskForm from './AssignTaskForm';
-import EditTaskForm from './EditTaskForm'; // Make sure this is imported
+import EditTaskForm from './EditTaskForm';
 import './TasksPage.css';
-import '../PlanPage/PlanPage.css'; // For modal styles (consider centralizing)
+import '../PlanPage/PlanPage.css'; // For modal styles
 
 const TasksPage = () => {
   const { user, profile, loading: authIsLoading } = useAuth();
   
-  const [createdTasks, setCreatedTasks] = useState([]); // For Organizers
-  const [musicianTasks, setMusicianTasks] = useState([]); // For Musicians (combined pending/completed)
-  
+  const [createdTasks, setCreatedTasks] = useState([]);
+  const [musicianTasks, setMusicianTasks] = useState([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [error, setError] = useState('');
-
-  // ... (modal states for create/assign/edit task for Organizers as before) ...
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
   const [isAssignTaskModalOpen, setIsAssignTaskModalOpen] = useState(false);
@@ -29,95 +26,63 @@ const TasksPage = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
   const [actionInProgress, setActionInProgress] = useState(false);
-
   const [upcomingOrgEvents, setUpcomingOrgEvents] = useState([]);
 
-  const fetchOrganizerData = useCallback(async () => {
-    if (!profile || profile.role !== 'ORGANIZER' || !profile.organization_id || !user) {
-        setIsLoadingTasks(false); setCreatedTasks([]); setOrganizationMusicians([]); return;
-    }
-    setIsLoadingTasks(true); setError('');
-    try {
-      const { data: tasksData, error: tasksError } = await supabase.from('tasks').select('id, title, type, description, due_date, created_at, is_active, task_config').eq('organization_id', profile.organization_id).order('created_at', { ascending: false });
-      if (tasksError) throw tasksError;
-      setCreatedTasks(tasksData || []);
-
-      const { data: membersData, error: membersError } = await supabase.from('profiles').select('id, first_name, last_name, email').eq('organization_id', profile.organization_id).eq('role', 'MUSICIAN');
-      if (membersError) throw membersError;
-      setOrganizationMusicians(membersData || []);
-
-      const today = new Date().toISOString().split('T')[0];
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('id, title, date')
-        .eq('organization_id', profile.organization_id)
-        .gte('date', today)
-        .order('date', { ascending: true });
-      if (eventsError) throw eventsError; // Or handle more gracefully
-      setUpcomingOrgEvents(eventsData || []);
-
-    } catch (err) {
-      console.error("Error fetching organizer data (tasks/musicians):", err);
-      setError(err.message || "Failed to fetch organizer data.");
-      setCreatedTasks([]); setOrganizationMusicians([]);
-    } finally {
-      setIsLoadingTasks(false);
-    }
-  }, [profile, user?.id]);
-
-  const fetchMusicianTasks = useCallback(async () => {
-    if (!profile || profile.role !== 'MUSICIAN' || !user?.id) {
-        setIsLoadingTasks(false); setMusicianTasks([]); return;
-    }
-    setIsLoadingTasks(true); setError('');
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('task_assignments')
-        .select(`
-          id, 
-          status, 
-          completed_at,
-          task:tasks!inner (id, title, type, due_date, is_active) 
-        `) // Fetch is_active and due_date from the task itself
-        .eq('assigned_to_user_id', user.id)
-        .in('status', ['PENDING', 'COMPLETED']); // Fetch both
-
-      if (fetchError) throw fetchError;
-      
-      // Sort tasks: pending tasks first, then by due date (soonest first for pending)
-      // then completed tasks (most recent first)
-      const sortedTasks = (data || []).sort((a, b) => {
-        if (a.status === 'PENDING' && b.status === 'COMPLETED') return -1;
-        if (a.status === 'COMPLETED' && b.status === 'PENDING') return 1;
-        if (a.status === 'PENDING') { // Both pending, sort by due date (nulls last)
-            const dueDateA = a.task.due_date ? new Date(a.task.due_date) : new Date('9999-12-31');
-            const dueDateB = b.task.due_date ? new Date(b.task.due_date) : new Date('9999-12-31');
-            return dueDateA - dueDateB;
-        }
-        if (a.status === 'COMPLETED') { // Both completed, sort by completed_at descending
-            return new Date(b.completed_at) - new Date(a.completed_at);
-        }
-        return 0;
-      });
-      setMusicianTasks(sortedTasks);
-    } catch (err) {
-      console.error("Error fetching musician tasks:", err);
-      setError(err.message || "Failed to fetch assigned tasks.");
-      setMusicianTasks([]);
-    } finally {
-      setIsLoadingTasks(false);
-    }
-  }, [profile, user?.id]);
-
   useEffect(() => {
-    if (!authIsLoading && profile && user) {
-      if (profile.role === 'ORGANIZER') {
-        fetchOrganizerData();
+    const fetchPageData = async () => {
+      if (!profile || !user) {
+        setIsLoadingTasks(false);
+        setError("User profile not loaded.");
+        return;
+      }
+      
+      setIsLoadingTasks(true);
+      setError('');
+
+      if (profile.role === 'ORGANIZER' && profile.organization_id) {
+        try {
+          const { data: tasksData, error: tasksError } = await supabase.from('tasks').select('*').eq('organization_id', profile.organization_id).order('created_at', { ascending: false });
+          if (tasksError) throw tasksError;
+          setCreatedTasks(tasksData || []);
+
+          const { data: membersData, error: membersError } = await supabase.from('profiles').select('id, first_name, last_name, email').eq('organization_id', profile.organization_id).eq('role', 'MUSICIAN');
+          if (membersError) throw membersError;
+          setOrganizationMusicians(membersData || []);
+
+          const today = new Date().toISOString().split('T')[0];
+          const { data: eventsData, error: eventsError } = await supabase.from('events').select('id, title, date').eq('organization_id', profile.organization_id).gte('date', today).order('date', { ascending: true });
+          if (eventsError) throw eventsError;
+          setUpcomingOrgEvents(eventsData || []);
+        } catch (err) {
+          setError(err.message || "Failed to fetch organizer data.");
+        }
       } else if (profile.role === 'MUSICIAN') {
-        fetchMusicianTasks();
-      } else { setIsLoadingTasks(false); setError("User role undefined.");}
-    } else if (!authIsLoading && !profile) { setIsLoadingTasks(false); setError("Profile not loaded."); }
-  }, [authIsLoading, profile, user, fetchOrganizerData, fetchMusicianTasks]);
+        try {
+          const { data, error: fetchError } = await supabase.from('task_assignments').select(`id, status, completed_at, task:tasks!inner (id, title, type, due_date, is_active)`).eq('assigned_to_user_id', user.id).in('status', ['PENDING', 'COMPLETED']);
+          if (fetchError) throw fetchError;
+          const sortedTasks = (data || []).sort((a, b) => {
+            if (a.status === 'PENDING' && b.status === 'COMPLETED') return -1;
+            if (a.status === 'COMPLETED' && b.status === 'PENDING') return 1;
+            if (a.status === 'PENDING') {
+                const dueDateA = a.task.due_date ? new Date(a.task.due_date) : new Date('9999-12-31');
+                const dueDateB = b.task.due_date ? new Date(b.task.due_date) : new Date('9999-12-31');
+                return dueDateA - dueDateB;
+            }
+            if (a.status === 'COMPLETED') return new Date(b.completed_at) - new Date(a.completed_at);
+            return 0;
+          });
+          setMusicianTasks(sortedTasks);
+        } catch (err) {
+          setError(err.message || "Failed to fetch assigned tasks.");
+        }
+      }
+      setIsLoadingTasks(false);
+    };
+
+    if (!authIsLoading) {
+      fetchPageData();
+    }
+  }, [authIsLoading, user?.id, profile?.role, profile?.organization_id]);
 
   const toggleCreateTaskModal = () => { setIsCreateTaskModalOpen(!isCreateTaskModalOpen); setError(''); };
   const openAssignTaskModal = (task) => { setTaskToAssign(task); setIsAssignTaskModalOpen(true); setError(''); };
@@ -126,7 +91,7 @@ const TasksPage = () => {
   const closeEditTaskModal = () => { setEditingTask(null); setIsEditTaskModalOpen(false); };
 
   const handleCreateTask = async (taskData) => {
-    if (!user || !profile?.organization_id) {throw new Error("User/Org info missing.");}
+    if (!user || !profile?.organization_id) throw new Error("User/Org info missing.");
     setIsSubmittingTask(true); setError('');
     try {
       const taskToInsert = { ...taskData, organization_id: profile.organization_id, created_by_user_id: user.id };
@@ -134,25 +99,24 @@ const TasksPage = () => {
       if (insertError) throw insertError;
       setCreatedTasks(prev => [newTask, ...prev].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
       toggleCreateTaskModal(); alert(`Task "${newTask.title}" created!`);
-    } catch (err) { console.error("Err creating task:", err); setError(err.message); throw err; }
+    } catch (err) { setError(err.message); throw err; }
     finally { setIsSubmittingTask(false); }
   };
 
   const handleAssignTask = async (selectedMusicianIds) => {
-    if (!taskToAssign || !selectedMusicianIds?.length) {throw new Error("Task/Musicians missing.");}
-    if (!user) {throw new Error("Organizer not authenticated.");}
+    if (!taskToAssign || !selectedMusicianIds?.length) throw new Error("Task/Musicians missing.");
     setIsAssigningTask(true); setError('');
     const assignments = selectedMusicianIds.map(id => ({task_id: taskToAssign.id, assigned_to_user_id: id, status: 'PENDING'}));
     try {
       const { error } = await supabase.from('task_assignments').insert(assignments);
       if (error) { if (error.message.includes('unique constraint')) throw new Error("One or more already assigned."); throw error; }
       alert(`Task "${taskToAssign.title}" assigned.`); closeAssignTaskModal();
-    } catch (err) { console.error("Err assigning task:", err); setError(err.message); throw err; }
+    } catch (err) { setError(err.message); throw err; }
     finally { setIsAssigningTask(false); }
   };
 
   const handleUpdateTask = async (updatedFormData) => {
-    if (!editingTask?.id) { throw new Error("Task ID missing for update."); }
+    if (!editingTask?.id) throw new Error("Task ID missing for update.");
     setIsUpdatingTask(true); setError('');
     try {
       const payload = { title: updatedFormData.title, description: updatedFormData.description, due_date: updatedFormData.due_date, task_config: updatedFormData.task_config };
@@ -161,21 +125,20 @@ const TasksPage = () => {
       alert(`Task "${updatedTask.title}" updated!`);
       setCreatedTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
       closeEditTaskModal();
-    } catch (err) { console.error("Err updating task:", err); setError(err.message); throw err; }
+    } catch (err) { setError(err.message); throw err; }
     finally { setIsUpdatingTask(false); }
   };
 
   const handleToggleTaskActiveStatus = async (taskId, taskTitle, currentIsActive) => {
     const newActive = !currentIsActive;
-    const action = newActive ? "activate" : "deactivate";
-    if (!window.confirm(`Sure you want to ${action} "${taskTitle}"?`)) return;
+    if (!window.confirm(`Sure you want to ${newActive ? "activate" : "deactivate"} "${taskTitle}"?`)) return;
     setActionInProgress(true); setError('');
     try {
       const { data: updated, error } = await supabase.from('tasks').update({ is_active: newActive }).eq('id', taskId).select().single();
       if (error) throw error;
       setCreatedTasks(prev => prev.map(t => t.id === taskId ? updated : t).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
-      alert(`Task ${action}d.`);
-    } catch (err) { console.error(`Err ${action}ing task:`, err); setError(err.message); }
+      alert(`Task ${newActive ? "activated" : "deactivated"}.`);
+    } catch (err) { setError(err.message); }
     finally { setActionInProgress(false); }
   };
   
@@ -187,24 +150,16 @@ const TasksPage = () => {
       if (error) throw error;
       setCreatedTasks(prev => prev.filter(t => t.id !== taskId));
       alert(`Task "${taskTitle}" deleted.`);
-    } catch (err) { console.error("Err deleting task:", err); setError(err.message); }
+    } catch (err) { setError(err.message); }
     finally { setActionInProgress(false); }
   };
 
   const getMusicianTaskAction = (assignment) => {
     if (!assignment || !assignment.task) return { text: "Error", disabled: true };
-
-    const taskIsOpen = assignment.task.is_active && 
-                       (!assignment.task.due_date || new Date() <= new Date(assignment.task.due_date + 'T23:59:59.999'));
-
-    if (assignment.status === 'PENDING') {
-      return taskIsOpen ? { text: "Complete Task", path: `/task/${assignment.id}`, disabled: false } 
-                        : { text: "Closed", path: `/task/${assignment.id}`, disabled: true, isInfoLink: true };
-    } else if (assignment.status === 'COMPLETED') {
-      return taskIsOpen && assignment.task.type != 'ACKNOWLEDGEMENT' ? { text: "View/Edit Response", path: `/task/${assignment.id}`, disabled: false } 
-                        : { text: "View Response", path: `/task/${assignment.id}`, disabled: false, isInfoLink: true };
-    }
-    return { text: "View Details", path: `/task/${assignment.id}`, disabled: true, isInfoLink: true }; // Should not happen for PENDING/COMPLETED
+    const taskIsOpen = assignment.task.is_active && (!assignment.task.due_date || new Date() <= new Date(assignment.task.due_date + 'T23:59:59.999'));
+    if (assignment.status === 'PENDING') return taskIsOpen ? { text: "Complete Task", path: `/task/${assignment.id}`, disabled: false } : { text: "Closed", path: `/task/${assignment.id}`, disabled: true, isInfoLink: true };
+    else if (assignment.status === 'COMPLETED') return taskIsOpen && assignment.task.type !== 'ACKNOWLEDGEMENT' ? { text: "View/Edit Response", path: `/task/${assignment.id}`, disabled: false } : { text: "View Response", path: `/task/${assignment.id}`, disabled: false, isInfoLink: true };
+    return { text: "View Details", path: `/task/${assignment.id}`, disabled: true, isInfoLink: true };
   };
 
   if (authIsLoading) return <p className="page-status">Loading user data...</p>;
@@ -215,9 +170,7 @@ const TasksPage = () => {
       <div className="tasks-header">
         <h1>{profile.role === 'ORGANIZER' ? "Manage Tasks" : "Your Tasks"}</h1>
         {profile.role === 'ORGANIZER' && (
-          <button onClick={toggleCreateTaskModal} className="create-new-task-btn" disabled={actionInProgress || isSubmittingTask || isAssigningTask || isUpdatingTask}>
-            + Create New Task
-          </button>
+          <button onClick={toggleCreateTaskModal} className="create-new-task-btn" disabled={actionInProgress || isSubmittingTask || isAssigningTask || isUpdatingTask}>+ Create New Task</button>
         )}
       </div>
 
@@ -226,9 +179,7 @@ const TasksPage = () => {
       {profile.role === 'ORGANIZER' && (
         <div className="organizer-tasks-view">
           {isLoadingTasks && <p className="page-status">Loading tasks...</p>}
-          {!isLoadingTasks && createdTasks.length === 0 && !error && (
-            <p>You haven't created any tasks yet. Click "Create New Task" to get started.</p>
-          )}
+          {!isLoadingTasks && createdTasks.length === 0 && !error && (<p>You haven't created any tasks yet.</p>)}
           {!isLoadingTasks && createdTasks.length > 0 && (
             <ul className="tasks-list">
               {createdTasks.map(task => (
@@ -241,9 +192,7 @@ const TasksPage = () => {
                     <button onClick={() => openAssignTaskModal(task)} className="assign-task-btn action-btn-placeholder" disabled={actionInProgress || !task.is_active}>Assign</button>
                     <button onClick={() => openEditTaskModal(task)} className="edit-task-btn action-btn-placeholder" disabled={actionInProgress}>Edit Task</button>
                     <Link to={`/task-results/${task.id}`} className="view-results-btn action-btn-placeholder">View Results</Link>
-                    <button onClick={() => handleToggleTaskActiveStatus(task.id, task.title, task.is_active)} className={`action-btn-placeholder ${task.is_active ? 'deactivate-btn' : 'activate-btn'}`} disabled={actionInProgress}>
-                      {task.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
+                    <button onClick={() => handleToggleTaskActiveStatus(task.id, task.title, task.is_active)} className={`action-btn-placeholder ${task.is_active ? 'deactivate-btn' : 'activate-btn'}`} disabled={actionInProgress}>{task.is_active ? 'Deactivate' : 'Activate'}</button>
                     <button onClick={() => handleDeleteTask(task.id, task.title)} className="delete-task-btn action-btn-placeholder" disabled={actionInProgress}>Delete</button>
                   </div>
                 </li>
@@ -255,36 +204,25 @@ const TasksPage = () => {
 
       {profile.role === 'MUSICIAN' && (
         <div className="musician-tasks-view">
-          {/* No separate Pending/Completed sections anymore, just one list */}
           {isLoadingTasks && <p className="page-status">Loading your tasks...</p>}
-          {!isLoadingTasks && musicianTasks.length === 0 && !error && (
-            <p>You have no tasks assigned, or all tasks are past due/inactive and completed.</p>
-          )}
+          {!isLoadingTasks && musicianTasks.length === 0 && !error && (<p>You have no tasks assigned.</p>)}
           {!isLoadingTasks && musicianTasks.length > 0 && (
             <ul className="tasks-list">
               {musicianTasks.map(assignment => {
-                if (!assignment.task) return null; // Should not happen with inner join
+                if (!assignment.task) return null;
                 const action = getMusicianTaskAction(assignment);
                 return (
                   <li key={assignment.id} className={`task-item-card status-chip-${assignment.status?.toLowerCase()} ${!assignment.task.is_active ? 'task-inactive-display': ''} ${!action.disabled && !action.isInfoLink ? '' : 'task-closed-display'}`}>
                     <div className="task-info-musician">
                       <h3>{assignment.task.title}</h3>
-                      {assignment.task.type === 'ACKNOWLEDGEMENT' && (
-                        <p className="task-type">Please acknowledge the expectations that you must abide by as a member of the IV worship team.</p>
-                      )}
-                      {assignment.task.type === 'REHEARSAL_POLL' && (
-                        <p className="task-type">Please let me know when you would be available this week for rehearsal.</p>
-                      )}
-                      {assignment.task.type === 'EVENT_AVAILABILITY' && (
-                        <p className="task-type">Please let me know which of the upcoming weeks you would be available for large group.</p>
-                      )}
+                      {assignment.task.type === 'ACKNOWLEDGEMENT' && (<p className="task-type">Please acknowledge the expectations for the IV worship team.</p>)}
+                      {assignment.task.type === 'REHEARSAL_POLL' && (<p className="task-type">Please let me know when you are available for rehearsal.</p>)}
+                      {assignment.task.type === 'EVENT_AVAILABILITY' && (<p className="task-type">Please let me know which upcoming weeks you are available.</p>)}
                       {assignment.task.due_date && <p className="task-due-date">Due: {new Date(assignment.task.due_date + 'T00:00:00').toLocaleDateString()}</p>}
                     </div>
                     <div className="task-status-and-action">
                         <span className={`status-badge-task status-${assignment.status?.toLowerCase()}`}>{assignment.status === 'PENDING' ? 'INCOMPLETE' : 'COMPLETE'}</span>
-                        <Link to={action.path} className={`action-btn task-action-btn ${action.disabled ? 'disabled' : ''}`}>
-                            {action.text}
-                        </Link>
+                        <Link to={action.path} className={`action-btn task-action-btn ${action.disabled ? 'disabled' : ''}`}>{action.text}</Link>
                     </div>
                   </li>
                 );
@@ -298,9 +236,7 @@ const TasksPage = () => {
         <div className="modal-overlay" onClick={toggleCreateTaskModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={toggleCreateTaskModal}>&times;</button>
-            <CreateTaskForm onCreateTask={handleCreateTask} onCancel={toggleCreateTaskModal} isSubmitting={isSubmittingTask} 
-              upcomingOrgEvents={upcomingOrgEvents} // Pass if CreateTaskForm needs it for EVENT_AVAILABILITY type creation
-            />
+            <CreateTaskForm onCreateTask={handleCreateTask} onCancel={toggleCreateTaskModal} isSubmitting={isSubmittingTask} upcomingOrgEvents={upcomingOrgEvents} />
           </div>
         </div>
       )}
@@ -309,13 +245,7 @@ const TasksPage = () => {
         <div className="modal-overlay" onClick={closeAssignTaskModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={closeAssignTaskModal}>&times;</button>
-            <AssignTaskForm
-              task={taskToAssign}
-              organizationMusicians={organizationMusicians}
-              onAssignTask={handleAssignTask}
-              onCancel={closeAssignTaskModal}
-              isSubmitting={isAssigningTask}
-            />
+            <AssignTaskForm task={taskToAssign} organizationMusicians={organizationMusicians} onAssignTask={handleAssignTask} onCancel={closeAssignTaskModal} isSubmitting={isAssigningTask} />
           </div>
         </div>
       )}
@@ -324,13 +254,7 @@ const TasksPage = () => {
         <div className="modal-overlay" onClick={closeEditTaskModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={closeEditTaskModal}>&times;</button>
-            <EditTaskForm
-              taskToEdit={editingTask}
-              onUpdateTask={handleUpdateTask}
-              onCancel={closeEditTaskModal}
-              isSubmitting={isUpdatingTask}
-              upcomingOrgEvents={upcomingOrgEvents} // Only if EditTaskForm needs to re-select events
-            />
+            <EditTaskForm taskToEdit={editingTask} onUpdateTask={handleUpdateTask} onCancel={closeEditTaskModal} isSubmitting={isUpdatingTask} upcomingOrgEvents={upcomingOrgEvents} />
           </div>
         </div>
       )}

@@ -32,101 +32,84 @@ const AllPlansPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  const fetchPlans = useCallback(async () => {
-    if (!user || !profile) {
-      console.log('[AllPlansPage] fetchPlans: Aborting. User or profile missing.');
-      setFetchedData([]); setPlansLoading(false); return;
-    }
-
-    console.log(`[AllPlansPage] fetchPlans: Started for User: ${user.id}, Role: ${profile.role}`);
-    setPlansLoading(true); setError(null);
-
-    try {
-      let dataToSet = [];
-      if (profile.role === 'ORGANIZER') {
-        if (!profile.organization_id) {
-          setError("Your organizer profile is not associated with an organization.");
-          throw new Error("Organizer profile missing organization_id.");
-        }
-        // console.log('[AllPlansPage] fetchPlans (Organizer): Querying events for organization:', profile.organization_id);
-        const { data, error: fetchError } = await supabase
-          .from('events')
-          .select('id, title, date, theme')
-          .eq('organization_id', profile.organization_id)
-          .order('date', { ascending: false });
-        if (fetchError) throw fetchError;
-        dataToSet = data || [];
-
-      } else if (profile.role === 'MUSICIAN') {
-        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-        console.log('[AllPlansPage] fetchPlans (Musician): Querying assignments for user:', user.id, 'for events on or after', today);
-        
-        const { data: assignments, error: assignmentsError } = await supabase
-          .from('event_assignments') // Start from the assignments table
-          .select(`
-            status, 
-            events!inner ( 
-              id, 
-              title, 
-              date, 
-              theme 
-            )
-          `) // Select status from assignments, and join events (INNER JOIN)
-          .eq('user_id', user.id) // Filter assignments for the current user
-          .in('status', ['PENDING', 'ACCEPTED']) // Filter by assignment status
-          .gte('events.date', today) // Filter on the DATE column of the JOINED events table
-          .order('date', { foreignTable: 'events', ascending: true }); // Order by DATE on the JOINED events table
-
-        if (assignmentsError) throw assignmentsError;
-        
-        // The data structure from Supabase will be:
-        // [{ status: 'PENDING', events: {id: ..., title: ..., date: ..., theme: ...} }, ...]
-        // Note: 'events' is plural because it's the table name.
-        dataToSet = (assignments || []).map(a => {
-          if (!a.events) { // Should not happen with !inner join, but good check
-            console.warn("[AllPlansPage] Musician assignment found without corresponding event details:", a);
-            return null; 
-          }
-          return { 
-            ...a.events, // Spread all properties from the event object
-            assignment_status: a.status // Add the assignment status
-          };
-        }).filter(Boolean); // Remove any nulls if an event was missing (though !inner prevents this)
-        
-        console.log('[AllPlansPage] fetchPlans (Musician): Processed assignments to plans:', dataToSet);
-      } else {
-        console.warn(`[AllPlansPage] Unknown or missing role for user ${user.id}: ${profile.role}`);
-        setError("Your user role is not configured to view plans.");
-      }
-      setFetchedData(dataToSet);
-    } catch (err) {
-      console.error("[AllPlansPage] fetchPlans: CATCH block. Error:", err.message);
-      setError(err.message || "Failed to fetch plans.");
-      setFetchedData([]);
-    } finally {
-      setPlansLoading(false);
-      // console.log('[AllPlansPage] fetchPlans: FINALLY block. plansLoading false.');
-    }
-  }, [user, profile]);
-  
   useEffect(() => {
-    // console.log('[AllPlansPage] useEffect triggered. AuthLoading:', authIsLoading, 'User ID:', user?.id, 'Profile Role:', profile?.role);
-    if (!authIsLoading && user && profile) {
-      if ((profile.role === 'ORGANIZER' && profile.organization_id) || profile.role === 'MUSICIAN') {
-        fetchPlans();
-      } else if (!profile.organization_id) {
-        setError("Your profile is not linked to an organization.");
-        setFetchedData([]); setPlansLoading(false);
-      } else if (!profile.role) {
-        setError("Your user profile is incomplete (no role assigned).");
-        setFetchedData([]); setPlansLoading(false);
+    const fetchPlans = async () => {
+      if (!user || !profile) {
+        setFetchedData([]);
+        setPlansLoading(false);
+        return;
       }
-    } else if (!authIsLoading && !user) {
-      setFetchedData([]); setPlansLoading(false); setError(null);
-    } else if (authIsLoading) {
+  
+      console.log(`[AllPlansPage] fetchPlans: Started for User: ${user.id}, Role: ${profile.role}`);
       setPlansLoading(true);
+      setError(null);
+  
+      try {
+        let dataToSet = [];
+        if (profile.role === 'ORGANIZER') {
+          if (!profile.organization_id) {
+            setError("Your organizer profile is not associated with an organization.");
+            throw new Error("Organizer profile missing organization_id.");
+          }
+          const { data, error: fetchError } = await supabase
+            .from('events')
+            .select('id, title, date, theme')
+            .eq('organization_id', profile.organization_id)
+            .order('date', { ascending: false });
+          if (fetchError) throw fetchError;
+          dataToSet = data || [];
+  
+        } else if (profile.role === 'MUSICIAN') {
+          const today = new Date().toISOString().split('T')[0];
+          
+          const { data: assignments, error: assignmentsError } = await supabase
+            .from('event_assignments')
+            .select(`
+              status, 
+              events!inner ( 
+                id, 
+                title, 
+                date, 
+                theme 
+              )
+            `)
+            .eq('user_id', user.id)
+            .in('status', ['PENDING', 'ACCEPTED'])
+            .gte('events.date', today)
+            .order('date', { foreignTable: 'events', ascending: true });
+  
+          if (assignmentsError) throw assignmentsError;
+          
+          dataToSet = (assignments || []).map(a => {
+            if (!a.events) {
+              return null; 
+            }
+            return { 
+              ...a.events,
+              assignment_status: a.status
+            };
+          }).filter(Boolean);
+          
+          console.log('[AllPlansPage] fetchPlans (Musician): Processed assignments to plans:', dataToSet);
+        } else {
+          setError("Your user role is not configured to view plans.");
+        }
+        setFetchedData(dataToSet);
+      } catch (err) {
+        console.error("[AllPlansPage] fetchPlans: CATCH block. Error:", err.message);
+        setError(err.message || "Failed to fetch plans.");
+        setFetchedData([]);
+      } finally {
+        setPlansLoading(false);
+      }
+    };
+
+    if (!authIsLoading && user && profile) {
+        fetchPlans();
+    } else if (!authIsLoading) {
+        setPlansLoading(false);
     }
-  }, [user, profile, authIsLoading, fetchPlans]);
+  }, [user?.id, profile?.role, profile?.organization_id, authIsLoading]); // Depend on stable primitive values
 
   const {
     upcomingOrganizerPlans,
@@ -183,8 +166,8 @@ const AllPlansPage = () => {
         }
       }
       setIsCreateModalOpen(false);
-      fetchPlans(); 
-      if (newEventId) navigate(`/plan/${newEventId}`);
+      // Re-fetch plans by triggering the useEffect
+      setFetchedData([]); // Force a re-fetch by clearing data
     } catch (err) {
       console.error('Error in handleCreatePlan:', err);
       alert(`An error occurred: ${err.message}`);
@@ -192,10 +175,8 @@ const AllPlansPage = () => {
     }
   };
 
-  // Define renderPlanListCards inside the AllPlansPage component scope
   const renderPlanListCards = (plansToRender, listTitleForEmpty) => {
     if (!plansToRender || plansToRender.length === 0) {
-      // This specific message is now handled by the main return logic
       return null; 
     }
     return (
@@ -209,7 +190,6 @@ const AllPlansPage = () => {
                 {plan.theme && <p className="plan-theme">Theme: {plan.theme}</p>}
               </Link>
             </div>
-            {/* Delete button was removed from cards */}
           </li>
         ))}
       </ul>
