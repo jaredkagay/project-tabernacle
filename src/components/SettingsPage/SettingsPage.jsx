@@ -29,7 +29,7 @@ const JoinOrgForm = ({ onJoin, onCancel, isSubmitting }) => {
 
 
 const SettingsPage = () => {
-  const { user, profile, loading: authIsLoading, refreshProfile } = useAuth();
+  const { user, profile, loading: authIsLoading, refreshProfile, login } = useAuth();
   const [activeTab, setActiveTab] = useState('user');
 
   // User Settings State
@@ -40,6 +40,13 @@ const SettingsPage = () => {
   const [userSettingsError, setUserSettingsError] = useState('');
   const [isUpdatingUserName, setIsUpdatingUserName] = useState(false);
   const [isUpdatingInstruments, setIsUpdatingInstruments] = useState(false);
+
+  // New state for password change
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
 
   // Organization Related State
   const [organization, setOrganization] = useState(null);
@@ -123,6 +130,51 @@ const SettingsPage = () => {
     } catch (err) { console.error("Error updating name:", err); setUserSettingsError(err.message || "Failed to update name."); }
     finally { setIsUpdatingUserName(false); }
   };
+  
+  const handleUpdatePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setUserSettingsMessage('');
+    setUserSettingsError('');
+
+    if (!currentPassword) {
+        setUserSettingsError('Please enter your current password.');
+        return;
+    }
+    if (password.length < 6) {
+      setUserSettingsError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setUserSettingsError('New passwords do not match.');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      // 1. Verify current password by attempting to sign in.
+      // This is a secure way to do it on the client-side.
+      const { error: signInError } = await login(user.email, currentPassword);
+
+      if (signInError) {
+        throw new Error("Your current password is not correct.");
+      }
+
+      // 2. If verification is successful, update to the new password.
+      const { error: updateError } = await supabase.auth.updateUser({ password: password });
+      if (updateError) throw updateError;
+      
+      setUserSettingsMessage('Password updated successfully!');
+      setCurrentPassword('');
+      setPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      console.error("Error updating password:", err);
+      setUserSettingsError(err.message || "Failed to update password.");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
 
   const handleUpdateInstrumentsSubmit = async (e) => {
     e.preventDefault();
@@ -233,7 +285,6 @@ const SettingsPage = () => {
 
       if (songsFetchError) {
         console.error("Error fetching songs for singer cleanup:", songsFetchError.message);
-        // Depending on desired behavior, you might throw here or just log and skip cleanup
         return; 
       }
 
@@ -241,14 +292,13 @@ const SettingsPage = () => {
 
       if (allSongsInEvents && allSongsInEvents.length > 0) {
         allSongsInEvents.forEach(song => {
-          // Check if the user to unassign is in this song's singer list
           if (song.assigned_singer_ids && Array.isArray(song.assigned_singer_ids) && song.assigned_singer_ids.includes(userIdToUnassign)) {
             const updatedSingerIds = song.assigned_singer_ids.filter(id => id !== userIdToUnassign);
             console.log(`[SettingsPage] Updating song ${song.id}, removing singer ${userIdToUnassign}. New singers:`, updatedSingerIds);
             songUpdatePromises.push(
               supabase
                 .from('service_items')
-                .update({ assigned_singer_ids: updatedSingerIds.length > 0 ? updatedSingerIds : null }) // Set to null if array becomes empty
+                .update({ assigned_singer_ids: updatedSingerIds.length > 0 ? updatedSingerIds : null })
                 .eq('id', song.id)
             );
           }
@@ -270,9 +320,6 @@ const SettingsPage = () => {
 
     } catch (cleanupError) {
       console.error("Exception in unassignUserFromAllOrgItems:", cleanupError);
-      // This error won't be directly shown to user via setOrgActionStatus unless re-thrown,
-      // as this function is a helper. The calling function (handleRemoveMember/handleLeave)
-      // will show its own success/error message.
     }
   };
 
@@ -359,6 +406,26 @@ const SettingsPage = () => {
               <div className="form-group"><label htmlFor="lastNameS">Last Name:</label><input type="text" id="lastNameS" value={lastName} onChange={(e) => setLastName(e.target.value)} required disabled={isUpdatingUserName} /></div>
               <button type="submit" className="submit-btn" disabled={isUpdatingUserName}>{isUpdatingUserName ? 'Saving...' : 'Update Name'}</button>
             </form>
+
+            <form onSubmit={handleUpdatePasswordSubmit} className="settings-form password-form">
+                <h3>Change Password</h3>
+                <div className="form-group">
+                    <label htmlFor="current-password">Current Password:</label>
+                    <input type="password" id="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required disabled={isUpdatingPassword} />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="new-password">New Password (min. 6 characters):</label>
+                    <input type="password" id="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength="6" disabled={isUpdatingPassword} />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="confirm-password">Confirm New Password:</label>
+                    <input type="password" id="confirm-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength="6" disabled={isUpdatingPassword} />
+                </div>
+                <button type="submit" className="submit-btn" disabled={isUpdatingPassword}>
+                    {isUpdatingPassword ? 'Saving...' : 'Update Password'}
+                </button>
+            </form>
+
             {profile.role === 'MUSICIAN' && (
               <form onSubmit={handleUpdateInstrumentsSubmit} className="settings-form instrument-form">
                 <h3>Your Instruments</h3><div className="form-group"><label>Select all instruments you play:</label><div className="checkbox-group settings-checkbox-group">{INSTRUMENT_OPTIONS.map(inst => (<label key={inst} className="checkbox-label"><input type="checkbox" value={inst} checked={selectedInstruments.includes(inst)} onChange={() => handleInstrumentCheckboxChange(inst)} disabled={isUpdatingInstruments}/>{inst}</label>))}</div></div>
@@ -377,9 +444,6 @@ const SettingsPage = () => {
               <JoinOrgForm 
                 onJoin={handleJoinOrgSubmit} 
                 isSubmitting={isOrgActionInProgress} 
-                // Pass down orgActionStatus.error/message to JoinOrgForm if it should display them directly
-                // currentError={orgActionStatus.error} 
-                // currentMessage={orgActionStatus.message}
               />
             )}
 
@@ -451,7 +515,7 @@ const SettingsPage = () => {
                                 <span className="member-name"><strong>{member.first_name} {member.last_name}</strong> ({member.email})</span>
                                 <span className="member-role-org">Role: <em>{member.role}</em></span>
                                 </div>
-                                {member.id !== organization.created_by && member.id !== user.id && ( // Can't remove creator or self from this list
+                                {member.id !== organization.created_by && member.id !== user.id && (
                                 <button onClick={() => handleRemoveMemberFromOrgByOrganizer(member.id, `${member.first_name} ${member.last_name}`)} className="delete-task-btn remove-member-btn" disabled={isOrgActionInProgress} title="Remove Member from Organization">Remove</button>
                                 )}
                                 {member.id === organization.created_by && (<span className="creator-tag">(Creator)</span>)}
@@ -468,7 +532,6 @@ const SettingsPage = () => {
                 )}
               </>
             )}
-            {/* Fallback/loading for initial org details fetch when user IS in an org but details are still loading */}
             {profile.organization_id && !organization && (orgDetailsLoading || isOrgActionInProgress) && <p>Loading your organization details...</p>}
             {profile.organization_id && !organization && !orgDetailsLoading && !isOrgActionInProgress && !orgActionStatus.error && (<p className="form-error">Could not load details for your current organization: {profile.organization_id}</p>)}
           </div>

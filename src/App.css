@@ -1,58 +1,50 @@
 /* src/App.css */
-/* ... your existing App styles ... */
-
 .main-nav {
   background-color: #333;
   padding: 15px 20px;
-  text-align: left;
-}
-
-.main-nav a {
-  color: white;
-  margin-right: 20px;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.main-nav a:hover {
-  text-decoration: underline;
-}
-
-/* src/App.css */
-/* ... your existing App styles ... */
-
-.main-nav {
-  background-color: #333;
-  padding: 15px 20px;
-  display: flex; /* Changed to flex for logout button alignment */
+  display: flex;
+  justify-content: space-between; /* This will push links to the left and user actions to the right */
   align-items: center;
 }
 
-.main-nav a {
+.nav-links a {
   color: white;
   margin-right: 20px;
   text-decoration: none;
   font-weight: bold;
 }
-.main-nav a:hover {
+
+.nav-links a:hover {
   text-decoration: underline;
 }
 
+.nav-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Adds space between "Hello, Name" and the logout button */
+}
+
+.hello-message {
+  color: white;
+  font-size: 0.9em;
+}
+
 .logout-btn {
-  margin-left: auto; /* Pushes logout button to the right */
   background: none;
-  border: 1px solid #fff; /* Example style */
+  border: 1px solid #fff;
   color: white;
   padding: 5px 10px;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+  transition: background-color 0.2s ease;
 }
+
 .logout-btn:hover {
   background-color: #555;
 }
 
-.app-loading-message { /* For the App.js level loading */
+.app-loading-message {
   display: flex;
   justify-content: center;
   align-items: center;

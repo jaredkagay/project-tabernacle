@@ -71,9 +71,6 @@
   padding: 20px;
 }
 
-/* src/components/SettingsPage/SettingsPage.css */
-/* ... (existing .settings-page-container, .settings-header, .settings-tabs, .tab-button, .settings-content, .settings-section styles) ... */
-
 .user-settings-section p {
   margin-bottom: 10px;
   color: #333;
@@ -112,7 +109,8 @@
   color: #444;
 }
 .form-group input[type="text"],
-.form-group input[type="email"] { /* Add other input types if needed */
+.form-group input[type="email"],
+.form-group input[type="password"] {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
@@ -185,19 +183,15 @@
   text-align: center;
 }
 
-.instrument-form {
-    margin-top: 30px; /* Space between name form and instrument form */
+.instrument-form, .password-form {
+    margin-top: 30px; 
 }
 
-/* src/components/SettingsPage/SettingsPage.css */
-/* ... (all existing styles for tabs, user settings forms, messages, etc.) ... */
-
 .organization-settings-section {
-  /* Styles for the overall organization settings area if needed */
 }
 
 .checklist-manager {
-  margin-top: 30px; /* Space from org name form */
+  margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid #eee;
 }
@@ -261,14 +255,12 @@
 }
 .add-task-form-group input[type="text"] {
   flex-grow: 1; /* Input takes available space */
-  /* Uses existing .form-group input styles if defined globally or copied */
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1em;
 }
 .add-task-btn {
-  /* Uses existing .submit-btn styles if class is applied, or define new: */
   padding: 10px 15px;
   font-size: 0.9em;
   font-weight: bold;
@@ -285,9 +277,6 @@
   background-color: #ccc;
   cursor: not-allowed;
 }
-
-/* src/components/SettingsPage/SettingsPage.css */
-/* ... (all existing styles) ... */
 
 .pre-approval-manager {
   margin-top: 30px;
@@ -307,7 +296,7 @@
   margin-bottom: 10px;
 }
 
-.pre-approval-manager > p { /* Paragraph directly under .pre-approval-manager */
+.pre-approval-manager > p {
     font-size: 0.9em;
     color: #666;
     margin-bottom: 15px;
@@ -315,17 +304,12 @@
 
 
 .add-preapproval-form {
-  /* background-color: #f9f9f9; */
-  /* padding: 15px; */
-  /* border-radius: 5px; */
-  /* margin-bottom: 20px; */
   display: flex;
-  flex-direction: column; /* Stack form groups */
+  flex-direction: column; 
   gap: 15px;
 }
 
 .add-preapproval-form .form-group {
-  /* Styles already defined for .form-group should apply */
 }
 
 .add-preapproval-form select {
@@ -337,11 +321,11 @@
   font-size: 1em;
 }
 
-.add-preapproval-form .add-task-btn { /* Reusing add-task-btn class from checklist */
-  align-self: flex-start; /* Align button to the left if form is column */
+.add-preapproval-form .add-task-btn {
+  align-self: flex-start;
 }
 
-.preapproval-list { /* Can reuse .checklist-display-list styles */
+.preapproval-list { 
   list-style-type: none;
   padding: 0;
   margin-bottom: 20px;
@@ -352,7 +336,7 @@
   padding: 10px;
 }
 
-.preapproval-item { /* Can reuse .checklist-display-item styles */
+.preapproval-item { 
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -379,9 +363,6 @@
     margin-left: 5px;
 }
 
-/* src/components/SettingsPage/SettingsPage.css */
-/* ... (all existing styles) ... */
-
 .org-members-manager {
   margin-top: 30px;
   padding-top: 20px;
@@ -394,22 +375,22 @@
   margin-bottom: 15px;
 }
 
-.org-members-list { /* Reusing .checklist-display-list for base style */
+.org-members-list {
   list-style-type: none;
   padding: 0;
   margin-bottom: 20px;
-  max-height: 400px; /* Or adjust */
+  max-height: 400px;
   overflow-y: auto;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   padding: 10px;
 }
 
-.org-member-item { /* Reusing .checklist-display-item for base style */
+.org-member-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 5px; /* More padding for member items */
+  padding: 10px 5px;
   border-bottom: 1px solid #f0f0f0;
 }
 .org-member-item:last-child {
@@ -418,7 +399,7 @@
 
 .org-member-item .member-details {
   display: flex;
-  flex-direction: column; /* Stack name and role */
+  flex-direction: column;
   flex-grow: 1;
 }
 .org-member-item .member-name {
@@ -437,10 +418,10 @@
   border-radius: 3px;
 }
 
-.remove-member-btn { /* Can reuse .delete-task-btn or style specifically */
+.remove-member-btn {
   background-color: transparent;
   color: #e74c3c;
-  border: 1px solid #e74c3c; /* Add border to make it more button-like */
+  border: 1px solid #e74c3c;
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 0.9em;

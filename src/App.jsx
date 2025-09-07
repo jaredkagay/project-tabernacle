@@ -4,9 +4,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-ro
 import { useAuth } from './contexts/AuthContext'; // Import useAuth
 import PlanPage from './components/PlanPage/PlanPage';
 import AllPlansPage from './components/AllPlansPage/AllPlansPage';
-import LandingPage from './components/LandingPage/LandingPage'; // We'll create this
-import StartPage from './components/StartPage/StartPage';     // We'll create this
-import SettingsPage from './components/SettingsPage/SettingsPage'; // <--- Import SettingsPage
+import LandingPage from './components/LandingPage/LandingPage';
+import StartPage from './components/StartPage/StartPage';
+import SettingsPage from './components/SettingsPage/SettingsPage';
 import TasksPage from './components/TasksPage/TasksPage';
 import SongsPage from './components/SongsPage/SongsPage';
 import './App.css';
@@ -28,22 +28,35 @@ const PublicRoute = ({ children }) => {
 }
 
 function App() {
-  const { user, logout, loading } = useAuth();
+  const { user, profile, logout, loading } = useAuth();
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Good morning';
+    if (hour >= 12 && hour < 17) return 'Good afternoon';
+    if (hour >= 17 && hour < 24) return 'Good evening';
+    return 'Good night';
+  };
 
   if (loading) {
-    return <div>Loading application...</div>; // Full screen loader while auth is resolving
+    return <div className="app-loading-message">Loading application...</div>;
   }
 
   return (
     <Router>
       <div className="App">
-        {user && ( // Show nav only if user is logged in
+        {user && (
           <nav className="main-nav">
-            <Link to="/plans">Plans</Link>
-            <Link to="/tasks">Tasks</Link>
-            <Link to="/songs">Songs</Link>
-            <Link to="/settings">Settings</Link>
-            <button onClick={logout} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>Logout</button>
+            <div className="nav-links">
+              <Link to="/plans">Plans</Link>
+              <Link to="/tasks">Tasks</Link>
+              <Link to="/songs">Songs</Link>
+              <Link to="/settings">Settings</Link>
+            </div>
+            <div className="nav-user-actions">
+              {profile && <span className="hello-message">{getGreeting()}, {profile.first_name}</span>}
+              <button onClick={logout} className="logout-btn">Logout</button>
+            </div>
           </nav>
         )}
 

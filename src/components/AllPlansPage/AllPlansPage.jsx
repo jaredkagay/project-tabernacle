@@ -109,7 +109,7 @@ const AllPlansPage = () => {
     } else if (!authIsLoading) {
         setPlansLoading(false);
     }
-  }, [user?.id, profile?.role, profile?.organization_id, authIsLoading]); // Depend on stable primitive values
+  }, [user?.id, profile?.role, profile?.organization_id, authIsLoading]);
 
   const {
     upcomingOrganizerPlans,
@@ -166,8 +166,7 @@ const AllPlansPage = () => {
         }
       }
       setIsCreateModalOpen(false);
-      // Re-fetch plans by triggering the useEffect
-      setFetchedData([]); // Force a re-fetch by clearing data
+      navigate(`/plan/${newEventId}`);
     } catch (err) {
       console.error('Error in handleCreatePlan:', err);
       alert(`An error occurred: ${err.message}`);
