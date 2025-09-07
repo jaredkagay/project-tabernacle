@@ -444,3 +444,7 @@
     margin-left: 10px;
     font-style: italic;
 }
+
+.instrument-form, .password-form, .instrument-manager {
+    margin-top: 30px; 
+}
