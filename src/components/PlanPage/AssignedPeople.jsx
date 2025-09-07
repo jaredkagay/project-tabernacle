@@ -20,7 +20,7 @@ const AssignedPeople = ({ people, onAccept, onDecline, onRescind, onOpenEditAssi
       <h2>Assigned Team</h2>
       <ul>
         {people.map((person) => (
-          <li key={person.assignment_id || person.id} className="team-member"> {/* Removed dynamic status class from li */}
+          <li key={person.assignment_id || person.id} className="team-member">
             <div className="member-details-row">
               <div className="member-info">
                 <span className="member-name"><strong>{person.name}</strong></span>
@@ -56,7 +56,6 @@ const AssignedPeople = ({ people, onAccept, onDecline, onRescind, onOpenEditAssi
             {/* Organizer Actions */}
             {profile?.role === 'ORGANIZER' && (
               <div className="assignment-actions organizer-actions">
-                {/* Conditionally render Edit button: Show if status is NOT 'DECLINED' */}
                 {person.status !== 'DECLINED' && (
                   <button
                     onClick={() => onOpenEditAssignment(person)}

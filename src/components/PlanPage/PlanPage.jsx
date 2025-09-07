@@ -44,6 +44,9 @@ const PlanPage = () => {
   const [checklistStatus, setChecklistStatus] = useState({});
   const [organizationMembers, setOrganizationMembers] = useState([]);
 
+  // New state for Organizer's edit mode, defaults to false (musician view)
+  const [isEditMode, setIsEditMode] = useState(false);
+
   const [isAddItemFormVisible, setIsAddItemFormVisible] = useState(false);
   const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -51,6 +54,9 @@ const PlanPage = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isEditAssignmentModalOpen, setIsEditAssignmentModalOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState(null);
+
+  // Determine the effective role ONLY for the OrderOfService component
+  const orderOfServiceRole = profile?.role === 'ORGANIZER' && isEditMode ? 'ORGANIZER' : 'MUSICIAN';
 
   const orderOfServiceWithTimes = React.useMemo(() => {
     let runningTimeInMinutes = 0;
@@ -83,67 +89,67 @@ const PlanPage = () => {
     return initialStatus;
   };
 
+  const fetchPlanDataAndOrgMembers = useCallback(async () => {
+    if (!planId || !user || !profile?.organization_id) {
+      setError(prevError => prevError || "Required information (plan, user, or organization) is missing.");
+      setPlanPageLoading(false); return;
+    }
+    setPlanPageLoading(true); setError(null);
+    try {
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .select(`*, organization:organizations (id, name, default_checklist)`)
+        .eq('id', planId)
+        .eq('organization_id', profile.organization_id)
+        .single();
+
+      if (eventError) throw new Error(`Event details error: ${eventError.message}`);
+      if (!eventData) throw new Error("Event not found or access denied.");
+      
+      setEventDetails(eventData);
+      
+      const orgDefaultTasks = eventData.organization?.default_checklist || [];
+      setCurrentChecklistTasks(orgDefaultTasks);
+      setChecklistStatus(initializeChecklistStatus(orgDefaultTasks, eventData.checklist_status));
+
+      const { data: orderData, error: orderError } = await supabase.from('service_items').select('*').eq('event_id', planId).order('sequence_number', { ascending: true });
+      if (orderError) throw new Error(`Service items error: ${orderError.message}`);
+      setOrderOfService(orderData || []);
+      
+      const { data: currentAssignments, error: assignmentsError } = await supabase.from('event_assignments').select(`id, status, instruments_assigned, notes_for_member, user_id, profile:profiles!event_assignments_user_id_fkey (id, first_name, last_name, instruments, role)`).eq('event_id', planId);
+      if (assignmentsError) throw new Error(`Assignments error: ${assignmentsError.message}`);
+      const formattedAssignments = (currentAssignments || []).map(a => ({
+          id: a.user_id, assignment_id: a.id,
+          name: `${a.profile?.first_name || 'User'} ${a.profile?.last_name || ''}`.trim(),
+          firstName: `${a.profile?.first_name || 'User'}`.trim(),
+          role: a.profile?.role,
+          instruments_played_by_profile: a.profile?.instruments || [],
+          instruments_assigned_for_event: a.instruments_assigned || [],
+          status: a.status, notes: a.notes_for_member
+      }));
+      setAssignedPeople(formattedAssignments);
+
+      if (profile.role === 'ORGANIZER') {
+        const { data: members, error: membersError } = await supabase.from('profiles').select('id, first_name, last_name, instruments, role').eq('organization_id', profile.organization_id).eq('role', 'MUSICIAN');
+        if (membersError) throw new Error(`Org members error: ${membersError.message}`);
+        setOrganizationMembers(members || []);
+      }
+    } catch (err) {
+      console.error("[PlanPage] Error in fetchPlanDataAndOrgMembers:", err.message);
+      setError(err.message);
+      setEventDetails(null); setOrderOfService([]); setAssignedPeople([]); setChecklistStatus({}); setOrganizationMembers([]);
+    } finally {
+      setPlanPageLoading(false);
+    }
+  }, [planId, user, profile]);
+
   useEffect(() => {
-    const fetchPlanDataAndOrgMembers = async () => {
-      if (!planId || !user || !profile?.organization_id) {
-        setError(prevError => prevError || "Required information (plan, user, or organization) is missing.");
-        setPlanPageLoading(false); return;
-      }
-      setPlanPageLoading(true); setError(null);
-      try {
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select(`*, organization:organizations (id, name, default_checklist)`)
-          .eq('id', planId)
-          .eq('organization_id', profile.organization_id)
-          .single();
-
-        if (eventError) throw new Error(`Event details error: ${eventError.message}`);
-        if (!eventData) throw new Error("Event not found or access denied.");
-        
-        setEventDetails(eventData);
-        
-        const orgDefaultTasks = eventData.organization?.default_checklist || [];
-        setCurrentChecklistTasks(orgDefaultTasks);
-        setChecklistStatus(initializeChecklistStatus(orgDefaultTasks, eventData.checklist_status));
-
-        const { data: orderData, error: orderError } = await supabase.from('service_items').select('*').eq('event_id', planId).order('sequence_number', { ascending: true });
-        if (orderError) throw new Error(`Service items error: ${orderError.message}`);
-        setOrderOfService(orderData || []);
-        
-        const { data: currentAssignments, error: assignmentsError } = await supabase.from('event_assignments').select(`id, status, instruments_assigned, notes_for_member, user_id, profile:profiles!event_assignments_user_id_fkey (id, first_name, last_name, instruments, role)`).eq('event_id', planId);
-        if (assignmentsError) throw new Error(`Assignments error: ${assignmentsError.message}`);
-        const formattedAssignments = (currentAssignments || []).map(a => ({
-            id: a.user_id, assignment_id: a.id,
-            name: `${a.profile?.first_name || 'User'} ${a.profile?.last_name || ''}`.trim(),
-            firstName: `${a.profile?.first_name || 'User'}`.trim(),
-            role: a.profile?.role,
-            instruments_played_by_profile: a.profile?.instruments || [],
-            instruments_assigned_for_event: a.instruments_assigned || [],
-            status: a.status, notes: a.notes_for_member
-        }));
-        setAssignedPeople(formattedAssignments);
-
-        if (profile.role === 'ORGANIZER') {
-          const { data: members, error: membersError } = await supabase.from('profiles').select('id, first_name, last_name, instruments, role').eq('organization_id', profile.organization_id).eq('role', 'MUSICIAN');
-          if (membersError) throw new Error(`Org members error: ${membersError.message}`);
-          setOrganizationMembers(members || []);
-        }
-      } catch (err) {
-        console.error("[PlanPage] Error in fetchPlanDataAndOrgMembers:", err.message);
-        setError(err.message);
-        setEventDetails(null); setOrderOfService([]); setAssignedPeople([]); setChecklistStatus({}); setOrganizationMembers([]);
-      } finally {
-        setPlanPageLoading(false);
-      }
-    };
-
     if (!authIsLoading && user && profile) {
         fetchPlanDataAndOrgMembers();
     } else if (!authIsLoading) {
         setPlanPageLoading(false);
     }
-  }, [planId, user?.id, profile?.organization_id, authIsLoading]);
+  }, [planId, user, profile, authIsLoading, fetchPlanDataAndOrgMembers]);
 
 
   const toggleAddItemForm = () => setIsAddItemFormVisible(prev => !prev);
@@ -377,12 +383,8 @@ const PlanPage = () => {
       <header className="plan-header">
         <div className="plan-header-title-group"><h1>{eventDetails.title}</h1></div>
         <div className="plan-header-actions">
-          {profile?.role === 'ORGANIZER' && (
-            <>
-              <button onClick={handleOpenEditEventModal} className="edit-event-info-btn page-header-action-btn" disabled={planPageLoading}>Edit Event Info</button>
-              <button onClick={handleDeleteCurrentPlan} className="delete-current-plan-btn page-header-action-btn" disabled={planPageLoading}>Delete Plan</button>
-            </>
-          )}
+          <button onClick={handleOpenEditEventModal} className="edit-event-info-btn page-header-action-btn" disabled={planPageLoading}>Edit Event Info</button>
+          <button onClick={handleDeleteCurrentPlan} className="delete-current-plan-btn page-header-action-btn" disabled={planPageLoading}>Delete Plan</button>
         </div>
       </header>
       
@@ -391,15 +393,41 @@ const PlanPage = () => {
           <div className="plan-left-column">
             <div className="order-of-service-header">
               <h2>Order of Service</h2>
-              {profile?.role === 'ORGANIZER' && (<button onClick={toggleAddItemForm} className="toggle-add-item-form-btn">+ Add Item</button>)}
+              {profile?.role === 'ORGANIZER' && (
+                <div className="view-mode-toggle">
+                  <span>Edit Mode</span>
+                  <label className="switch">
+                    <input type="checkbox" checked={isEditMode} onChange={() => setIsEditMode(!isEditMode)} />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+              )}
             </div>
-            <OrderOfService items={orderOfServiceWithTimes} onOrderChange={handleOrderOfServiceChange} onDeleteItem={profile?.role === 'ORGANIZER' ? handleDeleteItem : undefined} onEditItem={profile?.role === 'ORGANIZER' ? handleOpenEditModal : undefined} assignedPeople={assignedPeople} onUpdateKey={handleUpdateMusicalKey} userRole={profile?.role} />
+             <OrderOfService 
+                items={orderOfServiceWithTimes} 
+                onOrderChange={handleOrderOfServiceChange} 
+                onDeleteItem={orderOfServiceRole === 'ORGANIZER' ? handleDeleteItem : undefined} 
+                onEditItem={orderOfServiceRole === 'ORGANIZER' ? handleOpenEditModal : undefined} 
+                assignedPeople={assignedPeople} 
+                onUpdateKey={orderOfServiceRole === 'ORGANIZER' ? handleUpdateMusicalKey : undefined} 
+                userRole={profile?.role === 'ORGANIZER' ? orderOfServiceRole : 'MUSICIAN'}
+              />
           </div>
           <div className="plan-right-column">
             <ServiceDetails details={eventDetails} />
-            <AssignedPeople people={assignedPeople} onAccept={handleAcceptInvitation} onDecline={handleDeclineInvitation} onRescind={profile?.role === 'ORGANIZER' ? handleRescindInvitation : undefined} onOpenEditAssignment={profile?.role === 'ORGANIZER' ? handleOpenEditAssignmentModal : undefined} />
+            <AssignedPeople 
+              people={assignedPeople} 
+              onAccept={handleAcceptInvitation} 
+              onDecline={handleDeclineInvitation} 
+              onRescind={profile?.role === 'ORGANIZER' ? handleRescindInvitation : undefined} 
+              onOpenEditAssignment={profile?.role === 'ORGANIZER' ? handleOpenEditAssignmentModal : undefined}
+            />
             {profile?.role === 'ORGANIZER' && (<button onClick={toggleInviteModal} className="invite-member-btn page-action-btn " style={{marginTop: '15px', width: '100%'}}>+ Invite/Assign Musician</button>)}
-            {profile?.role === 'ORGANIZER' && (<WeeklyChecklist tasks={currentChecklistTasks} checkedStatuses={checklistStatus} onTaskToggle={profile?.role === 'ORGANIZER' ? handleChecklistToggle : undefined} />)}
+            <WeeklyChecklist 
+              tasks={currentChecklistTasks} 
+              checkedStatuses={checklistStatus} 
+              onTaskToggle={profile?.role === 'ORGANIZER' ? handleChecklistToggle : undefined} 
+            />
           </div>
         </div>
       )}

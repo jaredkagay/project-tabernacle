@@ -1,12 +1,11 @@
 // src/components/PlanPage/WeeklyChecklist.js
-import React from 'react'; // Removed useState
+import React from 'react';
 import './WeeklyChecklist.css';
 
-// This component now receives tasks, their statuses, and a toggle handler from props
 const WeeklyChecklist = ({ tasks, checkedStatuses, onTaskToggle }) => {
 
   const handleCheckboxChange = (taskString) => {
-    if (onTaskToggle) { // Check if onTaskToggle is provided (for read-only view for musicians)
+    if (onTaskToggle) {
         onTaskToggle(taskString);
     }
   };
@@ -16,7 +15,6 @@ const WeeklyChecklist = ({ tasks, checkedStatuses, onTaskToggle }) => {
       <div className="weekly-checklist-card">
         <h3>Pre-Service Checklist</h3>
         <p>No default checklist tasks defined for this organization yet.</p>
-        {/* Organizers can set this in Settings */}
       </div>
     );
   }
@@ -25,21 +23,20 @@ const WeeklyChecklist = ({ tasks, checkedStatuses, onTaskToggle }) => {
     <div className="weekly-checklist-card">
       <h3>Pre-Service Checklist</h3>
       <ul className="checklist-list">
-        {tasks.map((taskString, index) => ( // Iterate over tasks from props
+        {tasks.map((taskString, index) => (
           <li key={taskString + '-' + index} className={`checklist-item ${checkedStatuses[taskString] ? 'completed' : ''}`}>
             <label>
               <input
                 type="checkbox"
-                checked={!!checkedStatuses[taskString]} // Use taskString as key
-                onChange={() => handleCheckboxChange(taskString)} // Pass taskString
-                disabled={!onTaskToggle} // Disable if no toggle function (read-only for musicians)
+                checked={!!checkedStatuses[taskString]}
+                onChange={() => handleCheckboxChange(taskString)}
+                disabled={!onTaskToggle}
               />
               <span className="task-text">{taskString}</span>
             </label>
           </li>
         ))}
       </ul>
-      {/* The note about session-only state is no longer needed as it's persisted per plan */}
     </div>
   );
 };
