@@ -11,7 +11,6 @@ const TASK_TYPES_DISPLAY = {
 
 const EditTaskForm = ({ taskToEdit, onUpdateTask, onCancel, isSubmitting, upcomingOrgEvents }) => {
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [hasResponses, setHasResponses] = useState(false);
 
@@ -29,7 +28,6 @@ const EditTaskForm = ({ taskToEdit, onUpdateTask, onCancel, isSubmitting, upcomi
   useEffect(() => {
     if (taskToEdit) {
       setTitle(taskToEdit.title || '');
-      setDescription(taskToEdit.description || '');
       setDueDate(taskToEdit.due_date || '');
       setHasResponses(taskToEdit.has_responses || false); // Assuming this prop is passed
 
@@ -96,7 +94,6 @@ const EditTaskForm = ({ taskToEdit, onUpdateTask, onCancel, isSubmitting, upcomi
 
     onUpdateTask({
       title: title.trim(),
-      description: description.trim() || null,
       due_date: dueDate || null,
       task_config: updatedTaskConfig,
     });
@@ -116,10 +113,6 @@ const EditTaskForm = ({ taskToEdit, onUpdateTask, onCancel, isSubmitting, upcomi
       <div className="form-group">
         <label htmlFor="edit-task-title">Task Title:</label>
         <input type="text" id="edit-task-title" value={title} onChange={(e) => setTitle(e.target.value)} required disabled={isSubmitting} />
-      </div>
-      <div className="form-group">
-        <label htmlFor="edit-task-description">Description (Optional):</label>
-        <textarea id="edit-task-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} disabled={isSubmitting} />
       </div>
 
       {taskToEdit.type === 'ACKNOWLEDGEMENT' && (
