@@ -24,6 +24,7 @@ const SongsPage = () => {
   const [selectedMusicianIdForOrgView, setSelectedMusicianIdForOrgView] = useState('');
   const [viewingMusicianSecondarySongs, setViewingMusicianSecondarySongs] = useState([]);
   const [isLoadingViewingMusicianSongs, setIsLoadingViewingMusicianSongs] = useState(false);
+  const [isSecondaryEditMode, setIsSecondaryEditMode] = useState(false); // New state for edit mode
 
   const fetchPageData = useCallback(async () => {
     if (!profile?.organization_id) {
@@ -165,7 +166,8 @@ const SongsPage = () => {
         {songsToRender.map(song => {
           let canEditOrDelete = false;
           if (profile.role === 'ORGANIZER') {
-            if (song.is_primary || isOrganizerViewingSpecificMusicianSecondary) canEditOrDelete = true;
+            if (song.is_primary) canEditOrDelete = true;
+            if (isOrganizerViewingSpecificMusicianSecondary && isSecondaryEditMode) canEditOrDelete = true;
           } else if (profile.role === 'MUSICIAN') {
             if (!song.is_primary && song.added_by_user_id === user.id) canEditOrDelete = true;
           }
@@ -227,7 +229,18 @@ const SongsPage = () => {
       )}
       {profile.role === 'ORGANIZER' && (
         <div className="songs-section organizer-view-secondary">
-          <h2>Musicians' Secondary Songs</h2>
+          <div className="secondary-songs-header">
+            <h2>View Musician's Secondary Songs</h2>
+            {selectedMusicianIdForOrgView && (
+              <div className="view-mode-toggle">
+                <span>Edit Mode</span>
+                <label className="switch">
+                  <input type="checkbox" checked={isSecondaryEditMode} onChange={() => setIsSecondaryEditMode(!isSecondaryEditMode)} />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+            )}
+          </div>
           <div className="form-group" style={{maxWidth: '400px', marginBottom: '20px'}}>
             <label htmlFor="select-musician-view">Select a Musician:</label>
             <select id="select-musician-view" value={selectedMusicianIdForOrgView} onChange={(e) => setSelectedMusicianIdForOrgView(e.target.value)}>

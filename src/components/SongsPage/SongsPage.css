@@ -15,7 +15,7 @@
   border-bottom: 1px solid #eee;
 }
 .songs-header h1 { margin: 0; font-size: 2em; color: #333; }
-.add-song-btn { /* Use styles similar to .create-new-task-btn or .create-new-plan-btn */
+.add-song-btn {
   padding: 10px 15px; font-size: 1em; font-weight: bold; color: white;
   background-color: #007bff; border: none; border-radius: 5px; cursor: pointer;
 }
@@ -26,46 +26,137 @@
 .songs-section h2 { font-size: 1.5em; color: #2c3e50; margin-bottom: 15px; }
 
 .songs-list { list-style-type: none; padding: 0; }
+
 .song-item-card {
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 6px;
-  padding: 15px;
+  padding: 12px 15px;
   margin-bottom: 10px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start; /* Align items to top if content wraps */
-  gap: 10px;
+  align-items: center;
+  gap: 15px;
 }
 .song-info { flex-grow: 1; }
-.song-info h3 { margin-top: 0; margin-bottom: 5px; color: #34495e; }
-.song-info p { margin: 2px 0; font-size: 0.9em; color: #555; }
+.song-info h3 { margin-top: 0; margin-bottom: 2px; color: #2980b9; font-size: 1.1em;}
+.song-info p { margin: 0; font-size: 0.9em; color: #555; }
 .song-artist-display { font-style: italic; }
-.song-key-display { font-weight: bold; }
 
-.song-links {
+.song-actions-wrapper {
   display: flex;
-  flex-direction: column; /* Stack links if needed */
-  gap: 5px;
-  margin: 0 10px;
-  font-size: 0.9em;
-  align-items: flex-start;
+  align-items: center;
+  gap: 12px; /* Increased gap for better spacing */
+  flex-shrink: 0;
 }
-.song-links a { color: #007bff; text-decoration: none; }
-.song-links a:hover { text-decoration: underline; }
 
-.song-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-.edit-btn-small, .delete-btn-small { /* Use similar styles to .item-action-btn */
-  padding: 4px 8px; font-size: 0.8em; border-radius: 4px; cursor: pointer; color: white; border: none;
+/* Styles copied from OrderOfService.css for consistency */
+.item-action-btn {
+  padding: 6px 10px;
+  font-size: 1em; /* Icons are sized with this */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
 }
-.edit-btn-small { background-color: #5bc0de; } /* Info blue */
-.edit-btn-small:hover { background-color: #31b0d5; }
-.delete-btn-small { background-color: #d9534f; } /* Soft red */
-.delete-btn-small:hover { background-color: #c9302c; }
+.item-action-btn.edit-btn { background-color: #555; }
+.item-action-btn.edit-btn:hover { background-color: #333; }
+.item-action-btn.delete-btn { background-color: #e74c3c; }
+.item-action-btn.delete-btn:hover { background-color: #c0392b; }
+.item-action-btn.link-btn { background-color: #5dade2; }
+.item-action-btn.link-btn:hover { background-color: #4a98c8; }
 
-/* Page-level error/status as used in other pages */
+.song-key-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 14px;
+  background-color: #5dade2;
+  color: white;
+  font-size: 0.85em;
+  font-weight: bold;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .page-status { text-align: center; padding: 20px; font-size: 1.1em; }
 .form-error.page-level-error { margin-bottom: 20px; text-align: center; }
 
-/* Ensure modal styles are available from PlanPage.css or a shared file */
+/* Styles for Organizer's secondary song view */
+.secondary-songs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.secondary-songs-header h2 {
+  margin-bottom: 0;
+}
+
+/* Copied from PlanPage.css */
+.view-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  color: #333;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: #2ecc71;
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px #2ecc71;
+}
+input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+.slider.round {
+  border-radius: 24px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
