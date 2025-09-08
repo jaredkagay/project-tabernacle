@@ -26,7 +26,7 @@
   font-size: 1em;
   font-weight: bold;
   color: white;
-  background-color: #007bff; /* Blue */
+  background-color: #007bff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -35,12 +35,6 @@
 .create-new-task-btn:hover {
   background-color: #0056b3;
 }
-
-/* Styles for forms and messages (can reuse from SettingsPage or AllPlansPage) */
-.form-error { /* ... */ }
-.form-success { /* ... */ }
-.page-status { /* ... */ }
-/* Modal styles (.modal-overlay, .modal-content, .modal-close-btn) should be reused or defined globally */
 
 .tasks-list {
   list-style-type: none;
@@ -54,6 +48,14 @@
   padding: 15px 20px;
   margin-bottom: 15px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.task-info {
+  flex-grow: 1;
 }
 
 .task-item-card h3 {
@@ -69,68 +71,60 @@
 }
 .task-type { font-style: italic; }
 
-.task-details-preview {
-  margin-top: 10px;
-  font-size: 0.85em;
-  background-color: #f9f9f9;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #eee;
-}
-.task-details-preview strong {
-    display: block;
-    margin-bottom: 4px;
-}
-.preview-text {
-    white-space: pre-wrap; /* Preserve whitespace and wrap */
-    max-height: 100px; /* Limit preview height */
-    overflow-y: auto;
-    color: #666;
-}
-
-
 .task-actions {
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px solid #f0f0f0;
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-.action-btn-placeholder { /* For future buttons */
-  padding: 6px 12px;
-  font-size: 0.9em;
-  border: 1px solid #ccc;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-  cursor: pointer;
-}
-/* Reuse .create-plan-form styles for .create-task-form if applicable */
-
-/* src/components/TasksPage/TasksPage.css */
-/* ... (existing styles) ... */
-
-.assign-task-btn { /* Example style */
-  background-color: #5bc0de; /* Info blue */
-  color: white;
-  margin-right: 5px; /* Space from other buttons */
-  /* Reuses .action-btn-placeholder or similar base if defined */
-  padding: 6px 12px;
-  font-size: 0.9em;
+.item-action-btn {
+  padding: 6px 10px;
+  font-size: 1.1em;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
 }
-.assign-task-btn:hover:not(:disabled) {
-  background-color: #31b0d5;
-}
-.assign-task-btn:disabled {
+.item-action-btn.edit-btn { background-color: #555; }
+.item-action-btn.edit-btn:hover { background-color: #333; }
+.item-action-btn.delete-btn { background-color: #e74c3c; }
+.item-action-btn.delete-btn:hover { background-color: #c0392b; }
+.item-action-btn.assign-btn { background-color: #5bc0de; }
+.item-action-btn.assign-btn:hover:not(:disabled) { background-color: #31b0d5; }
+.item-action-btn.lock-btn { background-color: #f0ad4e; }
+.item-action-btn.lock-btn:hover { background-color: #ec971f; }
+.item-action-btn.unlock-btn { background-color: #28a745; }
+.item-action-btn.unlock-btn:hover { background-color: #218838; }
+
+.item-action-btn:disabled {
     background-color: #ccc;
     cursor: not-allowed;
+    opacity: 0.65;
 }
 
+.view-results-btn {
+  padding: 6px 12px;
+  font-size: 0.9em;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  text-decoration: none;
+  background-color: #17a2b8;
+  transition: background-color 0.2s ease;
+}
+.view-results-btn:hover {
+  background-color: #138496;
+}
 
-.multi-select-musician-group { /* For checkbox list in AssignTaskForm */
+.multi-select-musician-group {
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid #ddd;
@@ -140,7 +134,7 @@
 }
 
 .multi-select-musician-group .checkbox-label {
-  display: block; /* Each musician on a new line */
+  display: block;
   margin-bottom: 8px;
   font-size: 0.95em;
 }
@@ -148,252 +142,15 @@
   margin-right: 8px;
 }
 
-/* src/components/TasksPage/TasksPage.css */
-/* ... (existing styles for .tasks-page-container, .tasks-header, .tasks-list, etc.) ... */
-
-/* Styles for forms within modals on TasksPage */
-.create-task-form,
-.assign-task-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px; /* Spacing between form groups */
-}
-
-.create-task-form h3,
-.assign-task-form h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  text-align: center;
-  color: #333;
-  font-size: 1.5em;
-}
-
-/* Reusing .form-group, .form-actions, .submit-btn, .cancel-btn from a shared form style
-   If you don't have these globally, define them here or in a shared CSS file.
-   Assuming they are similar to SettingsPage.css or AllPlansPage.css form styles.
-*/
-
-/* Example .form-group and .form-actions if not already globally available */
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-  color: #444;
-}
-
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group input[type="password"],
-.form-group input[type="date"],
-.form-group input[type="url"],
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-  font-size: 1em;
-}
-.form-group input:disabled,
-.form-group select:disabled,
-.form-group textarea:disabled {
-  background-color: #f8f9fa;
-  cursor: not-allowed;
-}
-
-.form-group textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-.checkbox-group { /* For instrument selection or musician selection */
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
-  padding: 10px 0;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  font-weight: normal;
-  font-size: 0.95em;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  margin-right: 8px;
-  transform: scale(1.1);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.submit-btn, 
-.cancel-btn,
-.add-task-btn /* From SettingsPage for consistency */ {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1em;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-}
-
-.submit-btn { background-color: #007bff; color: white; }
-.submit-btn:hover:not(:disabled) { background-color: #0056b3; }
-.submit-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
-
-.cancel-btn { background-color: #6c757d; color: white; }
-.cancel-btn:hover:not(:disabled) { background-color: #5a6268; }
-.cancel-btn:disabled { background-color: #aaa; }
-
-.add-task-btn { background-color: #28a745; color: white; } /* Green */
-.add-task-btn:hover:not(:disabled) { background-color: #218838; }
-
-.no-singers-message,
-.no-musicians-message { /* For AssignTaskForm */
-    font-size: 0.9em;
-    color: #777;
-    font-style: italic;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
-    text-align: center;
-}
-
-/* src/components/TasksPage/TasksPage.css */
-/* ... (all existing styles for organizer view, headers, lists, cards, forms, modals) ... */
-
-.musician-tasks-view {
-  margin-top: 20px;
-}
-
-.assigned-task-card {
-  /* Styles specific to how a musician sees an assigned task card, if different from organizer's view */
-}
-
-.task-completion-area {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
-}
-
-.task-completion-area h4 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.acknowledgement-text-box {
-  max-height: 200px; /* Or your preferred height */
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 15px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  white-space: pre-wrap; /* To respect newlines in the body_text */
-}
-.acknowledgement-text-box p {
-    margin-bottom: 0.5em; /* Spacing between paragraphs in acknowledgement */
-}
-.acknowledgement-text-box p:last-child {
-    margin-bottom: 0;
-}
-
-
-.complete-task-btn {
-  /* Can reuse .submit-btn styles or make specific */
-  background-color: #28a745; /* Green */
-  display: block; /* Make it full width or align as needed */
-  margin-top: 10px;
-}
-.complete-task-btn:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-/* In TasksPage.css or your shared form CSS file */
-.event-selection-group {
-  max-height: 200px; /* Or your preferred height */
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  padding: 10px;
-  border-radius: 4px;
-  background-color: #fdfdfd; /* Or match other checkbox groups */
-}
-
-.event-selection-group .checkbox-label {
-  display: block; /* Each event on a new line for clarity */
-  margin-bottom: 8px;
-}
-
-/* In TasksPage.css or your shared form CSS file */
-/* ... (existing styles) ... */
-
-.day-selection-group { /* Similar to .checkbox-group */
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
-  padding: 10px 0;
-}
-
-/* For side-by-side time inputs */
-.form-row {
-  display: flex;
-  gap: 20px; /* Space between form groups in the row */
-  align-items: flex-end; /* Align labels and inputs nicely if labels are different heights */
-}
-
-.form-row .form-group {
-  flex: 1; /* Allow form groups to share space */
-  margin-bottom: 0; /* Remove bottom margin if they are already spaced by .form-row gap */
-}
-
-/* src/components/TasksPage/TasksPage.css */
-/* ... (existing styles) ... */
-
-.edit-task-btn { /* Example style */
-  background-color: #f0ad4e; /* Warning/Edit Orange */
-  color: white;
-  /* Reuses .action-btn-placeholder or similar base if defined */
-  padding: 6px 12px;
-  font-size: 0.9em;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.edit-task-btn:hover:not(:disabled) {
-  background-color: #ec971f;
-}
-.edit-task-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-/* src/components/TasksPage/TasksPage.css */
-/* ... (existing styles) ... */
-
 .task-item-card.task-inactive {
-  background-color: #f8f9fa; /* Lighter, subdued background */
+  background-color: #f8f9fa;
   opacity: 0.7;
 }
 
 .task-item-card h3 .inactive-chip {
   font-size: 0.7em;
   font-weight: normal;
-  color: #6c757d; /* Gray */
+  color: #6c757d;
   background-color: #e9ecef;
   padding: 2px 6px;
   border-radius: 8px;
@@ -401,186 +158,25 @@
   vertical-align: middle;
 }
 
-.deactivate-btn { /* Style like a warning or secondary action */
-  background-color: #ffc107; /* Yellow/Orange */
-  color: #212529;
-  /* other .action-btn-placeholder styles if used */
-  padding: 6px 12px;
-  font-size: 0.9em;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.deactivate-btn:hover:not(:disabled) {
-  background-color: #e0a800;
-}
-
-.activate-btn { /* Style like a success or primary action */
-  background-color: #28a745; /* Green */
-  color: white;
-  /* other .action-btn-placeholder styles if used */
-  padding: 6px 12px;
-  font-size: 0.9em;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.activate-btn:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-.deactivate-btn:disabled,
-.activate-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-    opacity: 0.65;
-}
-
-/* src/components/TasksPage/TasksPage.css */
-/* ... (existing styles, including activate/deactivate buttons) ... */
-
-.delete-task-btn {
-  background-color: #dc3545; /* Red */
-  color: white;
-  /* other .action-btn-placeholder styles if used */
-  padding: 6px 12px;
-  font-size: 0.9em;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.delete-task-btn:hover:not(:disabled) {
-  background-color: #c82333;
-}
-.delete-task-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-    opacity: 0.65;
-}
-
-/* src/components/TasksPage/TasksPage.css */
-/* ... (existing styles for .tasks-page-container, .tasks-header, .tasks-list, .task-item-card etc.) ... */
-
-.task-item-card.task-inactive {
-  background-color: #f8f9fa; /* Lighter, subdued background */
-  border-left: 5px solid #adb5bd; /* Example: indicate with side border */
-  opacity: 0.8; /* Slightly faded */
-}
-
-.task-item-card h3 .inactive-chip {
-  font-size: 0.7em;
-  font-weight: normal;
-  color: #6c757d; /* Gray */
-  background-color: #e9ecef;
-  padding: 2px 6px;
-  border-radius: 8px;
-  margin-left: 8px;
-  vertical-align: middle;
-  text-transform: uppercase;
-}
-
-/* Ensure these button styles (or similar) are present */
-.action-btn-placeholder { /* Base class if you use it for all task action buttons */
-  padding: 6px 10px;
-  font-size: 0.85em;
-  border: 1px solid #ccc;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-right: 5px; /* If they are not using flex gap */
-  color: #333;
-}
-.action-btn-placeholder:hover:not(:disabled) {
-  border-color: #bbb;
-  background-color: #e7e7e7;
-}
-.action-btn-placeholder:disabled {
-    background-color: #e9ecef;
-    border-color: #dee2e6;
-    color: #adb5bd;
-    cursor: not-allowed;
-}
-
-
-.assign-task-btn { background-color: #5bc0de; color: white; border-color: #46b8da;}
-.assign-task-btn:hover:not(:disabled) { background-color: #31b0d5; }
-
-.edit-task-btn { background-color: #f0ad4e; color: white; border-color: #eea236;}
-.edit-task-btn:hover:not(:disabled) { background-color: #ec971f; }
-
-.view-results-btn { background-color: #17a2b8; color: white; border-color: #117a8b;}
-.view-results-btn:hover:not(:disabled) { background-color: #138496; }
-
-.deactivate-btn { background-color: #ffc107; color: #212529; border-color: #ffb207;}
-.deactivate-btn:hover:not(:disabled) { background-color: #e0a800; }
-
-.activate-btn { background-color: #28a745; color: white; border-color: #218838;}
-.activate-btn:hover:not(:disabled) { background-color: #1e7e34; }
-
-.delete-task-btn { background-color: #dc3545; color: white; border-color: #d43f3a;}
-.delete-task-btn:hover:not(:disabled) { background-color: #c82333; }
-
-/* In TasksPage.css */
-.task-item-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* ... other card styles ... */
-}
-
-.task-info-musician {
-  flex-grow: 1;
-}
-
-.task-status-and-action {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.status-badge-task {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8em;
-  font-weight: bold;
-  color: white;
-  min-width: 70px; /* For consistent width */
-  text-align: center;
-  text-transform: capitalize;
-}
-.status-badge-task.status-pending { background-color: #f39c12; /* Orange */ }
-.status-badge-task.status-completed { background-color: #2ecc71; /* Green */ }
-
-.task-action-btn { /* For the Link styled as a button */
-  padding: 6px 12px;
-  font-size: 0.9em;
-  border: 1px solid #007bff;
-  background-color: #007bff;
-  color: white;
-  border-radius: 4px;
-  text-decoration: none;
-  transition: background-color 0.2s ease;
-}
-.task-action-btn:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
-}
-.task-action-btn.disabled {
-  background-color: #6c757d;
-  border-color: #6c757d;
-  color: #ccc;
-  cursor: not-allowed;
-  pointer-events: none; /* Clicks won't go through Link if styled as disabled */
-}
-
-.task-inactive-display .task-info-musician h3,
-.task-inactive-display .task-info-musician p,
-.task-closed-display .task-info-musician h3,
-.task-closed-display .task-info-musician p {
-  color: #999; /* Gray out text for inactive/closed tasks */
-}
-.task-inactive-display .task-status-chip { /* Ensure this is visible */
-    color: #6c757d;
-    background-color: #e9ecef;
+/* Musician View styles */
+.musician-tasks-view { margin-top: 20px; }
+.task-info-musician { flex-grow: 1; }
+.task-status-and-action { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.status-badge-task { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: white; min-width: 70px; text-align: center; text-transform: capitalize; }
+.status-badge-task.status-pending { background-color: #f39c12; }
+.status-badge-task.status-completed { background-color: #2ecc71; }
+.task-action-btn { padding: 6px 12px; font-size: 0.9em; border: 1px solid #007bff; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; transition: background-color 0.2s ease; }
+.task-action-btn:hover { background-color: #0056b3; border-color: #0056b3; }
+.task-action-btn.disabled { background-color: #6c757d; border-color: #6c757d; color: #ccc; cursor: not-allowed; pointer-events: none; }
+.task-closed-display { opacity: 0.7; }
+.task-closed-display .task-info-musician h3, .task-closed-display .task-info-musician p { color: #999; }
+.form-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 0.9em;
 }

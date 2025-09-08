@@ -3,24 +3,28 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
-import './TaskDetailPage.css'; // Ensure this CSS file is created and styled
+import './TaskDetailPage.css';
 import { DAYS_OF_WEEK } from '../../constants';
+
+// Helper function to format 24-hour time string to 12-hour AM/PM
+const formatTime = (timeStr) => {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':');
+    const date = new Date(1970, 0, 1, hours, minutes);
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+};
 
 // Helper function to generate time slots
 const generateTimeSlots = (startTimeStr, endTimeStr, intervalMinutes) => {
   const slots = [];
-  let currentTime = new Date(`1970-01-01T${startTimeStr}:00`); // Use a dummy date for time manipulation
+  let currentTime = new Date(`1970-01-01T${startTimeStr}:00`);
   const endTime = new Date(`1970-01-01T${endTimeStr}:00`);
-
   if (isNaN(currentTime.getTime()) || isNaN(endTime.getTime()) || currentTime >= endTime) {
     console.error("Invalid start/end time for generating slots", startTimeStr, endTimeStr);
     return [];
   }
-
   while (currentTime < endTime) {
-    slots.push(
-      currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-    );
+    slots.push(currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
     currentTime.setMinutes(currentTime.getMinutes() + intervalMinutes);
   }
   return slots;

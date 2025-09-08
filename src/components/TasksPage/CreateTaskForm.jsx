@@ -1,6 +1,6 @@
 // src/components/TasksPage/CreateTaskForm.jsx
 import React, { useState, useEffect } from 'react';
-import '../AllPlansPage/CreatePlanForm.css'; // Example: reusing some styles (ensure classes like form-group, checkbox-group, etc. are styled)
+import '../AllPlansPage/CreatePlanForm.css';
 import { DAYS_OF_WEEK } from '../../constants';
 
 const TASK_TYPES = [
@@ -9,28 +9,21 @@ const TASK_TYPES = [
   { value: 'REHEARSAL_POLL', label: 'Rehearsal Availability Poll' },
 ];
 
-// CreateTaskForm now receives upcomingOrgEvents
 const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvents }) => {
   const [title, setTitle] = useState('');
   const [selectedType, setSelectedType] = useState(TASK_TYPES[0].value);
-  const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
 
   // Type-specific fields state
   const [acknowledgementBodyText, setAcknowledgementBodyText] = useState('');
-  
-  // Event Availability state
   const [eventAvailabilityPrompt, setEventAvailabilityPrompt] = useState('Please indicate your availability for the following events:');
   const [selectedEventIdsForTask, setSelectedEventIdsForTask] = useState([]);
-
-  // Rehearsal Poll State
   const [rehearsalPollPrompt, setRehearsalPollPrompt] = useState('Please mark all time slots you are available for rehearsal:');
   const [selectedDaysForPoll, setSelectedDaysForPoll] = useState([]);
   const [pollTimeStart, setPollTimeStart] = useState('18:00');
   const [pollTimeEnd, setPollTimeEnd] = useState('21:00');
   const [pollIntervalMinutes, setPollIntervalMinutes] = useState(30);
 
-  // Reset type-specific fields when selectedType changes
   useEffect(() => {
     setAcknowledgementBodyText('');
     setEventAvailabilityPrompt('Please indicate your availability for the following events:');
@@ -43,19 +36,11 @@ const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvent
   }, [selectedType]);
 
   const handleEventSelectionChange = (eventId) => {
-    setSelectedEventIdsForTask(prevSelectedIds =>
-      prevSelectedIds.includes(eventId)
-        ? prevSelectedIds.filter(id => id !== eventId)
-        : [...prevSelectedIds, eventId]
-    );
+    setSelectedEventIdsForTask(prev => prev.includes(eventId) ? prev.filter(id => id !== eventId) : [...prev, eventId]);
   };
 
   const handleDaySelectionChange = (day) => {
-    setSelectedDaysForPoll(prevSelectedDays =>
-      prevSelectedDays.includes(day)
-        ? prevSelectedDays.filter(d => d !== day)
-        : [...prevSelectedDays, day]
-    );
+    setSelectedDaysForPoll(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
   const handleSubmit = (e) => {
@@ -77,8 +62,7 @@ const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvent
       };
     } else if (selectedType === 'REHEARSAL_POLL') {
       if (selectedDaysForPoll.length === 0) { alert('Please select at least one day for the rehearsal poll.'); return; }
-      if (!pollTimeStart || !pollTimeEnd) { alert('Please specify a start and end time for the poll.'); return; }
-      if (pollTimeStart >= pollTimeEnd) { alert('Poll start time must be before the end time.'); return; }
+      if (!pollTimeStart || !pollTimeEnd || pollTimeStart >= pollTimeEnd) { alert('Poll start time must be before the end time.'); return; }
       if (![15, 30, 60].includes(pollIntervalMinutes)) { alert('Please select a valid interval (15, 30, or 60 minutes).'); return; }
       if (!rehearsalPollPrompt.trim()) { alert('Please provide a prompt for the rehearsal poll.'); return; }
       
@@ -94,7 +78,7 @@ const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvent
     onCreateTask({
       title: title.trim(),
       type: selectedType,
-      description: description.trim() || null,
+      description: null, // Keep this as null
       due_date: dueDate || null,
       task_config: taskConfig,
     });
@@ -105,7 +89,7 @@ const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvent
       <h3>Create New Task</h3>
       <div className="form-group">
         <label htmlFor="task-title-create">Task Title:</label>
-        <input type="text" id="task-title-create" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Read Welcome Packet, Q3 Availability" required disabled={isSubmitting} />
+        <input type="text" id="task-title-create" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Q3 Availability, Read Welcome Packet" required disabled={isSubmitting} />
       </div>
 
       <div className="form-group">
@@ -117,14 +101,9 @@ const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvent
         </select>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="task-description-create">Description (Optional):</label>
-        <textarea id="task-description-create" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Briefly describe the task..." disabled={isSubmitting} />
-      </div>
-
       {selectedType === 'ACKNOWLEDGEMENT' && (
         <div className="form-group">
-          <label htmlFor="acknowledgement-body-create">Expectations / Text to Acknowledge:</label>
+          <label htmlFor="acknowledgement-body-create">Text to Acknowledge:</label>
           <textarea id="acknowledgement-body-create" value={acknowledgementBodyText} onChange={(e) => setAcknowledgementBodyText(e.target.value)} rows={6} placeholder="Enter the full text..." required disabled={isSubmitting} />
         </div>
       )}
@@ -136,21 +115,16 @@ const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvent
             <input type="text" id="event-availability-prompt-create" value={eventAvailabilityPrompt} onChange={(e) => setEventAvailabilityPrompt(e.target.value)} required disabled={isSubmitting} />
           </div>
           <div className="form-group">
-            <label>Select Events for Availability Request (Upcoming Only):</label>
+            <label>Select Events for Availability Request:</label>
             <div className="checkbox-group event-selection-group">
-              {(!upcomingOrgEvents || upcomingOrgEvents.length === 0) && <p className="no-items-message">No upcoming events found in your organization to select.</p>}
-              {upcomingOrgEvents && upcomingOrgEvents.map(event => (
-                <label key={event.id} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    value={event.id}
-                    checked={selectedEventIdsForTask.includes(event.id)}
-                    onChange={() => handleEventSelectionChange(event.id)}
-                    disabled={isSubmitting}
-                  />
-                  {event.title} ({new Date(event.date + 'T00:00:00').toLocaleDateString()})
-                </label>
-              ))}
+              {(!upcomingOrgEvents || upcomingOrgEvents.length === 0) ? <p>No upcoming events found.</p> :
+                upcomingOrgEvents.map(event => (
+                  <label key={event.id} className="checkbox-label">
+                    <input type="checkbox" value={event.id} checked={selectedEventIdsForTask.includes(event.id)} onChange={() => handleEventSelectionChange(event.id)} disabled={isSubmitting}/>
+                    {event.title} ({new Date(event.date + 'T00:00:00').toLocaleDateString()})
+                  </label>
+                ))
+              }
             </div>
           </div>
         </>
@@ -158,39 +132,10 @@ const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvent
 
       {selectedType === 'REHEARSAL_POLL' && (
         <>
-          <div className="form-group">
-            <label htmlFor="rehearsal-poll-prompt-create">Prompt for Musicians:</label>
-            <input type="text" id="rehearsal-poll-prompt-create" value={rehearsalPollPrompt} onChange={(e) => setRehearsalPollPrompt(e.target.value)} required disabled={isSubmitting} />
-          </div>
-          <div className="form-group">
-            <label>Select Days for Poll:</label>
-            <div className="checkbox-group day-selection-group">
-              {DAYS_OF_WEEK.map(day => (
-                <label key={day} className="checkbox-label">
-                  <input type="checkbox" value={day} checked={selectedDaysForPoll.includes(day)} onChange={() => handleDaySelectionChange(day)} disabled={isSubmitting} />
-                  {day}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="poll-time-start-create">Time Range Start:</label>
-              <input type="time" id="poll-time-start-create" value={pollTimeStart} onChange={(e) => setPollTimeStart(e.target.value)} required disabled={isSubmitting} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="poll-time-end-create">Time Range End:</label>
-              <input type="time" id="poll-time-end-create" value={pollTimeEnd} onChange={(e) => setPollTimeEnd(e.target.value)} required disabled={isSubmitting} />
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor="poll-interval-create">Time Slot Interval (minutes):</label>
-            <select id="poll-interval-create" value={pollIntervalMinutes} onChange={(e) => setPollIntervalMinutes(parseInt(e.target.value, 10))} disabled={isSubmitting}>
-              <option value={15}>15 minutes</option>
-              <option value={30}>30 minutes</option>
-              <option value={60}>60 minutes</option>
-            </select>
-          </div>
+          <div className="form-group"><label htmlFor="rehearsal-poll-prompt-create">Prompt for Musicians:</label><input type="text" id="rehearsal-poll-prompt-create" value={rehearsalPollPrompt} onChange={(e) => setRehearsalPollPrompt(e.target.value)} required disabled={isSubmitting} /></div>
+          <div className="form-group"><label>Select Days for Poll:</label><div className="checkbox-group day-selection-group">{DAYS_OF_WEEK.map(day => (<label key={day} className="checkbox-label"><input type="checkbox" value={day} checked={selectedDaysForPoll.includes(day)} onChange={() => handleDaySelectionChange(day)} disabled={isSubmitting} />{day}</label>))}</div></div>
+          <div className="form-row"><div className="form-group"><label htmlFor="poll-time-start-create">Time Range Start:</label><input type="time" id="poll-time-start-create" value={pollTimeStart} onChange={(e) => setPollTimeStart(e.target.value)} required disabled={isSubmitting} /></div><div className="form-group"><label htmlFor="poll-time-end-create">Time Range End:</label><input type="time" id="poll-time-end-create" value={pollTimeEnd} onChange={(e) => setPollTimeEnd(e.target.value)} required disabled={isSubmitting} /></div></div>
+          <div className="form-group"><label htmlFor="poll-interval-create">Time Slot Interval:</label><select id="poll-interval-create" value={pollIntervalMinutes} onChange={(e) => setPollIntervalMinutes(parseInt(e.target.value, 10))} disabled={isSubmitting}><option value={15}>15 minutes</option><option value={30}>30 minutes</option><option value={60}>60 minutes</option></select></div>
         </>
       )}
       

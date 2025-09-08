@@ -6,6 +6,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import './TaskResultsPage.css'; // We'll create this CSS file
 import { DAYS_OF_WEEK } from '../../constants';
 
+// Helper function to format 24-hour time string to 12-hour AM/PM
+const formatTime = (timeStr) => {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':');
+    const date = new Date(1970, 0, 1, hours, minutes);
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+};
+
 const generateTimeSlots = (startTimeStr, endTimeStr, intervalMinutes) => {
   const slots = [];
   if (!startTimeStr || !endTimeStr || !intervalMinutes) return slots;
@@ -45,7 +53,7 @@ const TaskResultsPage = () => {
       // 1. Fetch the task details
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
-        .select('id, title, type, description, task_config, organization_id')
+        .select('id, title, type, task_config, organization_id')
         .eq('id', taskId)
         .eq('organization_id', profile.organization_id) // Ensure organizer owns this task
         .single();
@@ -70,8 +78,8 @@ const TaskResultsPage = () => {
           )
         `)
         .eq('task_id', taskId)
-        // Temporarily remove or simplify ordering to test the join
-        .order('assigned_at', { ascending: true }); // Order by a column on task_assignments itself
+        // FIXED: Changed 'created_at' to 'assigned_at' which exists on the table
+        .order('assigned_at', { ascending: true }); 
 
       if (assignmentsError) throw new Error(`Assignments fetch error: ${assignmentsError.message}`);
       setAssignments(assignmentsData || []);
@@ -84,7 +92,6 @@ const TaskResultsPage = () => {
           .in('id', taskData.task_config.event_ids);
         if (eventsFetchError) {
             console.error("Error fetching event details for results:", eventsFetchError);
-            // Non-critical, proceed with what we have
         }
         setEventDetailsForTask(eventsData || []);
       }
@@ -95,10 +102,10 @@ const TaskResultsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [taskId, profile, user]); // user for general auth context
+  }, [taskId, profile]);
 
   useEffect(() => {
-    if (!authIsLoading && user && profile) { // Ensure auth is ready
+    if (!authIsLoading && user && profile) {
         fetchTaskResults();
     } else if (!authIsLoading && !user) {
         setError("Please log in to view task results.");
@@ -109,8 +116,6 @@ const TaskResultsPage = () => {
 
   // --- Memoized calculation for Rehearsal Poll aggregated results ---
   const rehearsalPollAggregatedResults = useMemo(() => {
-    // ... (Copy the full rehearsalPollAggregatedResults logic from ViewTaskResultsModal.jsx here)
-    // It uses 'task' and 'assignments' state variables from this component.
     if (task?.type !== 'REHEARSAL_POLL' || !task.task_config || !assignments) {
       return { timeLabels: [], days: [], aggregatedSlots: {}, maxAvailability: 0, totalParticipants: 0 };
     }
@@ -152,7 +157,7 @@ const TaskResultsPage = () => {
         eventId: eventId,
         eventTitle: eventInfo?.title || `Event ID: ${eventId.substring(0,8)}...`,
         eventDate: eventInfo?.date ? new Date(eventInfo.date + 'T00:00:00').toLocaleDateString() : 'N/A',
-        eventTime: eventInfo?.time || '',
+        eventTime: eventInfo?.time ? formatTime(eventInfo.time) : '',
         available: [], unavailable: [], maybe: [], noResponse: []
       };
     });
@@ -172,7 +177,6 @@ const TaskResultsPage = () => {
       }
     });
     
-    // Identify those who are PENDING (haven't responded)
      assignments.forEach(assignment => {
         if (assignment.status === 'PENDING') {
              const assigneeName = `${assignment.assignee?.first_name || 'User'} ${assignment.assignee?.last_name || ''}`.trim();
@@ -187,17 +191,13 @@ const TaskResultsPage = () => {
     return eventIdsInTask.map(eventId => resultsByEvent[eventId]).filter(Boolean);
   }, [task, assignments, eventDetailsForTask]);
 
-  // Helper to find event details by ID for EVENT_AVAILABILITY display
   const getEventInfo = (eventId) => {
     if (!eventDetailsForTask || eventDetailsForTask.length === 0) return { title: `Event ID: ${eventId.substring(0,8)}...`, date: '', time: '' };
     const event = eventDetailsForTask.find(e => e.id === eventId);
-    return event ? { title: event.title || 'Untitled Event', date: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A', time: event.time || '' } : { title: `Event ID: ${eventId.substring(0,8)}... (Details Missing)`, date: '', time: '' };
+    return event ? { title: event.title || 'Untitled Event', date: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A', time: event.time ? formatTime(event.time) : '' } : { title: `Event ID: ${eventId.substring(0,8)}... (Details Missing)`, date: '', time: '' };
   };
   
-  // Helper to display response_data (can be expanded from ViewTaskResultsModal)
   const renderIndividualResponseData = (responseData, taskType) => {
-    // ... (Copy the renderResponseData logic from ViewTaskResultsModal.jsx here) ...
-    // This will handle ACKNOWLEDGEMENT, EVENT_AVAILABILITY (using getEventInfo), and raw JSON for others.
     if (!responseData) return <span className="no-response">No response.</span>;
     if (taskType === 'ACKNOWLEDGEMENT') { return responseData.acknowledged ? `Acknowledged: ${new Date(responseData.acknowledged_at).toLocaleString()}` : "Not Acknowledged"; }
     if (taskType === 'EVENT_AVAILABILITY') {
@@ -206,7 +206,7 @@ const TaskResultsPage = () => {
         return (<ul className="availability-response-list">{orderedEventIds.map(eventId => { const availability = responseData.availabilities[eventId]; const eventInfo = getEventInfo(eventId); return (<li key={eventId}><strong>{eventInfo.title}</strong> ({eventInfo.date} {eventInfo.time}): <span className={`response-value availability-${availability?.toLowerCase()}`}>{availability || 'N/A'}</span></li>);})}</ul>);
       } else { return <span className="no-response">No availability data.</span>; }
     }
-    if (taskType === 'REHEARSAL_POLL') { if (responseData.selected_slots && responseData.selected_slots.length > 0) { return (<ul className="raw-slot-list">{responseData.selected_slots.map((slot, index) => (<li key={index}>{slot.day} at {slot.time}</li>))}</ul>); } else { return <span className="no-response">No slots selected.</span>; }}
+    if (taskType === 'REHEARSAL_POLL') { if (responseData.selected_slots && responseData.selected_slots.length > 0) { return (<ul className="raw-slot-list">{responseData.selected_slots.map((slot, index) => (<li key={index}>{slot.day} at {formatTime(slot.time)}</li>))}</ul>); } else { return <span className="no-response">No slots selected.</span>; }}
     return <pre className="response-data-raw">{JSON.stringify(responseData, null, 2)}</pre>;
   };
 
@@ -216,18 +216,16 @@ const TaskResultsPage = () => {
   if (!task) return <p className="page-status">Task not found or not accessible.</p>;
 
   return (
-    <div className="task-results-page-container task-detail-page-container"> {/* Reuse some styles */}
+    <div className="task-results-page-container task-detail-page-container">
       <Link to="/tasks" className="back-to-tasks-btn" style={{marginBottom: '20px', display: 'inline-block'}}>&larr; Back to Tasks List</Link>
       
       <div className="task-header-details">
         <h1>Results for: {task.title}</h1>
         <p className="task-page-type">Type: {task.type.replace('_', ' ')}</p>
-        {task.description && <p className="task-page-description"><strong>Description:</strong> {task.description}</p>}
       </div>
 
-      {/* --- Display Aggregated Event Availability Results --- */}
       {task.type === 'EVENT_AVAILABILITY' && (
-        <div className="aggregated-event-availability task-completion-area"> {/* Reuse class for section styling */}
+        <div className="aggregated-event-availability task-completion-area">
           <h3>Event Availability Summary</h3>
           {aggregatedEventAvailability.length === 0 && !loading && <p>No specific events found in this task's configuration or no responses yet.</p>}
           {aggregatedEventAvailability.map(eventResult => (
@@ -254,9 +252,8 @@ const TaskResultsPage = () => {
         </div>
       )}
 
-      {/* Aggregated Rehearsal Poll View */}
       {task.type === 'REHEARSAL_POLL' && rehearsalPollAggregatedResults.timeLabels.length > 0 && (
-        <div className="rehearsal-poll-results-grid-container task-completion-area"> {/* Reuse task-completion-area for sectioning */}
+        <div className="rehearsal-poll-results-grid-container task-completion-area">
           <h3>Aggregated Rehearsal Availability</h3>
           <p>{rehearsalPollAggregatedResults.totalParticipants} participant(s) responded.</p>
           <table className="rehearsal-poll-grid results-grid">
@@ -264,20 +261,17 @@ const TaskResultsPage = () => {
             <tbody>
               {rehearsalPollAggregatedResults.timeLabels.map(time => (
                 <tr key={time}>
-                  <td>{time}</td>
+                  <td>{formatTime(time)}</td>
                   {rehearsalPollAggregatedResults.days.map(day => {
                     const slotId = `${day}-${time}`;
                     const slotData = rehearsalPollAggregatedResults.aggregatedSlots[slotId];
                     const count = slotData ? slotData.count : 0;
                     let cellStyle = {};
                     if (rehearsalPollAggregatedResults.maxAvailability > 0 && count > 0) {
-                      const opacity = Math.max(0.2, count / rehearsalPollAggregatedResults.maxAvailability); // Ensure some visibility
+                      const opacity = Math.max(0.2, count / rehearsalPollAggregatedResults.maxAvailability);
                       cellStyle = { backgroundColor: `rgba(46, 204, 113, ${opacity})` };
                     }
-                    return (<td key={slotId} style={cellStyle} className={`poll-result-slot ${count > 0 ? 'has-availability' : ''}`}
-                                title={slotData ? `${count} available: ${slotData.names.join(', ')}` : '0 available'}>
-                              {count > 0 ? count : ''}
-                            </td>);
+                    return (<td key={slotId} style={cellStyle} className={`poll-result-slot ${count > 0 ? 'has-availability' : ''}`} title={slotData ? `${count} available: ${slotData.names.join(', ')}` : '0 available'}>{count > 0 ? count : ''}</td>);
                   })}
                 </tr>
               ))}
@@ -286,7 +280,6 @@ const TaskResultsPage = () => {
         </div>
       )}
 
-      {/* Table of Individual Assignments & Responses */}
       <div className="individual-responses-section task-completion-area">
         <h3>Individual Responses & Statuses</h3>
         {(!assignments || assignments.length === 0) && !loading && <p>No assignments or responses for this task yet.</p>}
