@@ -78,7 +78,6 @@ const CreateTaskForm = ({ onCreateTask, onCancel, isSubmitting, upcomingOrgEvent
     onCreateTask({
       title: title.trim(),
       type: selectedType,
-      description: null, // Keep this as null
       due_date: dueDate || null,
       task_config: taskConfig,
     });

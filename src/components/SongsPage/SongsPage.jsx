@@ -24,7 +24,7 @@ const SongsPage = () => {
   const [selectedMusicianIdForOrgView, setSelectedMusicianIdForOrgView] = useState('');
   const [viewingMusicianSecondarySongs, setViewingMusicianSecondarySongs] = useState([]);
   const [isLoadingViewingMusicianSongs, setIsLoadingViewingMusicianSongs] = useState(false);
-  const [isSecondaryEditMode, setIsSecondaryEditMode] = useState(false); // New state for edit mode
+  const [isSecondaryEditMode, setIsSecondaryEditMode] = useState(false);
 
   const fetchPageData = useCallback(async () => {
     if (!profile?.organization_id) {
@@ -128,14 +128,24 @@ const SongsPage = () => {
     }
   };
 
-  const handleDeleteSong = async (songId, songTitle) => {
+  const handleDeleteSong = async (songId, songTitle, isPrimary) => {
     if (!window.confirm(`Are you sure you want to delete "${songTitle}"? This cannot be undone.`)) return;
     setIsSubmittingSong(true); setError('');
     try {
       const { error } = await supabase.from('songs').delete().eq('id', songId);
       if (error) throw error;
+      
       alert(`Song "${songTitle}" deleted.`);
-      fetchPageData();
+      
+      if (isPrimary) {
+        setPrimarySongs(prev => prev.filter(s => s.id !== songId));
+      } else {
+        if (profile.role === 'MUSICIAN') {
+          setMySecondarySongs(prev => prev.filter(s => s.id !== songId));
+        } else if (profile.role === 'ORGANIZER') {
+          setViewingMusicianSecondarySongs(prev => prev.filter(s => s.id !== songId));
+        }
+      }
     } catch (err) {
       setError(err.message || "Failed to delete song.");
     } finally {
@@ -186,7 +196,7 @@ const SongsPage = () => {
                 {canEditOrDelete && (
                   <>
                     <button onClick={() => openSongModal(editMode, song)} className="item-action-btn edit-btn" title="Edit Song" disabled={isSubmittingSong}><FaPencilAlt /></button>
-                    <button onClick={() => handleDeleteSong(song.id, song.title)} className="item-action-btn delete-btn" title="Delete Song" disabled={isSubmittingSong}><FaTrashAlt /></button>
+                    <button onClick={() => handleDeleteSong(song.id, song.title, song.is_primary)} className="item-action-btn delete-btn" title="Delete Song" disabled={isSubmittingSong}><FaTrashAlt /></button>
                   </>
                 )}
               </div>
@@ -218,7 +228,7 @@ const SongsPage = () => {
       </div>
       {error && <p className="form-error page-level-error">{error}</p>}
       <div className="songs-section">
-        <h2>Primary Organization Songs</h2>
+        <h2>Primary Songs</h2>
         {renderSongList(primarySongs, "Primary Organization Songs")}
       </div>
       {profile.role === 'MUSICIAN' && (
@@ -241,8 +251,7 @@ const SongsPage = () => {
               </div>
             )}
           </div>
-          <div className="form-group" style={{maxWidth: '400px', marginBottom: '20px'}}>
-            <label htmlFor="select-musician-view">Select a Musician:</label>
+          <div className="musician-select-container">
             <select id="select-musician-view" value={selectedMusicianIdForOrgView} onChange={(e) => setSelectedMusicianIdForOrgView(e.target.value)}>
               <option value="">-- Select Musician --</option>
               {organizationMusicians.map(musician => (<option key={musician.id} value={musician.id}>{musician.first_name} {musician.last_name}</option>))}

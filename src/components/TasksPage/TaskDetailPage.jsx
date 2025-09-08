@@ -6,28 +6,92 @@ import { useAuth } from '../../contexts/AuthContext';
 import './TaskDetailPage.css';
 import { DAYS_OF_WEEK } from '../../constants';
 
-// Helper function to format 24-hour time string to 12-hour AM/PM
 const formatTime = (timeStr) => {
     if (!timeStr) return '';
     const [hours, minutes] = timeStr.split(':');
-    const date = new Date(1970, 0, 1, hours, minutes);
-    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    const hour = parseInt(hours, 10);
+    const minute = parseInt(minutes, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
+    const formattedMinute = minute < 10 ? '0' + minute : minute;
+    return `${formattedHour}:${formattedMinute} ${ampm}`;
 };
 
-// Helper function to generate time slots
 const generateTimeSlots = (startTimeStr, endTimeStr, intervalMinutes) => {
-  const slots = [];
-  let currentTime = new Date(`1970-01-01T${startTimeStr}:00`);
-  const endTime = new Date(`1970-01-01T${endTimeStr}:00`);
-  if (isNaN(currentTime.getTime()) || isNaN(endTime.getTime()) || currentTime >= endTime) {
-    console.error("Invalid start/end time for generating slots", startTimeStr, endTimeStr);
-    return [];
-  }
-  while (currentTime < endTime) {
-    slots.push(currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
-    currentTime.setMinutes(currentTime.getMinutes() + intervalMinutes);
-  }
-  return slots;
+    const slots = [];
+    if (!startTimeStr || !endTimeStr || !intervalMinutes) return slots;
+
+    let [startHours, startMinutes] = startTimeStr.split(':').map(Number);
+    const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
+
+    let currentMinutes = startHours * 60 + startMinutes;
+    const totalEndMinutes = endHours * 60 + endMinutes;
+
+    while (currentMinutes < totalEndMinutes) {
+        const hours = Math.floor(currentMinutes / 60);
+        const minutes = currentMinutes % 60;
+        slots.push(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+        currentMinutes += intervalMinutes;
+    }
+
+    return slots;
+};
+
+const summarizeSlots = (selectedSlots, intervalMinutes = 30) => {
+    if (!selectedSlots || selectedSlots.length === 0) {
+        return {};
+    }
+
+    const slotsByDay = {};
+    selectedSlots.forEach(slot => {
+        if (!slotsByDay[slot.day]) {
+            slotsByDay[slot.day] = [];
+        }
+        const [hours, minutes] = slot.time.split(':').map(Number);
+        slotsByDay[slot.day].push(hours * 60 + minutes);
+    });
+
+    const summary = {};
+
+    for (const day in slotsByDay) {
+        const minutesList = slotsByDay[day].sort((a, b) => a - b);
+        if (minutesList.length === 0) continue;
+
+        summary[day] = [];
+        let startMin = minutesList[0];
+        let endMin = minutesList[0];
+
+        for (let i = 1; i < minutesList.length; i++) {
+            if (minutesList[i] === endMin + intervalMinutes) {
+                endMin = minutesList[i];
+            } else {
+                summary[day].push({ start: startMin, end: endMin + intervalMinutes });
+                startMin = minutesList[i];
+                endMin = minutesList[i];
+            }
+        }
+        summary[day].push({ start: startMin, end: endMin + intervalMinutes });
+    }
+
+    const formatMinutes = (totalMinutes) => {
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHour = hours % 12 === 0 ? 12 : hours % 12;
+        const formattedMinute = minutes === 0 ? '' : `:${String(minutes).padStart(2, '0')}`;
+        return `${formattedHour}${formattedMinute}${ampm}`;
+    };
+
+    const finalSummary = {};
+    for (const day in summary) {
+        finalSummary[day] = summary[day].map(range => {
+            const startTime = formatMinutes(range.start);
+            const endTime = formatMinutes(range.end);
+            return `${startTime} - ${endTime}`;
+        });
+    }
+
+    return finalSummary;
 };
 
 // Helper to render response data (can be shared or adapted from TaskResultsPage)
@@ -35,8 +99,8 @@ const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDe
   if (!responseData) return <p className="no-response-display"><em>No response was recorded.</em></p>;
 
   if (taskType === 'ACKNOWLEDGEMENT') {
-    return responseData.acknowledged 
-      ? <p>You acknowledged this task on: {responseData.acknowledged_at ? new Date(responseData.acknowledged_at).toLocaleString() : 'N/A'}</p> 
+    return responseData.acknowledged
+      ? <p>You acknowledged this task on: {responseData.acknowledged_at ? new Date(responseData.acknowledged_at).toLocaleString() : 'N/A'}</p>
       : <p>Acknowledgement not recorded.</p>;
   }
   if (taskType === 'EVENT_AVAILABILITY') {
@@ -56,7 +120,7 @@ const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDe
               const eventInfo = getEventInfo(eventId);
               return (
                 <li key={eventId}>
-                  <strong>{eventInfo.title}</strong> ({eventInfo.date}{eventInfo.time ? `, ${eventInfo.time}` : ''}): 
+                  <strong>{eventInfo.title}</strong> ({eventInfo.date}{eventInfo.time ? `, ${eventInfo.time}` : ''}):
                   <span className={`response-value availability-${availability?.toLowerCase()}`}>
                     {availability === 'YES' ? 'Available' : availability === 'NO' ? 'Unavailable' : availability === 'MAYBE' ? 'Maybe' : (availability || 'Not specified')}
                   </span>
@@ -69,19 +133,23 @@ const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDe
   }
   if (taskType === 'REHEARSAL_POLL') {
     if (responseData.selected_slots && responseData.selected_slots.length > 0) {
+      const summarized = summarizeSlots(responseData.selected_slots);
       return (
         <div className="submitted-response-details">
-          <h4>Your Submitted Rehearsal Slots:</h4>
-          <ul className="raw-slot-list view-only">
-            {responseData.selected_slots.map((slot, index) => (<li key={index}>{slot.day} at {slot.time}</li>))}
-          </ul>
+          {Object.entries(summarized).map(([day, slots]) => (
+            <div key={day}>
+                <strong>{day}:</strong>
+                <ul className="raw-slot-list view-only" style={{ marginTop: '5px' }}>
+                    {slots.map((line, index) => (<li key={index}>{line}</li>))}
+                </ul>
+            </div>
+          ))}
         </div>
       );
     } else { return <p className="no-response-display"><em>No rehearsal slots submitted.</em></p>; }
   }
   return <pre className="response-data-raw">{JSON.stringify(responseData, null, 2)}</pre>;
 };
-
 
 const TaskDetailPage = () => {
   const { assignmentId } = useParams();
@@ -137,8 +205,7 @@ const TaskDetailPage = () => {
           task:tasks!inner ( 
             id, 
             title, 
-            type, 
-            description, 
+            type,
             task_config, 
             due_date,
             is_active
@@ -200,6 +267,11 @@ const TaskDetailPage = () => {
             const generatedSlots = [];
             days.forEach(day => timeLabels.forEach(time => generatedSlots.push({ day, time, id: `${day}-${time}` })));
             setAllPossibleRehearsalSlots(generatedSlots);
+
+            // If there is no response data, pre-select all slots to be available
+            if (!data.response_data?.selected_slots) {
+              setSelectedRehearsalSlots(generatedSlots.map(slot => slot.id));
+            }
         } else { setError(prev => prev + " (Rehearsal poll config incomplete)"); }
       }
 
@@ -426,7 +498,6 @@ const TaskDetailPage = () => {
         <p className="task-page-type">Type: {task.type.replace('_', ' ')}</p>
         {task.due_date && <p className="task-page-due-date"><strong>Due:</strong> {new Date(task.due_date + 'T00:00:00').toLocaleDateString()} {!isTaskOpenForSubmission && task.is_active && <span className="task-status-chip past-due-chip">(Past Due)</span>}</p>}
         {!task.is_active && <p className="task-status-chip inactive-chip">(Task Inactive)</p>}
-        {task.description && <p className="task-page-description" style={{whiteSpace: 'pre-wrap'}}><strong>Description:</strong> {task.description}</p>}
       </div>
 
       {error && <p className="form-error" style={{textAlign:'center', marginBottom: '15px'}}>{error}</p>}
@@ -567,11 +638,7 @@ const TaskDetailPage = () => {
                       <tbody>
                         {pollGrid.timeLabels.map(time => (
                           <tr key={time}>
-                            <td>{new Date(`1970-01-01T${time}Z`).toLocaleTimeString(undefined, {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true,
-                            })}
+                            <td>{formatTime(time)}
                             </td>
                             {pollGrid.days.map(day => {
                               const slot = pollGrid.slotsByTime[time]?.[day];

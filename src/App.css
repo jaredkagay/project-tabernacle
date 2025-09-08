@@ -1,27 +1,39 @@
 /* src/App.css */
 .main-nav {
   background-color: #333;
-  padding: 15px 20px;
+  padding: 10px 20px;
   display: flex;
-  justify-content: space-between; /* This will push links to the left and user actions to the right */
+  justify-content: space-between;
   align-items: center;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .nav-links a {
   color: white;
-  margin-right: 20px;
   text-decoration: none;
   font-weight: bold;
+  display: flex;
+  align-items: center;
 }
 
 .nav-links a:hover {
   text-decoration: underline;
 }
 
+.nav-logo {
+  height: 35px;
+  margin-right: 10px;
+}
+
 .nav-user-actions {
   display: flex;
   align-items: center;
-  gap: 15px; /* Adds space between "Hello, Name" and the logout button */
+  gap: 15px;
 }
 
 .hello-message {
@@ -42,6 +54,19 @@
 
 .logout-btn:hover {
   background-color: #555;
+}
+
+.settings-icon-link {
+  color: white;
+  font-size: 1.4em; /* Controls the size of the icon */
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.settings-icon-link:hover {
+  color: #ccc;
+  text-decoration: none; /* Prevent underline on icon hover */
 }
 
 .app-loading-message {

@@ -46,7 +46,7 @@ const SongForm = ({ initialData = {}, onSubmit, onCancel, isSubmitting, formType
       </div>
       {songType === 'secondary' && (
         <div className="form-group">
-          <label htmlFor="song-default-key">Default Key (Optional):</label>
+          <label htmlFor="song-default-key">Ideal Key (Optional):</label>
           {/* Changed to a dropdown select */}
           <select 
             id="song-default-key" 

@@ -44,7 +44,6 @@ const PlanPage = () => {
   const [checklistStatus, setChecklistStatus] = useState({});
   const [organizationMembers, setOrganizationMembers] = useState([]);
 
-  // New state for Organizer's edit mode, defaults to false (musician view)
   const [isEditMode, setIsEditMode] = useState(false);
 
   const [isAddItemFormVisible, setIsAddItemFormVisible] = useState(false);
@@ -55,7 +54,6 @@ const PlanPage = () => {
   const [isEditAssignmentModalOpen, setIsEditAssignmentModalOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState(null);
 
-  // Determine the effective role ONLY for the OrderOfService component
   const orderOfServiceRole = profile?.role === 'ORGANIZER' && isEditMode ? 'ORGANIZER' : 'MUSICIAN';
 
   const orderOfServiceWithTimes = React.useMemo(() => {
@@ -332,7 +330,13 @@ const PlanPage = () => {
   const handleSendInvitation = async (invitationData) => {
     if (!eventDetails?.id) throw new Error("Event details missing.");
     try {
-      const { error } = await supabase.from('event_assignments').insert([{...invitationData, event_id: eventDetails.id, status: 'PENDING'}]);
+      const { error } = await supabase.from('event_assignments').insert([{
+        event_id: eventDetails.id, 
+        user_id: invitationData.musician_user_id,
+        instruments_assigned: invitationData.instruments,
+        notes_for_member: invitationData.notes,
+        status: 'PENDING'
+      }]);
       if (error) throw error;
       fetchPlanDataAndOrgMembers();
       toggleInviteModal();
@@ -383,8 +387,12 @@ const PlanPage = () => {
       <header className="plan-header">
         <div className="plan-header-title-group"><h1>{eventDetails.title}</h1></div>
         <div className="plan-header-actions">
-          <button onClick={handleOpenEditEventModal} className="edit-event-info-btn page-header-action-btn" disabled={planPageLoading}>Edit Event Info</button>
-          <button onClick={handleDeleteCurrentPlan} className="delete-current-plan-btn page-header-action-btn" disabled={planPageLoading}>Delete Plan</button>
+          {profile?.role === 'ORGANIZER' && (
+            <>
+              <button onClick={handleOpenEditEventModal} className="edit-event-info-btn page-header-action-btn" disabled={planPageLoading}>Edit Event Info</button>
+              <button onClick={handleDeleteCurrentPlan} className="delete-current-plan-btn page-header-action-btn" disabled={planPageLoading}>Delete Plan</button>
+            </>
+          )}
         </div>
       </header>
       
@@ -423,11 +431,12 @@ const PlanPage = () => {
               onOpenEditAssignment={profile?.role === 'ORGANIZER' ? handleOpenEditAssignmentModal : undefined}
             />
             {profile?.role === 'ORGANIZER' && (<button onClick={toggleInviteModal} className="invite-member-btn page-action-btn " style={{marginTop: '15px', width: '100%'}}>+ Invite/Assign Musician</button>)}
-            <WeeklyChecklist 
+            {profile?.role === 'ORGANIZER' && <WeeklyChecklist 
               tasks={currentChecklistTasks} 
               checkedStatuses={checklistStatus} 
               onTaskToggle={profile?.role === 'ORGANIZER' ? handleChecklistToggle : undefined} 
             />
+            }
           </div>
         </div>
       )}

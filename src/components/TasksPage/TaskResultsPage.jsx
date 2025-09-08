@@ -6,30 +6,93 @@ import { useAuth } from '../../contexts/AuthContext';
 import './TaskResultsPage.css'; // We'll create this CSS file
 import { DAYS_OF_WEEK } from '../../constants';
 
-// Helper function to format 24-hour time string to 12-hour AM/PM
 const formatTime = (timeStr) => {
     if (!timeStr) return '';
     const [hours, minutes] = timeStr.split(':');
-    const date = new Date(1970, 0, 1, hours, minutes);
-    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    const hour = parseInt(hours, 10);
+    const minute = parseInt(minutes, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
+    const formattedMinute = minute < 10 ? '0' + minute : minute;
+    return `${formattedHour}:${formattedMinute} ${ampm}`;
 };
 
 const generateTimeSlots = (startTimeStr, endTimeStr, intervalMinutes) => {
-  const slots = [];
-  if (!startTimeStr || !endTimeStr || !intervalMinutes) return slots;
-  let currentTime = new Date(`1970-01-01T${startTimeStr}:00`);
-  const endTime = new Date(`1970-01-01T${endTimeStr}:00`);
-  if (isNaN(currentTime.getTime()) || isNaN(endTime.getTime()) || currentTime >= endTime) {
-    console.error("Invalid time for generating slots", {startTimeStr, endTimeStr, intervalMinutes});
-    return [];
-  }
-  while (currentTime < endTime) {
-    slots.push(currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
-    currentTime.setMinutes(currentTime.getMinutes() + intervalMinutes);
-  }
-  return slots;
+    const slots = [];
+    if (!startTimeStr || !endTimeStr || !intervalMinutes) return slots;
+
+    let [startHours, startMinutes] = startTimeStr.split(':').map(Number);
+    const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
+
+    let currentMinutes = startHours * 60 + startMinutes;
+    const totalEndMinutes = endHours * 60 + endMinutes;
+
+    while (currentMinutes < totalEndMinutes) {
+        const hours = Math.floor(currentMinutes / 60);
+        const minutes = currentMinutes % 60;
+        slots.push(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+        currentMinutes += intervalMinutes;
+    }
+
+    return slots;
 };
 
+const summarizeSlots = (selectedSlots, intervalMinutes = 30) => {
+    if (!selectedSlots || selectedSlots.length === 0) {
+        return {};
+    }
+
+    const slotsByDay = {};
+    selectedSlots.forEach(slot => {
+        if (!slotsByDay[slot.day]) {
+            slotsByDay[slot.day] = [];
+        }
+        const [hours, minutes] = slot.time.split(':').map(Number);
+        slotsByDay[slot.day].push(hours * 60 + minutes);
+    });
+
+    const summary = {};
+
+    for (const day in slotsByDay) {
+        const minutesList = slotsByDay[day].sort((a, b) => a - b);
+        if (minutesList.length === 0) continue;
+
+        summary[day] = [];
+        let startMin = minutesList[0];
+        let endMin = minutesList[0];
+
+        for (let i = 1; i < minutesList.length; i++) {
+            if (minutesList[i] === endMin + intervalMinutes) {
+                endMin = minutesList[i];
+            } else {
+                summary[day].push({ start: startMin, end: endMin + intervalMinutes });
+                startMin = minutesList[i];
+                endMin = minutesList[i];
+            }
+        }
+        summary[day].push({ start: startMin, end: endMin + intervalMinutes });
+    }
+
+    const formatMinutes = (totalMinutes) => {
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHour = hours % 12 === 0 ? 12 : hours % 12;
+        const formattedMinute = minutes === 0 ? '' : `:${String(minutes).padStart(2, '0')}`;
+        return `${formattedHour}${formattedMinute}${ampm}`;
+    };
+
+    const finalSummary = {};
+    for (const day in summary) {
+        finalSummary[day] = summary[day].map(range => {
+            const startTime = formatMinutes(range.start);
+            const endTime = formatMinutes(range.end);
+            return `${startTime} - ${endTime}`;
+        });
+    }
+
+    return finalSummary;
+};
 
 const TaskResultsPage = () => {
   const { taskId } = useParams(); // Get taskId from URL
@@ -197,7 +260,7 @@ const TaskResultsPage = () => {
     return event ? { title: event.title || 'Untitled Event', date: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A', time: event.time ? formatTime(event.time) : '' } : { title: `Event ID: ${eventId.substring(0,8)}... (Details Missing)`, date: '', time: '' };
   };
   
-  const renderIndividualResponseData = (responseData, taskType) => {
+const renderIndividualResponseData = (responseData, taskType) => {
     if (!responseData) return <span className="no-response">No response.</span>;
     if (taskType === 'ACKNOWLEDGEMENT') { return responseData.acknowledged ? `Acknowledged: ${new Date(responseData.acknowledged_at).toLocaleString()}` : "Not Acknowledged"; }
     if (taskType === 'EVENT_AVAILABILITY') {
@@ -206,10 +269,27 @@ const TaskResultsPage = () => {
         return (<ul className="availability-response-list">{orderedEventIds.map(eventId => { const availability = responseData.availabilities[eventId]; const eventInfo = getEventInfo(eventId); return (<li key={eventId}><strong>{eventInfo.title}</strong> ({eventInfo.date} {eventInfo.time}): <span className={`response-value availability-${availability?.toLowerCase()}`}>{availability || 'N/A'}</span></li>);})}</ul>);
       } else { return <span className="no-response">No availability data.</span>; }
     }
-    if (taskType === 'REHEARSAL_POLL') { if (responseData.selected_slots && responseData.selected_slots.length > 0) { return (<ul className="raw-slot-list">{responseData.selected_slots.map((slot, index) => (<li key={index}>{slot.day} at {formatTime(slot.time)}</li>))}</ul>); } else { return <span className="no-response">No slots selected.</span>; }}
+    if (taskType === 'REHEARSAL_POLL') {
+        if (responseData.selected_slots && responseData.selected_slots.length > 0) {
+            const summarized = summarizeSlots(responseData.selected_slots);
+            return (
+                <div>
+                    {Object.entries(summarized).map(([day, slots]) => (
+                        <div key={day} style={{ marginBottom: '5px' }}>
+                            <strong>{day}:</strong>
+                            <ul className="raw-slot-list" style={{ marginTop: '2px', paddingLeft: '25px' }}>
+                                {slots.map((line, index) => (<li key={index}>{line}</li>))}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+            );
+        } else {
+            return <span className="no-response">No slots selected.</span>;
+        }
+    }
     return <pre className="response-data-raw">{JSON.stringify(responseData, null, 2)}</pre>;
   };
-
 
   if (authIsLoading || loading) return <p className="page-status">Loading task results...</p>;
   if (error) return <p className="page-status error">{error}</p>;
@@ -285,12 +365,11 @@ const TaskResultsPage = () => {
         {(!assignments || assignments.length === 0) && !loading && <p>No assignments or responses for this task yet.</p>}
         {assignments && assignments.length > 0 && (
           <table className="results-table">
-            <thead><tr><th>Musician</th><th>Email</th><th>Status</th><th>Completed At</th><th>Response Details</th></tr></thead>
+            <thead><tr><th>Musician</th><th>Status</th><th>Completed At</th><th>Response Details</th></tr></thead>
             <tbody>
               {assignments.map(assign => (
                 <tr key={assign.id}>
                   <td>{assign.assignee?.first_name || ''} {assign.assignee?.last_name || '(Name N/A)'}</td>
-                  <td>{assign.assignee?.email || 'N/A'}</td>
                   <td><span className={`status-badge-results status-${assign.status?.toLowerCase()}`}>{assign.status}</span></td>
                   <td>{assign.completed_at ? new Date(assign.completed_at).toLocaleString() : (assign.status === 'PENDING' ? 'Pending' : 'N/A')}</td>
                   <td>{assign.status === 'COMPLETED' ? renderIndividualResponseData(assign.response_data, task.type) : <span className="no-response">Pending</span>}</td>

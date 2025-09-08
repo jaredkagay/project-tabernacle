@@ -417,7 +417,7 @@ const SettingsPage = () => {
             )}
             {profile.organization_id && organization && !orgDetailsLoading && (
               <>
-                <h2>Organization: {orgName} <span style={{fontSize: '0.7em', color: '#777'}}>({organization.id})</span></h2>
+                <h2>{orgName} <span style={{fontSize: '0.7em', color: '#777'}}>({organization.id})</span></h2>
                 <button onClick={handleLeaveOrganization} className="submit-btn leave-org-btn" disabled={isOrgActionInProgress} style={{backgroundColor: '#e74c3c', marginBottom:'20px', display:'block'}}>{isOrgActionInProgress ? 'Processing...' : 'Leave This Organization'}</button>
                 <hr style={{margin: "20px 0"}}/>
                 {profile.role === 'ORGANIZER' && (

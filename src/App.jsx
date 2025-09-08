@@ -1,7 +1,7 @@
 // src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext'; // Import useAuth
+import { useAuth } from './contexts/AuthContext';
 import PlanPage from './components/PlanPage/PlanPage';
 import AllPlansPage from './components/AllPlansPage/AllPlansPage';
 import LandingPage from './components/LandingPage/LandingPage';
@@ -12,18 +12,19 @@ import SongsPage from './components/SongsPage/SongsPage';
 import './App.css';
 import TaskDetailPage from './components/TasksPage/TaskDetailPage';
 import TaskResultsPage from './components/TasksPage/TaskResultsPage';
+import { FaCog } from 'react-icons/fa'; // Import the gear icon
 
 // Component to protect routes
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading application...</div>; // Or a spinner
+  if (loading) return <div>Loading application...</div>;
   return user ? children : <Navigate to="/" replace />;
 };
 
 // Component for routes accessible only by public/logged-out users
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading application...</div>; // Or a spinner
+  if (loading) return <div>Loading application...</div>;
   return !user ? children : <Navigate to="/plans" replace />;
 }
 
@@ -48,65 +49,33 @@ function App() {
         {user && (
           <nav className="main-nav">
             <div className="nav-links">
+              <Link to="/plans">
+                <img src="/logo.png" alt="App Logo" className="nav-logo" />
+              </Link>
               <Link to="/plans">Plans</Link>
               <Link to="/tasks">Tasks</Link>
               <Link to="/songs">Songs</Link>
-              <Link to="/settings">Settings</Link>
             </div>
             <div className="nav-user-actions">
               {profile && <span className="hello-message">{getGreeting()}, {profile.first_name}</span>}
               <button onClick={logout} className="logout-btn">Logout</button>
+              <Link to="/settings" className="settings-icon-link" title="Settings">
+                <FaCog />
+              </Link>
             </div>
           </nav>
         )}
 
         <Routes>
-          <Route path="/" element={
-            <PublicRoute>
-              <LandingPage />
-            </PublicRoute>
-          } />
-          <Route path="/start" element={
-            <PublicRoute>
-              <StartPage />
-            </PublicRoute>
-          } />
-          <Route path="/plans" element={
-            <ProtectedRoute>
-              <AllPlansPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/plan/:planId" element={
-            <ProtectedRoute>
-              <PlanPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/tasks" element={
-            <ProtectedRoute>
-              <TasksPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/task/:assignmentId" element={
-            <ProtectedRoute>
-              <TaskDetailPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/task-results/:taskId" element={
-            <ProtectedRoute>
-              <TaskResultsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/songs" element={
-            <ProtectedRoute>
-              <SongsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          } />
-          {/* Redirect any unknown paths, or show a 404 component */}
+          <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+          <Route path="/start" element={<PublicRoute><StartPage /></PublicRoute>} />
+          <Route path="/plans" element={<ProtectedRoute><AllPlansPage /></ProtectedRoute>} />
+          <Route path="/plan/:planId" element={<ProtectedRoute><PlanPage /></ProtectedRoute>} />
+          <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
+          <Route path="/task/:assignmentId" element={<ProtectedRoute><TaskDetailPage /></ProtectedRoute>} />
+          <Route path="/task-results/:taskId" element={<ProtectedRoute><TaskResultsPage /></ProtectedRoute>} />
+          <Route path="/songs" element={<ProtectedRoute><SongsPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to={user ? "/plans" : "/"} replace />} />
         </Routes>
       </div>

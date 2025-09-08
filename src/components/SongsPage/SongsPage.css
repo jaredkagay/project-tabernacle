@@ -47,7 +47,7 @@
 .song-actions-wrapper {
   display: flex;
   align-items: center;
-  gap: 12px; /* Increased gap for better spacing */
+  gap: 12px;
   flex-shrink: 0;
 }
 
@@ -159,4 +159,36 @@ input:checked + .slider:before {
 }
 .slider.round:before {
   border-radius: 50%;
+}
+
+/* New styles for the musician select dropdown */
+.musician-select-container {
+  position: relative;
+  max-width: 400px;
+  margin-bottom: 20px;
+}
+
+.musician-select-container select {
+  width: 100%;
+  padding: 10px 30px 10px 12px;
+  font-size: 1em;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.musician-select-container::after {
+  content: '▼';
+  font-size: 0.8em;
+  color: #555;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
