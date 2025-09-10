@@ -172,7 +172,7 @@ const StartPage = () => {
 
       if (orgStepFailed) { setIsSubmitting(false); return; }
 
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({ email: userEnteredEmail, password: password });
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({ email: userEnteredEmail, password: password, options: { emailRedirectTo: window.location.origin } });
       if (signUpError) throw new Error(`Sign up failed: ${signUpError.message}`);
       if (!authData.user || !authData.user.id) throw new Error("User auth creation successful, but no user data returned.");
       const userId = authData.user.id;

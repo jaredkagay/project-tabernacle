@@ -420,6 +420,11 @@ const PlanPage = () => {
                 onUpdateKey={orderOfServiceRole === 'ORGANIZER' ? handleUpdateMusicalKey : undefined} 
                 userRole={profile?.role === 'ORGANIZER' ? orderOfServiceRole : 'MUSICIAN'}
               />
+              {profile?.role === 'ORGANIZER' && isEditMode && (
+                <button onClick={toggleAddItemForm} className={`toggle-add-item-form-btn ${isAddItemFormVisible ? 'cancel-style' : ''}`} style={{marginTop: '20px', width: '100%'}}>
+                  {isAddItemFormVisible ? 'Cancel Adding Item' : '+ Add Service Item'}
+                </button>
+              )}
           </div>
           <div className="plan-right-column">
             <ServiceDetails details={eventDetails} />
