@@ -1,101 +1,175 @@
 // src/components/TasksPage/AssignTaskForm.jsx
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient'; // May not be needed if parent handles all Supabase
-import '../AllPlansPage/CreatePlanForm.css'; // Reusing some styles
+import { supabase } from '../../supabaseClient';
+import '../AllPlansPage/CreatePlanForm.css'; 
 
-const AssignTaskForm = ({ task, organizationMusicians, onAssignTask, onCancel, isSubmitting }) => {
+const AssignTaskForm = ({ task, organizationMusicians, upcomingOrgEvents, onAssignTask, onCancel, isSubmitting }) => {
   const [selectedMusicianIds, setSelectedMusicianIds] = useState([]);
-  const [existingAssignmentUserIds, setExistingAssignmentUserIds] = useState([]);
   const [isLoadingExisting, setIsLoadingExisting] = useState(true);
+  
+  // State for REHEARSAL_POLL mode
+  const [selectedPlanId, setSelectedPlanId] = useState('');
+  const [loadingPlanRoster, setLoadingPlanRoster] = useState(false);
 
-  // Fetch existing assignments for this task to disable already assigned users
+  // Helper to fetch roster from a plan and update selection
+  const fetchAndSelectRoster = async (planId) => {
+    setLoadingPlanRoster(true);
+    try {
+      // Fetch users assigned to this plan ('ACCEPTED' or 'PENDING')
+      const { data, error } = await supabase
+        .from('event_assignments')
+        .select('user_id')
+        .eq('event_id', planId)
+        .in('status', ['ACCEPTED', 'PENDING']);
+        
+      if (error) throw error;
+      
+      const rosterIds = (data || []).map(r => r.user_id);
+      setSelectedMusicianIds(rosterIds);
+    } catch (err) {
+      console.error("Error fetching plan roster:", err);
+      alert("Failed to load musicians for this plan.");
+    } finally {
+      setLoadingPlanRoster(false);
+    }
+  };
+
   useEffect(() => {
     if (task?.id) {
       setIsLoadingExisting(true);
-      supabase
-        .from('task_assignments')
-        .select('assigned_to_user_id, status')
-        .eq('task_id', task.id)
-        .then(({ data, error }) => {
-          if (error) {
-            console.error("Error fetching existing assignments for task:", error);
-          } else if (data) {
-            setExistingAssignmentUserIds(data.map(a => a.assigned_to_user_id));
-          }
-          setIsLoadingExisting(false);
-        });
+      
+      const initializeForm = async () => {
+        // 1. Check if this task is already linked to a plan (Auto-Select Plan Logic)
+        if (task.task_config?.linked_event_id) {
+            setSelectedPlanId(task.task_config.linked_event_id);
+            // AUTO-SYNC: Fetch the *current* roster of the linked plan. 
+            // This ensures if people were added/removed from the plan, the task form reflects that.
+            await fetchAndSelectRoster(task.task_config.linked_event_id);
+        } else {
+            // 2. If not linked to a plan, just load existing assignments normally
+            const { data, error } = await supabase
+                .from('task_assignments')
+                .select('assigned_to_user_id')
+                .eq('task_id', task.id);
+            if (!error && data) {
+                setSelectedMusicianIds(data.map(a => a.assigned_to_user_id));
+            }
+        }
+        setIsLoadingExisting(false);
+      };
+
+      initializeForm();
     }
-  }, [task?.id]);
+  }, [task?.id, task.task_config]);
 
   const handleMusicianSelectionChange = (musicianId) => {
-    setSelectedMusicianIds(prevSelectedIds =>
-      prevSelectedIds.includes(musicianId)
-        ? prevSelectedIds.filter(id => id !== musicianId)
-        : [...prevSelectedIds, musicianId]
+    setSelectedMusicianIds(prev =>
+      prev.includes(musicianId)
+        ? prev.filter(id => id !== musicianId)
+        : [...prev, musicianId]
     );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedMusicianIds(organizationMusicians.map(m => m.id));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedMusicianIds([]);
+  };
+
+  const handlePlanSelection = async (planId) => {
+    setSelectedPlanId(planId);
+    await fetchAndSelectRoster(planId);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (selectedMusicianIds.length === 0) {
-      alert('Please select at least one musician to assign the task to.');
-      return;
-    }
-    onAssignTask(selectedMusicianIds); // Parent (TasksPage) handles the actual Supabase insert
+    // Pass selectedPlanId so the parent can save the link
+    onAssignTask(selectedMusicianIds, selectedPlanId);
   };
 
-  if (!task) return <p>No task selected for assignment.</p>;
+  if (!task) return <p>No task selected.</p>;
   if (isLoadingExisting) return <p>Loading current assignments...</p>;
 
-  // Filter out musicians who are already assigned this task from being selectable again
-  const availableMusiciansToAssign = organizationMusicians.filter(
-    musician => !existingAssignmentUserIds.includes(musician.id)
-  );
+  const isRehearsalPoll = task.type === 'REHEARSAL_POLL';
 
   return (
     <form onSubmit={handleSubmit} className="create-plan-form assign-task-form">
-      <h3>Assign Task: "{task.title}"</h3>
-      <p>Select musicians from your organization to assign this task to.</p>
-
-      <div className="form-group">
-        <label>Available Musicians:</label>
-        {availableMusiciansToAssign.length > 0 ? (
-            <div className="checkbox-group multi-select-musician-group">
-            {availableMusiciansToAssign.map(musician => (
-                <label key={musician.id} className="checkbox-label">
-                <input
-                    type="checkbox"
-                    value={musician.id}
-                    checked={selectedMusicianIds.includes(musician.id)}
-                    onChange={() => handleMusicianSelectionChange(musician.id)}
-                    disabled={isSubmitting}
-                />
-                {musician.first_name} {musician.last_name} ({musician.email})
-                </label>
-            ))}
-            </div>
-        ) : (
-            <p>All musicians in your organization have already been assigned this task or there are no musicians.</p>
-        )}
-      </div>
+      <h3>Manage Assignments: "{task.title}"</h3>
       
-      {existingAssignmentUserIds.length > 0 && (
-          <div className="form-group">
-              <label>Already Assigned (cannot re-assign):</label>
-              <ul>
-                  {organizationMusicians.filter(m => existingAssignmentUserIds.includes(m.id)).map(m => <li key={m.id} style={{fontSize: '0.9em', color: '#777'}}>{m.first_name} {m.last_name}</li>)}
-              </ul>
+      {/* MODE: REHEARSAL POLL (Select by Plan) */}
+      {isRehearsalPoll && (
+        <div className="form-group">
+          <p>Select an upcoming plan. This will select all musicians currently scheduled for that service.</p>
+          <div className="checkbox-group" style={{maxHeight: '200px', overflowY: 'auto'}}>
+            {(!upcomingOrgEvents || upcomingOrgEvents.length === 0) ? (
+              <p>No upcoming plans found.</p>
+            ) : (
+               upcomingOrgEvents.map(plan => (
+                 <label key={plan.id} className="radio-label" style={{display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer'}}>
+                   <input 
+                      type="radio" 
+                      name="plan_selection" 
+                      value={plan.id}
+                      checked={selectedPlanId === plan.id}
+                      onChange={() => handlePlanSelection(plan.id)}
+                      disabled={isSubmitting || loadingPlanRoster}
+                      style={{marginRight: '10px'}}
+                   />
+                   <span>{plan.title} ({new Date(plan.date + 'T00:00:00').toLocaleDateString()})</span>
+                 </label>
+               ))
+            )}
           </div>
+          {loadingPlanRoster && <p style={{fontSize: '0.9em', color: '#666'}}>Loading roster...</p>}
+          {selectedPlanId && !loadingPlanRoster && (
+            <p style={{fontSize: '0.9em', color: '#2ecc71', marginTop: '5px'}}>
+              <strong>{selectedMusicianIds.length}</strong> musician(s) selected from this plan.
+            </p>
+          )}
+        </div>
       )}
 
+      {/* MODE: OTHER TASKS (Select Individual Musicians) */}
+      {!isRehearsalPoll && (
+        <div className="form-group">
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+            <label style={{marginBottom: 0}}>Select Musicians:</label>
+            <div className="select-all-actions">
+              <button type="button" onClick={handleSelectAll} className="small-text-btn" disabled={isSubmitting}>Select All</button>
+              <span style={{margin: '0 5px'}}>|</span>
+              <button type="button" onClick={handleDeselectAll} className="small-text-btn" disabled={isSubmitting}>Deselect All</button>
+            </div>
+          </div>
+          
+          <div className="checkbox-group multi-select-musician-group">
+            {organizationMusicians.length > 0 ? (
+              organizationMusicians.map(musician => (
+                <label key={musician.id} className="checkbox-label">
+                  <input
+                      type="checkbox"
+                      value={musician.id}
+                      checked={selectedMusicianIds.includes(musician.id)}
+                      onChange={() => handleMusicianSelectionChange(musician.id)}
+                      disabled={isSubmitting}
+                  />
+                  {musician.first_name} {musician.last_name}
+                </label>
+              ))
+            ) : (
+              <p>No musicians found in your organization.</p>
+            )}
+          </div>
+          <p style={{fontSize: '0.9em', color: '#666', marginTop: '5px'}}>
+            Currently Selected: {selectedMusicianIds.length}
+          </p>
+        </div>
+      )}
 
       <div className="form-actions">
-        <button 
-            type="submit" 
-            className="submit-btn" 
-            disabled={isSubmitting || selectedMusicianIds.length === 0}
-        >
-          {isSubmitting ? 'Assigning...' : 'Assign to Selected'}
+        <button type="submit" className="submit-btn" disabled={isSubmitting}>
+          {isSubmitting ? 'Updating...' : 'Update Assignments'}
         </button>
         <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>
           Cancel
