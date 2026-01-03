@@ -82,7 +82,11 @@ const TasksPage = () => {
         try {
           const { data, error: fetchError } = await supabase.from('task_assignments').select(`id, status, completed_at, task:tasks!inner (id, title, type, due_date, is_active)`).eq('assigned_to_user_id', user.id).in('status', ['PENDING', 'COMPLETED']);
           if (fetchError) throw fetchError;
-          const sortedTasks = (data || []).sort((a, b) => {
+          
+          // Filter to include ONLY active tasks
+          const activeTasks = (data || []).filter(assignment => assignment.task && assignment.task.is_active);
+
+          const sortedTasks = activeTasks.sort((a, b) => {
             if (a.status === 'PENDING' && b.status === 'COMPLETED') return -1;
             if (a.status === 'COMPLETED' && b.status === 'PENDING') return 1;
             if (a.status === 'PENDING') {
@@ -128,13 +132,10 @@ const TasksPage = () => {
 
   const handleAssignTask = async (selectedMusicianIds, linkedEventId = null) => {
     if (!taskToAssign) throw new Error("Task missing.");
-    // selectedMusicianIds can be empty if everyone is unassigned.
-    
     setIsAssigningTask(true); 
     setError('');
 
     try {
-        // 1. Fetch existing assignments to compare
         const { data: existingAssignments, error: fetchError } = await supabase
             .from('task_assignments')
             .select('id, assigned_to_user_id')
@@ -143,14 +144,9 @@ const TasksPage = () => {
         if (fetchError) throw fetchError;
 
         const existingIds = existingAssignments.map(a => a.assigned_to_user_id);
-        
-        // 2. Determine Additions and Removals
         const toAdd = selectedMusicianIds.filter(id => !existingIds.includes(id));
         const toRemove = existingIds.filter(id => !selectedMusicianIds.includes(id));
         
-        // 3. Perform Updates
-        
-        // REMOVE Unchecked Musicians
         if (toRemove.length > 0) {
             const { error: deleteError } = await supabase
                 .from('task_assignments')
@@ -160,7 +156,6 @@ const TasksPage = () => {
             if (deleteError) throw deleteError;
         }
 
-        // ADD Newly Selected Musicians
         if (toAdd.length > 0) {
              const assignments = toAdd.map(id => ({
                 task_id: taskToAssign.id, 
@@ -173,7 +168,6 @@ const TasksPage = () => {
             if (insertError) throw insertError;
         }
         
-        // 4. Update Linked Event (For Rehearsal Polls)
         if (taskToAssign.type === 'REHEARSAL_POLL' && linkedEventId) {
              const updatedConfig = { 
                  ...taskToAssign.task_config, 
@@ -190,7 +184,7 @@ const TasksPage = () => {
 
         alert(`Task assignments updated for "${taskToAssign.title}".`);
         closeAssignTaskModal();
-        fetchPageData(); // Refresh data to reflect new counts/status
+        fetchPageData(); 
 
     } catch (err) {
         console.error("Assign Task Error:", err);
@@ -314,10 +308,7 @@ const TasksPage = () => {
       )}
 
       {isCreateTaskModalOpen && profile.role === 'ORGANIZER' && ( <div className="modal-overlay" onClick={toggleCreateTaskModal}> <div className="modal-content" onClick={(e) => e.stopPropagation()}> <button className="modal-close-btn" onClick={toggleCreateTaskModal}>&times;</button> <CreateTaskForm onCreateTask={handleCreateTask} onCancel={toggleCreateTaskModal} isSubmitting={isSubmittingTask} upcomingOrgEvents={upcomingOrgEvents} /> </div> </div> )}
-      
-      {/* ADDED: upcomingOrgEvents prop */}
       {isAssignTaskModalOpen && taskToAssign && profile.role === 'ORGANIZER' && ( <div className="modal-overlay" onClick={closeAssignTaskModal}> <div className="modal-content" onClick={(e) => e.stopPropagation()}> <button className="modal-close-btn" onClick={closeAssignTaskModal}>&times;</button> <AssignTaskForm task={taskToAssign} organizationMusicians={organizationMusicians} upcomingOrgEvents={upcomingOrgEvents} onAssignTask={handleAssignTask} onCancel={closeAssignTaskModal} isSubmitting={isAssigningTask} /> </div> </div> )}
-      
       {isEditTaskModalOpen && editingTask && profile?.role === 'ORGANIZER' && ( <div className="modal-overlay" onClick={closeEditTaskModal}> <div className="modal-content" onClick={(e) => e.stopPropagation()}> <button className="modal-close-btn" onClick={closeEditTaskModal}>&times;</button> <EditTaskForm taskToEdit={editingTask} onUpdateTask={handleUpdateTask} onCancel={closeEditTaskModal} isSubmitting={isUpdatingTask} upcomingOrgEvents={upcomingOrgEvents} /> </div> </div> )}
     </div>
   );
