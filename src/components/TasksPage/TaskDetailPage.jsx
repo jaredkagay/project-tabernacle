@@ -6,6 +6,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import './TaskDetailPage.css';
 import { DAYS_OF_WEEK } from '../../constants';
 
+const formatTaskType = (type) => {
+  if (!type) return '';
+  return type
+    .toLowerCase()
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const formatTime = (timeStr) => {
     if (!timeStr) return '';
     const [hours, minutes] = timeStr.split(':');
@@ -110,15 +119,7 @@ const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDe
         const event = eventDetailsForTaskConfig.find(e => e.id === eventId);
         return event ? { title: event.title || 'Untitled Event', date: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A', time: event.time || '' } : { title: `Event (ID: ${eventId.substring(0,8)}...) - Details Missing`, date: '', time: '' };
       };
-
-      // Determine order: Use sorted eventDetails if available, otherwise fallback to config/keys
-      let orderedEventIds = [];
-      if (eventDetailsForTaskConfig && eventDetailsForTaskConfig.length > 0) {
-        orderedEventIds = eventDetailsForTaskConfig.map(e => e.id).filter(id => responseData.availabilities.hasOwnProperty(id));
-      } else {
-        orderedEventIds = taskConfig?.event_ids || Object.keys(responseData.availabilities);
-      }
-
+      const orderedEventIds = taskConfig?.event_ids || Object.keys(responseData.availabilities);
       return (
         <div className="submitted-response-details">
           <h4>Your Submitted Availability:</h4>
@@ -258,15 +259,11 @@ const TaskDetailPage = () => {
       if (data.task.type === 'EVENT_AVAILABILITY' && data.task.task_config?.event_ids?.length > 0) {
         const { data: eventsData, error: eventsError } = await supabase.from('events').select('id, title, date, time').in('id', data.task.task_config.event_ids);
         if (eventsError) { setError(prev => prev + " (Could not load event details for availability)"); }
-        
-        // SORTING: Sort events by date (Ascending: Recent -> Furthest)
-        const sortedEvents = (eventsData || []).sort((a, b) => new Date(a.date) - new Date(b.date));
-        setEventDetailsForTask(sortedEvents);
-        
+        setEventDetailsForTask(eventsData || []);
         // Initialize responses if not already pre-filled from response_data
         if (!data.response_data?.availabilities) {
             const initialResponses = {};
-            (sortedEvents || []).forEach(event => { initialResponses[event.id] = ''; });
+            (eventsData || []).forEach(event => { initialResponses[event.id] = ''; });
             setAvailabilityResponses(initialResponses);
         }
       }
@@ -507,7 +504,7 @@ const TaskDetailPage = () => {
       
       <div className="task-header-details">
         <h1>{task.title}</h1>
-        <p className="task-page-type">Type: {task.type.replace('_', ' ')}</p>
+        <p className="task-page-type">Type: {formatTaskType(task.type)}</p>
         {task.due_date && <p className="task-page-due-date"><strong>Due:</strong> {new Date(task.due_date + 'T00:00:00').toLocaleDateString()} {!isTaskOpenForSubmission && task.is_active && <span className="task-status-chip past-due-chip">(Past Due)</span>}</p>}
         {!task.is_active && <p className="task-status-chip inactive-chip">(Task Inactive)</p>}
       </div>

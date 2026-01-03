@@ -6,6 +6,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import './TaskResultsPage.css'; // We'll create this CSS file
 import { DAYS_OF_WEEK } from '../../constants';
 
+const formatTaskType = (type) => {
+  if (!type) return '';
+  return type
+    .toLowerCase()
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const formatTime = (timeStr) => {
     if (!timeStr) return '';
     const [hours, minutes] = timeStr.split(':');
@@ -156,10 +165,7 @@ const TaskResultsPage = () => {
         if (eventsFetchError) {
             console.error("Error fetching event details for results:", eventsFetchError);
         }
-        
-        // SORTING: Sort events by date (Ascending: Recent -> Furthest)
-        const sortedEvents = (eventsData || []).sort((a, b) => new Date(a.date) - new Date(b.date));
-        setEventDetailsForTask(sortedEvents);
+        setEventDetailsForTask(eventsData || []);
       }
 
     } catch (err) {
@@ -214,12 +220,10 @@ const TaskResultsPage = () => {
     }
     const eventsMap = new Map();
     eventDetailsForTask.forEach(event => eventsMap.set(event.id, event));
-    
-    // Use the sorted order from eventDetailsForTask, not just the config IDs
-    const eventIdsSorted = eventDetailsForTask.map(e => e.id);
+    const eventIdsInTask = task.task_config?.event_ids || [];
     const resultsByEvent = {};
 
-    eventIdsSorted.forEach(eventId => {
+    eventIdsInTask.forEach(eventId => {
       const eventInfo = eventsMap.get(eventId);
       resultsByEvent[eventId] = {
         eventId: eventId,
@@ -248,7 +252,7 @@ const TaskResultsPage = () => {
      assignments.forEach(assignment => {
         if (assignment.status === 'PENDING') {
              const assigneeName = `${assignment.assignee?.first_name || 'User'} ${assignment.assignee?.last_name || ''}`.trim();
-             eventIdsSorted.forEach(eventId => {
+             eventIdsInTask.forEach(eventId => {
                  if (resultsByEvent[eventId]) {
                      resultsByEvent[eventId].noResponse.push(assigneeName);
                  }
@@ -256,7 +260,7 @@ const TaskResultsPage = () => {
         }
      });
 
-    return eventIdsSorted.map(eventId => resultsByEvent[eventId]).filter(Boolean);
+    return eventIdsInTask.map(eventId => resultsByEvent[eventId]).filter(Boolean);
   }, [task, assignments, eventDetailsForTask]);
 
   const getEventInfo = (eventId) => {
@@ -265,19 +269,12 @@ const TaskResultsPage = () => {
     return event ? { title: event.title || 'Untitled Event', date: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A', time: event.time ? formatTime(event.time) : '' } : { title: `Event ID: ${eventId.substring(0,8)}... (Details Missing)`, date: '', time: '' };
   };
   
-const renderIndividualResponseData = (responseData, taskType, eventDetailsForTask) => {
+const renderIndividualResponseData = (responseData, taskType) => {
     if (!responseData) return <span className="no-response">No response.</span>;
     if (taskType === 'ACKNOWLEDGEMENT') { return responseData.acknowledged ? `Acknowledged: ${new Date(responseData.acknowledged_at).toLocaleString()}` : "Not Acknowledged"; }
     if (taskType === 'EVENT_AVAILABILITY') {
       if (responseData.availabilities && Object.keys(responseData.availabilities).length > 0) {
-        // Use sorted event details to order the list
-        let orderedEventIds = [];
-        if (eventDetailsForTask && eventDetailsForTask.length > 0) {
-          orderedEventIds = eventDetailsForTask.map(e => e.id).filter(id => responseData.availabilities.hasOwnProperty(id));
-        } else {
-          orderedEventIds = Object.keys(responseData.availabilities);
-        }
-
+        const orderedEventIds = task.task_config?.event_ids || Object.keys(responseData.availabilities);
         return (<ul className="availability-response-list">{orderedEventIds.map(eventId => { const availability = responseData.availabilities[eventId]; const eventInfo = getEventInfo(eventId); return (<li key={eventId}><strong>{eventInfo.title}</strong> ({eventInfo.date} {eventInfo.time}): <span className={`response-value availability-${availability?.toLowerCase()}`}>{availability || 'N/A'}</span></li>);})}</ul>);
       } else { return <span className="no-response">No availability data.</span>; }
     }
@@ -313,7 +310,7 @@ const renderIndividualResponseData = (responseData, taskType, eventDetailsForTas
       
       <div className="task-header-details">
         <h1>Results for: {task.title}</h1>
-        <p className="task-page-type">Type: {task.type.replace('_', ' ')}</p>
+        <p className="task-page-type">Type: {formatTaskType(task.type)}</p>
       </div>
 
       {task.type === 'EVENT_AVAILABILITY' && (
@@ -347,7 +344,7 @@ const renderIndividualResponseData = (responseData, taskType, eventDetailsForTas
       {task.type === 'REHEARSAL_POLL' && rehearsalPollAggregatedResults.timeLabels.length > 0 && (
         <div className="rehearsal-poll-results-grid-container task-completion-area">
           <h3>Aggregated Rehearsal Availability</h3>
-          <p>{rehearsalPollAggregatedResults.totalParticipants} participant(s) responded.</p>
+          <p>{rehearsalPollAggregatedResults.totalParticipants} out of {assignments.length} participant(s) responded.</p>
           <table className="rehearsal-poll-grid results-grid">
             <thead><tr><th>Time</th>{rehearsalPollAggregatedResults.days.map(day => <th key={day}>{day.substring(0,3)}</th>)}</tr></thead>
             <tbody>
@@ -384,7 +381,7 @@ const renderIndividualResponseData = (responseData, taskType, eventDetailsForTas
                   <td>{assign.assignee?.first_name || ''} {assign.assignee?.last_name || '(Name N/A)'}</td>
                   <td><span className={`status-badge-results status-${assign.status?.toLowerCase()}`}>{assign.status}</span></td>
                   <td>{assign.completed_at ? new Date(assign.completed_at).toLocaleString() : (assign.status === 'PENDING' ? 'Pending' : 'N/A')}</td>
-                  <td>{assign.status === 'COMPLETED' ? renderIndividualResponseData(assign.response_data, task.type, eventDetailsForTask) : <span className="no-response">Pending</span>}</td>
+                  <td>{assign.status === 'COMPLETED' ? renderIndividualResponseData(assign.response_data, task.type) : <span className="no-response">Pending</span>}</td>
                 </tr>
               ))}
             </tbody>

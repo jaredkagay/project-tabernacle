@@ -151,6 +151,15 @@ const PlanPage = () => {
 
 
   const toggleAddItemForm = () => setIsAddItemFormVisible(prev => !prev);
+  
+  // NEW: Updated handler to switch to edit mode if necessary
+  const handleToggleAddItem = () => {
+    if (!isAddItemFormVisible && !isEditMode) {
+        setIsEditMode(true);
+    }
+    toggleAddItemForm();
+  };
+
   const toggleInviteModal = () => setIsInviteModalOpen(prev => !prev);
   const handleOpenEditModal = (itemToEdit) => { setEditingItem(itemToEdit); setIsEditItemModalOpen(true); };
   const handleCloseEditModal = () => { setIsEditItemModalOpen(false); setEditingItem(null); };
@@ -420,8 +429,9 @@ const PlanPage = () => {
                 onUpdateKey={orderOfServiceRole === 'ORGANIZER' ? handleUpdateMusicalKey : undefined} 
                 userRole={profile?.role === 'ORGANIZER' ? orderOfServiceRole : 'MUSICIAN'}
               />
-              {profile?.role === 'ORGANIZER' && isEditMode && (
-                <button onClick={toggleAddItemForm} className={`toggle-add-item-form-btn ${isAddItemFormVisible ? 'cancel-style' : ''}`} style={{marginTop: '20px', width: '100%'}}>
+              {/* UPDATED: Check only for ORGANIZER role, remove isEditMode requirement */}
+              {profile?.role === 'ORGANIZER' && (
+                <button onClick={handleToggleAddItem} className={`toggle-add-item-form-btn ${isAddItemFormVisible ? 'cancel-style' : ''}`} style={{marginTop: '20px', width: '100%'}}>
                   {isAddItemFormVisible ? 'Cancel Adding Item' : '+ Add Service Item'}
                 </button>
               )}

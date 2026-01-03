@@ -10,6 +10,15 @@ import './TasksPage.css';
 import '../PlanPage/PlanPage.css'; // For modal styles
 import { FaPencilAlt, FaTrashAlt, FaLock, FaUnlock, FaCaretRight } from 'react-icons/fa';
 
+const formatTaskType = (type) => {
+  if (!type) return '';
+  return type
+    .toLowerCase()
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const TasksPage = () => {
   const { user, profile, loading: authIsLoading } = useAuth();
   
@@ -41,6 +50,7 @@ const TasksPage = () => {
 
       if (profile.role === 'ORGANIZER' && profile.organization_id) {
         try {
+          // Fetch tasks and a count of their assignments
           const { data: tasksData, error: tasksError } = await supabase
             .from('tasks')
             .select('*, assignments:task_assignments(count)')
@@ -49,6 +59,7 @@ const TasksPage = () => {
 
           if (tasksError) throw tasksError;
           
+          // Check if any assignments have responses
           const tasksWithResponseInfo = tasksData.map(t => ({
               ...t,
               has_responses: t.assignments[0]?.count > 0,
@@ -71,10 +82,7 @@ const TasksPage = () => {
         try {
           const { data, error: fetchError } = await supabase.from('task_assignments').select(`id, status, completed_at, task:tasks!inner (id, title, type, due_date, is_active)`).eq('assigned_to_user_id', user.id).in('status', ['PENDING', 'COMPLETED']);
           if (fetchError) throw fetchError;
-
-          const visibleTasks = (data || []).filter(assignment => assignment.task && assignment.task.is_active);
-
-          const sortedTasks = visibleTasks.sort((a, b) => {
+          const sortedTasks = (data || []).sort((a, b) => {
             if (a.status === 'PENDING' && b.status === 'COMPLETED') return -1;
             if (a.status === 'COMPLETED' && b.status === 'PENDING') return 1;
             if (a.status === 'PENDING') {
@@ -112,75 +120,22 @@ const TasksPage = () => {
       const taskToInsert = { ...taskData, organization_id: profile.organization_id, created_by_user_id: user.id };
       const { data: newTask, error: insertError } = await supabase.from('tasks').insert([taskToInsert]).select().single();
       if (insertError) throw insertError;
-      fetchPageData(); 
+      fetchPageData(); // Re-fetch all data
       toggleCreateTaskModal(); alert(`Task "${newTask.title}" created!`);
     } catch (err) { setError(err.message); throw err; }
     finally { setIsSubmittingTask(false); }
   };
 
-  // UPDATED: Now supports linking an event ID to the task config
-  const handleAssignTask = async (finalSelectedMusicianIds, linkedEventId = null) => {
-    if (!taskToAssign) throw new Error("Task information missing.");
-    setIsAssigningTask(true); 
-    setError('');
-
+  const handleAssignTask = async (selectedMusicianIds) => {
+    if (!taskToAssign || !selectedMusicianIds?.length) throw new Error("Task/Musicians missing.");
+    setIsAssigningTask(true); setError('');
+    const assignments = selectedMusicianIds.map(id => ({task_id: taskToAssign.id, assigned_to_user_id: id, status: 'PENDING'}));
     try {
-      // 1. If a plan (linkedEventId) was selected, save it to the task_config so we remember it next time
-      if (linkedEventId) {
-        const updatedConfig = { ...taskToAssign.task_config, linked_event_id: linkedEventId };
-        const { error: configError } = await supabase
-            .from('tasks')
-            .update({ task_config: updatedConfig })
-            .eq('id', taskToAssign.id);
-        
-        if (configError) throw new Error("Failed to link task to plan: " + configError.message);
-      }
-
-      // 2. Fetch current assignments
-      const { data: currentAssignments, error: fetchError } = await supabase
-        .from('task_assignments')
-        .select('assigned_to_user_id')
-        .eq('task_id', taskToAssign.id);
-      
-      if (fetchError) throw fetchError;
-
-      const currentIds = currentAssignments.map(r => r.assigned_to_user_id);
-      
-      // 3. Calculate Diff
-      const idsToAdd = finalSelectedMusicianIds.filter(id => !currentIds.includes(id));
-      const idsToRemove = currentIds.filter(id => !finalSelectedMusicianIds.includes(id));
-
-      // 4. Add New Assignments
-      if (idsToAdd.length > 0) {
-        const assignmentsToInsert = idsToAdd.map(id => ({
-          task_id: taskToAssign.id, 
-          assigned_to_user_id: id, 
-          status: 'PENDING'
-        }));
-        const { error: insertError } = await supabase.from('task_assignments').insert(assignmentsToInsert);
-        if (insertError) throw insertError;
-      }
-
-      // 5. Remove Deselected Assignments
-      if (idsToRemove.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('task_assignments')
-          .delete()
-          .eq('task_id', taskToAssign.id)
-          .in('assigned_to_user_id', idsToRemove);
-        if (deleteError) throw deleteError;
-      }
-
-      alert(`Assignments updated for "${taskToAssign.title}".`);
-      closeAssignTaskModal();
-      fetchPageData(); 
-
-    } catch (err) {
-      console.error("Assignment Update Error:", err);
-      setError(err.message || "Failed to update assignments.");
-    } finally {
-      setIsAssigningTask(false);
-    }
+      const { error } = await supabase.from('task_assignments').insert(assignments);
+      if (error) { if (error.message.includes('unique constraint')) throw new Error("One or more of the selected musicians has already been assigned this task."); throw error; }
+      alert(`Task "${taskToAssign.title}" assigned.`); closeAssignTaskModal();
+    } catch (err) { setError(err.message); throw err; }
+    finally { setIsAssigningTask(false); }
   };
 
   const handleUpdateTask = async (updatedFormData) => {
@@ -251,7 +206,7 @@ const TasksPage = () => {
                 <li key={task.id} className={`task-item-card ${!task.is_active ? 'task-inactive' : ''}`}>
                   <div className="task-info">
                     <h3>{task.title} {!task.is_active && <span className="inactive-chip">(Inactive)</span>}</h3>
-                    <p className="task-type">Type: {task.type.replace('_', ' ')}</p>
+                    <p className="task-type">{formatTaskType(task.type)}</p>
                     {task.due_date && <p className="task-due-date">Due: {new Date(task.due_date + 'T00:00:00').toLocaleDateString()}</p>}
                   </div>
                   <div className="task-actions">
@@ -281,7 +236,7 @@ const TasksPage = () => {
                   <li key={assignment.id} className={`task-item-card ${!assignment.task.is_active || !isOpen ? 'task-closed-display' : ''}`}>
                     <div className="task-info-musician">
                       <h3>{assignment.task.title}</h3>
-                      <p className="task-type">{assignment.task.type.replace('_', ' ')}</p>
+                      <p className="task-type">{formatTaskType(assignment.task.type)}</p>
                       {assignment.task.due_date && <p className="task-due-date">Due: {new Date(assignment.task.due_date + 'T00:00:00').toLocaleDateString()}</p>}
                     </div>
                     <div className="task-status-and-action">
@@ -297,9 +252,7 @@ const TasksPage = () => {
       )}
 
       {isCreateTaskModalOpen && profile.role === 'ORGANIZER' && ( <div className="modal-overlay" onClick={toggleCreateTaskModal}> <div className="modal-content" onClick={(e) => e.stopPropagation()}> <button className="modal-close-btn" onClick={toggleCreateTaskModal}>&times;</button> <CreateTaskForm onCreateTask={handleCreateTask} onCancel={toggleCreateTaskModal} isSubmitting={isSubmittingTask} upcomingOrgEvents={upcomingOrgEvents} /> </div> </div> )}
-      
-      {isAssignTaskModalOpen && taskToAssign && profile.role === 'ORGANIZER' && ( <div className="modal-overlay" onClick={closeAssignTaskModal}> <div className="modal-content" onClick={(e) => e.stopPropagation()}> <button className="modal-close-btn" onClick={closeAssignTaskModal}>&times;</button> <AssignTaskForm task={taskToAssign} organizationMusicians={organizationMusicians} upcomingOrgEvents={upcomingOrgEvents} onAssignTask={handleAssignTask} onCancel={closeAssignTaskModal} isSubmitting={isAssigningTask} /> </div> </div> )}
-      
+      {isAssignTaskModalOpen && taskToAssign && profile.role === 'ORGANIZER' && ( <div className="modal-overlay" onClick={closeAssignTaskModal}> <div className="modal-content" onClick={(e) => e.stopPropagation()}> <button className="modal-close-btn" onClick={closeAssignTaskModal}>&times;</button> <AssignTaskForm task={taskToAssign} organizationMusicians={organizationMusicians} onAssignTask={handleAssignTask} onCancel={closeAssignTaskModal} isSubmitting={isAssigningTask} /> </div> </div> )}
       {isEditTaskModalOpen && editingTask && profile?.role === 'ORGANIZER' && ( <div className="modal-overlay" onClick={closeEditTaskModal}> <div className="modal-content" onClick={(e) => e.stopPropagation()}> <button className="modal-close-btn" onClick={closeEditTaskModal}>&times;</button> <EditTaskForm taskToEdit={editingTask} onUpdateTask={handleUpdateTask} onCancel={closeEditTaskModal} isSubmitting={isUpdatingTask} upcomingOrgEvents={upcomingOrgEvents} /> </div> </div> )}
     </div>
   );
