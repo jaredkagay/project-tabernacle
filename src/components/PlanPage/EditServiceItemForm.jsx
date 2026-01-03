@@ -1,8 +1,9 @@
 // src/components/PlanPage/EditServiceItemForm.jsx
 import React, { useState, useEffect } from 'react';
-import './AddItemForm.css'; // Reusing styles, or create EditServiceItemForm.css
+import { supabase } from '../../supabaseClient';
+import './AddItemForm.css'; 
 
-const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopleForSingerRole }) => {
+const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopleForSingerRole, allAssignedPeople }) => {
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('');
   const [details, setDetails] = useState('');
@@ -11,7 +12,7 @@ const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopl
   const [artist, setArtist] = useState('');
   const [chordChartUrl, setChordChartUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [selectedSingerIds, setSelectedSingerIds] = useState([]); // Array for singers
+  const [selectedSingerIds, setSelectedSingerIds] = useState([]); 
 
   // Bible Verse-specific fields
   const [bibleBook, setBibleBook] = useState('');
@@ -19,6 +20,12 @@ const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopl
   const [bibleVerseRange, setBibleVerseRange] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Import Song Info State
+  const [importMode, setImportMode] = useState('NONE'); // NONE, SELECT_MUSICIAN, SELECT_SONG
+  const [importedMusicianId, setImportedMusicianId] = useState(null);
+  const [availableImportSongs, setAvailableImportSongs] = useState([]);
+  const [loadingImportSongs, setLoadingImportSongs] = useState(false);
 
   useEffect(() => {
     if (itemToEdit) {
@@ -43,6 +50,48 @@ const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopl
         ? prevSelectedIds.filter(id => id !== singerId)
         : [...prevSelectedIds, singerId]
     );
+  };
+
+  const handleStartImport = () => {
+    setImportMode('SELECT_MUSICIAN');
+  };
+
+  const handleMusicianSelect = async (musicianId) => {
+    setImportedMusicianId(musicianId);
+    setLoadingImportSongs(true);
+    setImportMode('SELECT_SONG');
+    try {
+        const { data, error } = await supabase
+            .from('songs')
+            .select('*')
+            .eq('added_by_user_id', musicianId)
+            .eq('is_primary', false)
+            .order('title', { ascending: true });
+        
+        if (error) throw error;
+        setAvailableImportSongs(data || []);
+    } catch (err) {
+        alert('Failed to fetch songs for this musician: ' + err.message);
+        setImportMode('SELECT_MUSICIAN');
+    } finally {
+        setLoadingImportSongs(false);
+    }
+  };
+
+  const handleSongImportSelect = (song) => {
+      setTitle(song.title || '');
+      setArtist(song.artist || '');
+      setChordChartUrl(song.chord_chart_url || '');
+      setYoutubeUrl(song.youtube_url || '');
+      setImportMode('NONE');
+      setAvailableImportSongs([]);
+      setImportedMusicianId(null);
+  };
+
+  const handleCancelImport = () => {
+      setImportMode('NONE');
+      setAvailableImportSongs([]);
+      setImportedMusicianId(null);
   };
 
   const handleSubmit = async (e) => {
@@ -90,6 +139,64 @@ const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopl
   const showTitleInput = itemToEdit.type !== 'Divider';
   const showDurationAndDetails = itemToEdit.type === 'Generic' || itemToEdit.type === 'Song' || itemToEdit.type === 'Bible Verse';
 
+  // --- Render Import Views ---
+  if (importMode === 'SELECT_MUSICIAN') {
+    // Deduplicate musicians by ID
+    const uniqueMusicians = [];
+    const map = new Map();
+    if (allAssignedPeople) {
+        for (const person of allAssignedPeople) {
+            if(!map.has(person.id)){
+                map.set(person.id, true);
+                uniqueMusicians.push(person);
+            }
+        }
+    }
+
+    return (
+        <div className="add-item-form edit-item-form import-view">
+            <h3>Import Song Info</h3>
+            <p>Select a musician to view their songs:</p>
+            <div className="import-list">
+                {uniqueMusicians.length > 0 ? (
+                    uniqueMusicians.map(musician => (
+                        <button key={musician.id} type="button" className="import-list-item-btn" onClick={() => handleMusicianSelect(musician.id)}>
+                            {musician.name} <span className="role-tag">({musician.role})</span>
+                        </button>
+                    ))
+                ) : (
+                    <p>No musicians assigned to this plan.</p>
+                )}
+            </div>
+            <button type="button" className="cancel-btn" onClick={handleCancelImport} style={{marginTop: '15px', width: '100%'}}>Cancel</button>
+        </div>
+    );
+  }
+
+  if (importMode === 'SELECT_SONG') {
+    return (
+        <div className="add-item-form edit-item-form import-view">
+            <h3>Select a Song</h3>
+            {loadingImportSongs ? <p>Loading songs...</p> : (
+                <div className="import-list">
+                    {availableImportSongs.length > 0 ? (
+                        availableImportSongs.map(song => (
+                            <button key={song.id} type="button" className="import-list-item-btn" onClick={() => handleSongImportSelect(song)}>
+                                <strong>{song.title}</strong>
+                                {song.artist && <span style={{display:'block', fontSize:'0.85em', color:'#666'}}>{song.artist}</span>}
+                            </button>
+                        ))
+                    ) : (
+                        <p>No secondary songs found for this musician.</p>
+                    )}
+                </div>
+            )}
+             <button type="button" className="cancel-btn" onClick={() => setImportMode('SELECT_MUSICIAN')} style={{marginTop: '15px', width: '100%'}}>Back</button>
+        </div>
+    )
+  }
+
+  // --- Main Form Render ---
   return (
     <form onSubmit={handleSubmit} className="add-item-form edit-item-form">
       <h3>Edit: {itemToEdit.title || itemToEdit.type}</h3>
@@ -181,6 +288,14 @@ const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopl
       )}
 
       <div className="form-actions" style={{ marginTop: '20px' }}>
+        {itemToEdit.type === 'Song' && (
+          <>
+            <button type="button" className="import-song-btn" onClick={handleStartImport} style={{fontSize: '0.9em', padding: '5px 10px', cursor:'pointer', backgroundColor: '#f0f0f0', border:'1px solid #ccc', borderRadius:'4px'}}>
+              Import
+            </button>
+          </>
+        )}
+        
         <button type="submit" className="submit-btn" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : 'Save Changes'}
         </button>

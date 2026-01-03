@@ -450,7 +450,11 @@ const PlanPage = () => {
         <div className="modal-overlay" onClick={toggleAddItemForm}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={toggleAddItemForm}>&times;</button>
-            <AddItemForm onAddItem={handleAddItem} assignedPeopleForSingerRole={potentialSingersForSongs} />
+            <AddItemForm 
+              onAddItem={handleAddItem} 
+              assignedPeopleForSingerRole={potentialSingersForSongs}
+              allAssignedPeople={assignedPeople}
+            />
           </div>
         </div>
       )}
@@ -458,7 +462,13 @@ const PlanPage = () => {
         <div className="modal-overlay" onClick={handleCloseEditModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={handleCloseEditModal}>&times;</button>
-            <EditServiceItemForm itemToEdit={editingItem} onUpdateItem={handleUpdateItem} onCancel={handleCloseEditModal} assignedPeopleForSingerRole={potentialSingersForSongs} />
+            <EditServiceItemForm 
+              itemToEdit={editingItem} 
+              onUpdateItem={handleUpdateItem} 
+              onCancel={handleCloseEditModal} 
+              assignedPeopleForSingerRole={potentialSingersForSongs}
+              allAssignedPeople={assignedPeople}
+            />
           </div>
         </div>
       )}
