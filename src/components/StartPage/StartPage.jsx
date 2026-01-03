@@ -35,7 +35,7 @@ const StartPage = () => {
 
   // Submission & Success State
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [signupSuccessMessage, setSignupSuccessMessage] = useState('');
+  const [signupSuccessMessage, setSignupSuccessMessage] = useState(null);
 
   const navigate = useNavigate();
 
@@ -205,8 +205,14 @@ const StartPage = () => {
         await supabase.from('organization_pre_approvals').delete().eq('id', preApprovalRecordId);
       }
 
-      setSignupSuccessMessage(`Signup complete! We've sent a confirmation link to ${userEnteredEmail}. Please click the link in that email to activate your account and log in.`);
-      setCurrentStep(4);
+      setSignupSuccessMessage(
+        <>
+          We've sent a confirmation link to {userEnteredEmail}.
+          <br />
+          Please click the link in that email to activate your account.
+        </>
+      );
+    setCurrentStep(4);
 
     } catch (err) {
       console.error("[StartPage] Final submission process error:", err);
@@ -220,32 +226,31 @@ const StartPage = () => {
 
   const renderStepOne = () => (
     <div className="role-selection-container">
-      <h2>First, tell us who you are:</h2>
+      <h2>How do you contribute to your organization?</h2>
       <div className="role-buttons">
         <button onClick={() => handleRoleSelect('MUSICIAN')} className="role-button musician-btn">I'm a Musician</button>
         <button onClick={() => handleRoleSelect('ORGANIZER')} className="role-button organizer-btn">I'm an Organizer</button>
       </div>
       <p className="role-description">
-        <strong>Musicians</strong> get invited to plans and manage their assignments.<br />
-        <strong>Organizers</strong> create plans and manage teams.
+        <strong>Musicians</strong> get invited to plans to help with the band.<br />
+        <strong>Organizers</strong> create plans and manage the musicians.
       </p>
     </div>
   );
 
   const renderStepTwoMusician = () => (
     <div className="role-specific-form">
-      <h3>Musician Details</h3>
-      <p>Please enter your organization's code. On the next screen, you will select the instruments you play from your organization's list.</p>
+      <h3>Please enter your organization's code.</h3>
        <div className="form-group">
         <label htmlFor="musician-org-code">Organization Code:</label>
-        <input type="text" id="musician-org-code" value={musicianOrgCode} onChange={(e) => setMusicianOrgCode(e.target.value)} placeholder="Enter code from your organizer" />
+        <input type="text" id="musician-org-code" value={musicianOrgCode} onChange={(e) => setMusicianOrgCode(e.target.value)}/>
       </div>
     </div>
   );
 
   const renderStepTwoOrganizer = () => (
     <div className="role-specific-form">
-      <h3>Organizer Details</h3>
+      <h3>Are you joining or creating an organization?</h3>
       <div className="form-group radio-group">
         <label><input type="radio" name="organizerAction" value="join" checked={organizerAction === 'join'} onChange={(e) => setOrganizerAction(e.target.value)} /> Join an Existing Organization</label>
         <label><input type="radio" name="organizerAction" value="create" checked={organizerAction === 'create'} onChange={(e) => setOrganizerAction(e.target.value)} /> Create a New Organization</label>
@@ -253,19 +258,19 @@ const StartPage = () => {
       {organizerAction === 'join' && (
         <div className="form-group">
           <label htmlFor="organizer-org-code">Organization Code:</label>
-          <input type="text" id="organizer-org-code" value={organizerOrgCode} onChange={(e) => setOrganizerOrgCode(e.target.value)} placeholder="Enter code to join" />
+          <input type="text" id="organizer-org-code" value={organizerOrgCode} onChange={(e) => setOrganizerOrgCode(e.target.value)}/>
         </div>
       )}
       {organizerAction === 'create' && (
         <>
           <div className="form-group">
-            <label htmlFor="new-org-id">New Organization ID:</label>
-            <input type="text" id="new-org-id" value={newOrgId} onChange={(e) => setNewOrgId(e.target.value)} placeholder="e.g., gracechurch (no spaces, unique)" />
-            <small>This will also be your organization's join code. Letters, numbers, hyphens (-), underscores (_) only. No spaces.</small>
+            <label htmlFor="new-org-name">Organization Name:</label>
+            <input type="text" id="new-org-name" value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)}/>
           </div>
           <div className="form-group">
-            <label htmlFor="new-org-name">New Organization Name:</label>
-            <input type="text" id="new-org-name" value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="e.g., Grace Church Downtown" />
+            <label htmlFor="new-org-id">Organization ID:</label>
+            <input type="text" id="new-org-id" value={newOrgId} onChange={(e) => setNewOrgId(e.target.value)}/>
+            <small>This will be the unique join code for your organization.<br />Letters, numbers, hyphens, underscores only.</small>
           </div>
         </>
       )}
@@ -274,14 +279,13 @@ const StartPage = () => {
 
   const renderStepTwo = () => (
     <div className="details-step-container">
-      <h2>You selected: {selectedRole}</h2>
       {selectedRole === 'MUSICIAN' && renderStepTwoMusician()}
       {selectedRole === 'ORGANIZER' && renderStepTwoOrganizer()}
       {step2Error && <p className="form-error">{step2Error}</p>}
       <div className="step-actions">
           <button onClick={() => {setCurrentStep(1); setSelectedRole(''); setStep2Error('');}} className="back-btn" disabled={step2Loading}>Back</button>
           <button onClick={handleProceedToStepThree} className="next-btn" disabled={step2Loading}>
-            {step2Loading ? 'Verifying...' : 'Next: Account Info'}
+            {step2Loading ? 'Verifying...' : 'Continue'}
           </button>
       </div>
     </div>
@@ -289,12 +293,12 @@ const StartPage = () => {
 
   const renderStepThree = () => (
     <div className="account-info-form">
-      <h3>Finally, Your Account Details</h3>
+      <h3>Tell us a little bit about yourself.</h3>
       <form onSubmit={handleFinalSubmit}>
         {step3Error && <p className="form-error">{step3Error}</p>}
         {selectedRole === 'MUSICIAN' && instrumentOptionsForMusician.length > 0 && (
             <div className="form-group">
-                <label>Instruments you play (select all that apply):</label>
+                <label>Instruments:</label>
                 <div className="checkbox-group settings-checkbox-group">
                 {instrumentOptionsForMusician.map(instrument => (
                     <label key={instrument} className="checkbox-label">
@@ -318,7 +322,7 @@ const StartPage = () => {
           <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isSubmitting} />
         </div>
         <div className="form-group">
-          <label htmlFor="password">Password (min. 6 characters):</label>
+          <label htmlFor="password">Password:</label>
           <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength="6" disabled={isSubmitting} />
         </div>
         <div className="form-group">
@@ -328,7 +332,7 @@ const StartPage = () => {
         <div className="step-actions">
           <button type="button" onClick={() => {setCurrentStep(2); setStep3Error('');}} className="back-btn" disabled={isSubmitting}>Back</button>
           <button type="submit" className="submit-btn main-submit-btn" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating Account...' : 'Finish Signup'}
+            {isSubmitting ? 'Creating Account...' : 'Continue'}
           </button>
         </div>
       </form>
@@ -337,9 +341,8 @@ const StartPage = () => {
 
   const renderStepFour_Success = () => (
       <div className="signup-success-message">
-        <h3>Account Creation Initiated!</h3>
+        <h3>Your account has been created successfully!</h3>
         <p>{signupSuccessMessage}</p>
-        <Link to="/" className="back-to-home-btn-success">Go to Homepage</Link>
       </div>
   );
 
@@ -349,10 +352,12 @@ const StartPage = () => {
         <Link to="/" className="back-to-home-link">&larr; Back to Home</Link>
         <h1>Create Your Account</h1>
         <div className="progress-steps">
-            <span className={currentStep === 1 ? 'active-step' : ''}>1. Role</span> &rarr;
-            <span className={currentStep === 2 ? 'active-step' : ''}>2. Details</span> &rarr;
-            <span className={currentStep === 3 && !signupSuccessMessage ? 'active-step' : ''}>3. Account</span>
-            {signupSuccessMessage && <span className="active-step">&rarr; 4. Confirm Email</span>}
+            <span className={currentStep === 1 ? 'active-step' : ''}> Role</span> &rarr;
+            <span className={currentStep === 2 ? 'active-step' : ''}> Details</span> &rarr;
+            <span className={currentStep === 3 && !signupSuccessMessage ? 'active-step' : ''}> Account</span> &rarr;
+            <span className={signupSuccessMessage ? 'active-step' : ''}> Confirm</span>
+            {/* {signupSuccessMessage && <span className="active-step">&rarr;</span>}
+            {signupSuccessMessage && <span className="active-step"> Confirm</span>} */}
         </div>
 
         {currentStep === 1 && renderStepOne()}

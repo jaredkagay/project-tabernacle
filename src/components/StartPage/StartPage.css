@@ -1,335 +1,372 @@
 /* src/components/StartPage/StartPage.css */
+
+/* 1. Import Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* 2. Global Container & Background */
 .start-page-container {
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Align card to top */
-  min-height: calc(100vh - 80px); /* Adjust if you have a fixed header */
+  align-items: center;
+  min-height: 100vh;
   padding: 40px 20px;
-  background-color: #f4f7f6; /* Light background for the page */
-  font-family: sans-serif;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  color: #ffffff;
+  /* Deep Ocean Gradient */
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%);
+  position: relative;
+  overflow-y: auto;
 }
 
+/* Background Decor */
+.start-page-container::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 3. The Glass Card */
 .start-page-card {
-  background-color: #fff;
-  padding: 30px 40px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
   width: 100%;
-  max-width: 600px;
+  max-width: 550px;
+  padding: 40px;
+  
+  /* Glassmorphism Effect */
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  
   text-align: center;
+  transition: height 0.3s ease;
 }
 
+/* Headings */
 .start-page-card h1 {
-  color: #333;
-  margin-bottom: 30px;
   font-size: 2em;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #ffffff;
+  letter-spacing: -0.02em;
 }
 
-.back-to-home-link {
-  display: block;
-  text-align: left;
+.start-page-card h2, 
+.start-page-card h3 {
+  color: #e2e8f0;
   margin-bottom: 20px;
-  color: #007bff;
+  font-weight: 600;
+}
+
+.start-page-card h3 {
+  font-size: 1.4em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 15px;
+}
+
+/* Navigation Links */
+.start-page-card .back-to-home-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #94a3b8;
   text-decoration: none;
   font-size: 0.9em;
-}
-.back-to-home-link:hover {
-  text-decoration: underline;
-}
-
-
-/* Role Selection (Step 1) */
-.role-selection-container h2 {
-  font-size: 1.5em;
-  color: #444;
-  margin-bottom: 25px;
+  font-weight: 500;
+  transition: color 0.2s;
 }
 
-.role-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 20px; /* Space between buttons */
-  margin-bottom: 25px;
+.start-page-card .back-to-home-link:hover {
+  color: #fff;
 }
 
-.role-button {
-  padding: 15px 30px;
-  font-size: 1.1em;
-  font-weight: bold;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 200px;
-}
-
-.musician-btn {
-  background-color: #3498db; /* Blue */
-  color: white;
-}
-.musician-btn:hover {
-  background-color: #2980b9;
-  transform: translateY(-2px);
-}
-
-.organizer-btn {
-  background-color: #2ecc71; /* Green */
-  color: white;
-}
-.organizer-btn:hover {
-  background-color: #27ae60;
-  transform: translateY(-2px);
-}
-
-.role-description {
-  font-size: 0.95em;
-  color: #666;
-  line-height: 1.6;
-  max-width: 450px;
-  margin: 0 auto; /* Center if container is wider */
-}
-
-/* Placeholder for Step 2 & 3 */
-.details-step-container h2 {
-  font-size: 1.5em;
-  color: #444;
-  margin-bottom: 15px;
-}
-.details-step-container p {
-  font-size: 1em;
-  color: #555;
-  margin-bottom: 20px;
-}
-.details-step-container em {
-  color: #777;
-}
-
-.back-btn {
-  padding: 8px 15px;
-  background-color: #6c757d; /* Gray */
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9em;
-  margin-top: 20px;
-}
-.back-btn:hover {
-  background-color: #5a6268;
-}
-
-/* src/components/StartPage/StartPage.css */
-/* ... (existing styles for .start-page-container, .start-page-card, .role-selection-container, etc.) ... */
-
-.progress-steps {
+/* Progress Steps */
+.start-page-card .progress-steps {
   margin-bottom: 30px;
-  font-size: 0.9em;
-  color: #777;
-}
-.progress-steps .active-step {
-  font-weight: bold;
-  color: #007bff;
-}
-
-.details-step-container h2,
-.role-specific-form h3 {
-  font-size: 1.4em;
-  color: #333;
-  margin-bottom: 20px;
-}
-.role-specific-form h3 {
-    margin-top: 0; /* Reset margin for h3 inside role-specific-form */
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+  font-size: 0.85em;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
-.role-specific-form p {
+.start-page-card .progress-steps span {
+  margin: 0 5px;
+}
+
+.start-page-card .progress-steps .active-step {
+  color: #3b82f6;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+/* --- STEP 1: ROLE SELECTION --- */
+.start-page-card .role-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+@media (min-width: 500px) {
+  .start-page-card .role-buttons {
+    flex-direction: row;
+  }
+}
+
+.start-page-card .role-button {
+  flex: 1;
+  padding: 20px;
+  font-size: 1.1em;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.start-page-card .musician-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+.start-page-card .organizer-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.start-page-card .role-description {
   font-size: 0.95em;
-  color: #555;
-  margin-bottom: 20px;
+  color: #cbd5e1;
+  line-height: 1.6;
 }
 
-.form-group {
+/* --- FORMS & INPUTS --- */
+.start-page-card .form-group {
   margin-bottom: 20px;
   text-align: left;
 }
 
-.form-group label,
-.checkbox-group label:first-child { /* For the main label of checkbox group */
+/* INCREASED SPECIFICITY: Using .start-page-card parent to win over generic styles */
+.start-page-card .form-group label {
   display: block;
   margin-bottom: 8px;
-  font-weight: bold;
-  color: #444;
+  font-size: 0.85em;
+  font-weight: 600;
+  /* Reverted to Slate Gray (Original Vision) */
+  color: #94a3b8; 
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.form-group input[type="text"],
-.form-group input[type="email"], /* For later step */
-.form-group input[type="password"] /* For later step */
- {
+.start-page-card .form-group input[type="text"],
+.start-page-card .form-group input[type="email"],
+.start-page-card .form-group input[type="password"] {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 12px 15px;
   box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
   font-size: 1em;
-}
-.form-group small {
-    font-size: 0.8em;
-    color: #666;
-    margin-top: 4px;
-    display: block;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.3s, background-color 0.3s;
 }
 
-
-.checkbox-group {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive columns */
-  gap: 10px;
-  padding: 10px 0;
+.start-page-card .form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(0, 0, 0, 0.35);
 }
 
-.checkbox-label {
+.start-page-card .form-group small {
+  color: #64748b;
+  margin-top: 6px;
+  font-size: 0.85em;
+}
+
+/* Radio Buttons */
+.start-page-card .radio-group label {
   display: flex;
   align-items: center;
-  font-weight: normal;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: #e2e8f0;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.start-page-card .radio-group label:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.start-page-card .radio-group input[type="radio"] {
+  margin-right: 12px;
+  accent-color: #3b82f6;
+  width: 16px;
+  height: 16px;
+}
+
+/* --- CHECKBOX GROUP FIX --- */
+/* We target the specific combination to override the shared 'settings-checkbox-group' class */
+.start-page-card .checkbox-group,
+.start-page-card .checkbox-group.settings-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 10px 0;
+  
+  /* FORCE OVERRIDE: Remove the white background and border from the shared class */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin-top: 0;
+}
+
+.start-page-card .checkbox-label {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 6px;
+  color: #e2e8f0;
   font-size: 0.95em;
   cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.checkbox-label input[type="checkbox"] {
-  margin-right: 8px;
-  transform: scale(1.1);
+.start-page-card .checkbox-label:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.radio-group label {
-  display: block; /* Each radio on new line */
-  margin-bottom: 10px;
-  font-weight: normal;
-  cursor: pointer;
-}
-.radio-group input[type="radio"] {
-  margin-right: 8px;
+.start-page-card .checkbox-label:has(input:checked) {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: #fff;
 }
 
-.step-actions {
+.start-page-card .checkbox-label input {
+  display: none; 
+}
+
+
+/* --- ACTION BUTTONS --- */
+.start-page-card .step-actions {
   margin-top: 30px;
   display: flex;
-  justify-content: space-between; /* Back and Next buttons on opposite ends */
-  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
 }
 
-.next-btn, .back-btn { /* Shared styles for navigation buttons within steps */
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
+.start-page-card .next-btn, 
+.start-page-card .main-submit-btn {
+  flex-grow: 1;
+  padding: 12px 24px;
   font-size: 1em;
-  font-weight: bold;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.next-btn {
-  background-color: #007bff; /* Blue */
   color: white;
-}
-.next-btn:hover {
-  background-color: #0056b3;
-}
-
-.back-btn {
-  background-color: #6c757d; /* Gray */
-  color: white;
-}
-.back-btn:hover {
-  background-color: #545b62;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.form-error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  text-align: center;
+.start-page-card .next-btn:hover, 
+.start-page-card .main-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
 }
 
-/* For Step 3 placeholder */
-.account-info-container h2 {
-  font-size: 1.5em;
-  color: #444;
-  margin-bottom: 15px;
-}
-.account-info-container p {
-    font-size: 1em;
-    color: #555;
-    margin-bottom: 10px;
-    text-align: left;
+.start-page-card .next-btn:disabled, 
+.start-page-card .main-submit-btn:disabled {
+  background: #475569;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.account-info-form h3 {
-  font-size: 1.4em;
-  color: #333;
-  margin-bottom: 25px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
+.start-page-card .back-btn {
+  padding: 12px 24px;
+  font-size: 1em;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
 }
 
-/* .account-info-form .form-group { */
-  /* Uses existing .form-group styles */
-/* } */
-
-.main-submit-btn { /* To potentially style the final submit button differently */
-  background-color: #28a745; /* Green, like get started */
-  color: white;
-  padding: 12px 25px; /* Slightly larger */
-}
-.main-submit-btn:hover:not(:disabled) {
-  background-color: #218838;
-}
-.main-submit-btn:disabled {
-    background-color: #95a5a6;
-    cursor: not-allowed;
+.start-page-card .back-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border-color: #fff;
 }
 
-/* src/components/StartPage/StartPage.css */
-/* ... (all existing styles) ... */
-
-.signup-success-message {
-  padding: 20px;
-  text-align: center;
+/* ERROR MESSAGES */
+.start-page-card .form-error {
+  background-color: rgba(220, 38, 38, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.9em;
 }
 
-.signup-success-message h3 {
-  color: #28a745; /* Green for success */
-  font-size: 1.6em;
-  margin-bottom: 15px;
+/* SUCCESS STATE */
+.start-page-card .signup-success-message h3 {
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+  border: none;
 }
 
-.signup-success-message p {
-  font-size: 1.1em;
-  color: #333;
-  line-height: 1.6;
-  margin-bottom: 25px;
+.start-page-card .signup-success-message p {
+  color: #e2e8f0;
 }
 
-.back-to-home-btn-success {
+.start-page-card .back-to-home-btn-success {
   display: inline-block;
-  padding: 10px 20px;
-  background-color: #007bff;
+  margin-top: 15px;
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   text-decoration: none;
-  border-radius: 5px;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
+  border-radius: 50px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+  transition: transform 0.2s;
 }
 
-.back-to-home-btn-success:hover {
-  background-color: #0056b3;
-}
-
-/* Update progress steps if success message is shown */
-.progress-steps span:last-child.active-step { /* If step 4 is active */
-    font-weight: bold;
-    color: #28a745; /* Green for confirmation step */
+.start-page-card .back-to-home-btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
 }
