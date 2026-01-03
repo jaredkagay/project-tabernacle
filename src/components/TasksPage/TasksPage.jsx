@@ -74,7 +74,11 @@ const TasksPage = () => {
         try {
           const { data, error: fetchError } = await supabase.from('task_assignments').select(`id, status, completed_at, task:tasks!inner (id, title, type, due_date, is_active)`).eq('assigned_to_user_id', user.id).in('status', ['PENDING', 'COMPLETED']);
           if (fetchError) throw fetchError;
-          const sortedTasks = (data || []).sort((a, b) => {
+          
+          // Filter out inactive ("locked") tasks so the musician cannot see them
+          const visibleTasks = (data || []).filter(assignment => assignment.task && assignment.task.is_active);
+
+          const sortedTasks = visibleTasks.sort((a, b) => {
             if (a.status === 'PENDING' && b.status === 'COMPLETED') return -1;
             if (a.status === 'COMPLETED' && b.status === 'PENDING') return 1;
             if (a.status === 'PENDING') {
