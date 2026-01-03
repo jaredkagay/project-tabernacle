@@ -110,7 +110,15 @@ const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDe
         const event = eventDetailsForTaskConfig.find(e => e.id === eventId);
         return event ? { title: event.title || 'Untitled Event', date: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A', time: event.time || '' } : { title: `Event (ID: ${eventId.substring(0,8)}...) - Details Missing`, date: '', time: '' };
       };
-      const orderedEventIds = taskConfig?.event_ids || Object.keys(responseData.availabilities);
+
+      // Determine order: Use sorted eventDetails if available, otherwise fallback to config/keys
+      let orderedEventIds = [];
+      if (eventDetailsForTaskConfig && eventDetailsForTaskConfig.length > 0) {
+        orderedEventIds = eventDetailsForTaskConfig.map(e => e.id).filter(id => responseData.availabilities.hasOwnProperty(id));
+      } else {
+        orderedEventIds = taskConfig?.event_ids || Object.keys(responseData.availabilities);
+      }
+
       return (
         <div className="submitted-response-details">
           <h4>Your Submitted Availability:</h4>
@@ -250,11 +258,15 @@ const TaskDetailPage = () => {
       if (data.task.type === 'EVENT_AVAILABILITY' && data.task.task_config?.event_ids?.length > 0) {
         const { data: eventsData, error: eventsError } = await supabase.from('events').select('id, title, date, time').in('id', data.task.task_config.event_ids);
         if (eventsError) { setError(prev => prev + " (Could not load event details for availability)"); }
-        setEventDetailsForTask(eventsData || []);
+        
+        // SORTING: Sort events by date (Ascending: Recent -> Furthest)
+        const sortedEvents = (eventsData || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+        setEventDetailsForTask(sortedEvents);
+        
         // Initialize responses if not already pre-filled from response_data
         if (!data.response_data?.availabilities) {
             const initialResponses = {};
-            (eventsData || []).forEach(event => { initialResponses[event.id] = ''; });
+            (sortedEvents || []).forEach(event => { initialResponses[event.id] = ''; });
             setAvailabilityResponses(initialResponses);
         }
       }
