@@ -1,39 +1,76 @@
 /* src/components/LandingPage/LandingPage.css */
+
+/* CHANGED: Importing 'Inter' instead of 'Outfit' */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* GLOBAL RESET for this component */
 .landing-container {
+  min-height: 100vh;
+  /* CHANGED: Applying 'Inter' */
+  font-family: 'Inter', sans-serif; 
+  color: #ffffff;
+  /* Deep Blue Gradient Background */
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  font-family: sans-serif;
+  position: relative;
+  overflow: hidden;
 }
 
+/* Optional: Add a subtle mesh/blob effect in the background */
+.landing-container::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* HEADER */
 .landing-header {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
+  padding: 20px 60px;
   box-sizing: border-box;
-  background-color: #f8f9fa; /* Light background for header */
+  z-index: 10;
+  /* Glass effect for header */
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .logo {
-  height: 50px; /* Adjust as needed */
+  height: 40px;
 }
 
+/* Header Login Button */
 .login-btn-header {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
+  padding: 10px 24px;
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px; /* CHANGED: Slightly less rounded than before for a sharper look */
   cursor: pointer;
-  font-size: 1em;
-}
-.login-btn-header:hover {
-  background-color: #0056b3;
+  font-size: 0.9em; /* Inter reads well a bit smaller */
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
 }
 
+.login-btn-header:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+}
+
+/* MAIN CONTENT */
 .landing-main {
   flex-grow: 1;
   display: flex;
@@ -42,81 +79,171 @@
   align-items: center;
   text-align: center;
   padding: 20px;
+  z-index: 10;
 }
 
 .landing-main h1 {
-  font-size: 3em;
+  font-size: 4em;
+  font-weight: 800; /* Inter looks great extra bold */
   margin-bottom: 20px;
-  color: #333;
+  line-height: 1.1;
+  letter-spacing: -0.02em; /* Tighten letters slightly for modern feel */
+  /* Gradient Text */
+  background: linear-gradient(to right, #ffffff, #93c5fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
 .landing-main p {
-  font-size: 1.2em;
-  color: #555;
-  margin-bottom: 40px;
+  font-size: 1.25em;
+  color: #cbd5e1; /* Light cool gray */
+  margin-bottom: 50px;
   max-width: 600px;
+  line-height: 1.6;
+  font-weight: 400;
 }
 
+/* Call to Action Button */
 .get-started-btn {
-  padding: 15px 30px;
-  font-size: 1.5em;
-  background-color: #28a745; /* Green */
+  padding: 16px 40px;
+  font-size: 1.1em;
+  font-weight: 600;
+  /* Modern bright blue gradient */
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   text-decoration: none;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
+  border-radius: 8px; /* Matching the sharper look */
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5); /* Glowing shadow */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-family: 'Inter', sans-serif;
 }
 
 .get-started-btn:hover {
-  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 20px 35px -5px rgba(59, 130, 246, 0.6);
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
 }
 
-/* Styles for LoginModal (can be in a global modal.css or PlanPage.css if reusing) */
-/* Assuming .modal-overlay, .modal-content, .modal-close-btn are defined as before */
+/* --- MODAL STYLES (Glassmorphism) --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); 
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content.auth-modal {
+  background: rgba(30, 41, 59, 0.7); 
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 40px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  position: relative;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 2em;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: #fff;
+}
+
 .auth-modal h2 {
   text-align: center;
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
+  margin-bottom: 30px;
+  font-size: 1.8em;
+  font-weight: 700;
+  color: white;
 }
+
 .auth-modal .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   text-align: left;
 }
+
 .auth-modal .form-group label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #94a3b8; /* Slate gray */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
+
 .auth-modal .form-group input {
   width: 100%;
-  padding: 10px;
+  padding: 12px 15px;
   box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: white;
+  font-size: 1em;
+  transition: border-color 0.3s;
+  font-family: 'Inter', sans-serif;
 }
+
+.auth-modal .form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(0, 0, 0, 0.3);
+}
+
 .auth-submit-btn {
   width: 100%;
-  padding: 12px;
-  font-size: 1.1em;
-  background-color: #007bff;
+  padding: 14px;
+  font-size: 1em;
+  font-weight: 600;
+  background: #3b82f6;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s;
+  font-family: 'Inter', sans-serif;
 }
+
+.auth-submit-btn:hover {
+  background-color: #2563eb;
+}
+
 .auth-submit-btn:disabled {
-  background-color: #6c757d;
+  background-color: #475569;
+  cursor: not-allowed;
 }
-.auth-submit-btn:hover:not(:disabled) {
-  background-color: #0056b3;
-}
+
 .auth-error {
-  color: #dc3545; /* Red */
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
+  background-color: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
   padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
   text-align: center;
+  font-size: 0.9em;
 }

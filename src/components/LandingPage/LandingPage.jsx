@@ -31,7 +31,7 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close-btn" onClick={onClose}>&times;</button>
-        <h2>Log In</h2>
+        <h2>It's nice to see you again.</h2>
         <form onSubmit={handleLoginSubmit}>
           {error && <p className="auth-error">{error}</p>}
           <div className="form-group">
@@ -77,8 +77,8 @@ const LandingPage = () => {
         <button onClick={openLoginModal} className="login-btn-header">Log In</button>
       </header>
       <main className="landing-main">
-        <h1>Plan Your Services, Together.</h1>
-        <p>The simple way for musicians and organizers to coordinate church events.</p>
+        <h1>Church planning, made simple.</h1>
+        <p>One platform to organize events, schedule teams,<br />and keep everyone on the same page.</p>
         <Link to="/start" className="get-started-btn">Get Started</Link>
       </main>
       {isLoginModalOpen && <LoginModal onClose={closeLoginModal} onLoginSuccess={handleLoginSuccess} />}
