@@ -300,8 +300,23 @@ hr.divider-full-line {
   cursor: grabbing;
 }
 
-/* Optional: if you want to visually indicate non-draggable items slightly */
-/* .service-item.non-draggable-item { */
-  /* For example, a very slight change in opacity or no hover effect */
-  /* opacity: 0.95; */
-/* } */
+/* ... existing styles ... */
+
+/* Add this to your CSS file */
+.item-duration-display {
+  font-size: 0.85em;
+  color: #666;
+  background-color: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 10px;
+  margin-right: 5px;
+  white-space: nowrap;
+}
+
+/* Ensure it aligns well in the flex container */
+.item-actions-and-time {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}

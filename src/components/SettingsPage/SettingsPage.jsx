@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../supabaseClient';
+import { useNavigate } from 'react-router-dom';
 import './SettingsPage.css';
 
 // --- Join Organization Form (for org-less users) ---
@@ -29,6 +30,8 @@ const JoinOrgForm = ({ onJoin, onCancel, isSubmitting }) => {
 const SettingsPage = () => {
   const { user, profile, loading: authIsLoading, refreshProfile, login } = useAuth();
   const [activeTab, setActiveTab] = useState('user');
+
+  const navigate = useNavigate();
 
   // User Settings State
   const [firstName, setFirstName] = useState('');
@@ -449,6 +452,17 @@ const SettingsPage = () => {
                         <button type="button" onClick={handleAddChecklistTask} className="add-task-btn" disabled={isOrgActionInProgress || !newChecklistTask.trim()}>+ Add Task</button>
                         </div>
                     </div>
+                    <div className="settings-form">
+                      <h3>Plan Templates</h3>
+                      <p>Configure the default items added to every new plan.</p>
+                      <button 
+                          onClick={() => navigate('/settings/default-plan')} // Ensure useNavigate is imported and hooked
+                          className="submit-btn" 
+                          style={{ marginTop: '10px' }}
+                      >
+                          Edit Default Plan
+                      </button>
+                  </div>
                     <div className="pre-approval-manager settings-form">
                         <h3>Manage Pre-Approved Emails</h3>
                         <p>Add emails to allow users to join your organization ({organization.id}).</p>

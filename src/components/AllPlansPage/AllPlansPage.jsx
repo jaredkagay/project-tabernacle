@@ -1,12 +1,13 @@
 // src/components/AllPlansPage/AllPlansPage.jsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import CreatePlanForm from './CreatePlanForm';
 import './AllPlansPage.css';
-import '../PlanPage/PlanPage.css'; // For modal styles
+import '../PlanPage/PlanPage.css'; 
 
+// Fallback items in case the organization hasn't set up a default plan yet
 const DEFAULT_SERVICE_ITEMS = [
   { type: 'Generic', title: 'Welcome', duration: '5 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
   { type: 'Generic', title: 'Announcements', duration: '5 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
@@ -22,7 +23,6 @@ const DEFAULT_SERVICE_ITEMS = [
   { type: 'Generic', title: 'Community Builder', duration: '20 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
   { type: 'Generic', title: 'Dismissal', duration: '0 min', details: 'Go in Peace. Serve the Lord.', artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, }
 ];
-
 
 const AllPlansPage = () => {
   const { user, profile, loading: authIsLoading } = useAuth();
@@ -40,7 +40,6 @@ const AllPlansPage = () => {
         return;
       }
   
-      console.log(`[AllPlansPage] fetchPlans: Started for User: ${user.id}, Role: ${profile.role}`);
       setPlansLoading(true);
       setError(null);
   
@@ -51,6 +50,7 @@ const AllPlansPage = () => {
             setError("Your organizer profile is not associated with an organization.");
             throw new Error("Organizer profile missing organization_id.");
           }
+          // Fetch descending (Newest dates first) to easily handle Archives
           const { data, error: fetchError } = await supabase
             .from('events')
             .select('id, title, date, theme')
@@ -62,6 +62,7 @@ const AllPlansPage = () => {
         } else if (profile.role === 'MUSICIAN') {
           const today = new Date().toISOString().split('T')[0];
           
+          // Fetch ascending (Oldest/Closest dates first) for Upcoming/Pending
           const { data: assignments, error: assignmentsError } = await supabase
             .from('event_assignments')
             .select(`
@@ -81,22 +82,18 @@ const AllPlansPage = () => {
           if (assignmentsError) throw assignmentsError;
           
           dataToSet = (assignments || []).map(a => {
-            if (!a.events) {
-              return null; 
-            }
+            if (!a.events) return null; 
             return { 
               ...a.events,
               assignment_status: a.status
             };
           }).filter(Boolean);
-          
-          console.log('[AllPlansPage] fetchPlans (Musician): Processed assignments to plans:', dataToSet);
         } else {
           setError("Your user role is not configured to view plans.");
         }
         setFetchedData(dataToSet);
       } catch (err) {
-        console.error("[AllPlansPage] fetchPlans: CATCH block. Error:", err.message);
+        console.error("[AllPlansPage] fetchPlans error:", err.message);
         setError(err.message || "Failed to fetch plans.");
         setFetchedData([]);
       } finally {
@@ -118,19 +115,43 @@ const AllPlansPage = () => {
     acceptedMusicianPlans
   } = useMemo(() => {
     if (!profile) return { upcomingOrganizerPlans: [], archivedOrganizerPlans: [], pendingMusicianPlans: [], acceptedMusicianPlans: [] };
+    
     if (profile.role === 'ORGANIZER') {
       const today = new Date(); today.setHours(0, 0, 0, 0);
-      const upcoming = []; const archived = [];
+      const upcoming = []; 
+      const archived = [];
+      
+      // fetchedData is Descending (2026, 2025...)
       (fetchedData || []).forEach(plan => {
         const planDate = new Date(plan.date + 'T00:00:00'); planDate.setHours(0,0,0,0);
         if (planDate >= today) upcoming.push(plan);
         else archived.push(plan);
       });
-      return { upcomingOrganizerPlans: upcoming, archivedOrganizerPlans: archived, pendingMusicianPlans: [], acceptedMusicianPlans: [] };
+      
+      // Archived: Desired Order is Descending (Most Recent -> Least Recent). 
+      // fetchedData is already Descending, so `archived` is correct.
+
+      // Upcoming: Desired Order is Ascending (Closest to Present -> Furthest).
+      // fetchedData is Descending, so `upcoming` is [Furthest ... Closest].
+      // We need to reverse it to be [Closest ... Furthest].
+      return { 
+        upcomingOrganizerPlans: upcoming.reverse(), 
+        archivedOrganizerPlans: archived, 
+        pendingMusicianPlans: [], 
+        acceptedMusicianPlans: [] 
+      };
+
     } else if (profile.role === 'MUSICIAN') {
+      // fetchedData is Ascending (Closest -> Furthest). This matches requirements.
       const pending = (fetchedData || []).filter(plan => plan.assignment_status === 'PENDING');
       const accepted = (fetchedData || []).filter(plan => plan.assignment_status === 'ACCEPTED');
-      return { pendingMusicianPlans: pending, acceptedMusicianPlans: accepted, upcomingOrganizerPlans: [], archivedOrganizerPlans: [] };
+      
+      return { 
+        pendingMusicianPlans: pending, 
+        acceptedMusicianPlans: accepted, 
+        upcomingOrganizerPlans: [], 
+        archivedOrganizerPlans: [] 
+      };
     }
     return { upcomingOrganizerPlans: [], archivedOrganizerPlans: [], pendingMusicianPlans: [], acceptedMusicianPlans: [] };
   }, [fetchedData, profile]);
@@ -139,13 +160,14 @@ const AllPlansPage = () => {
 
   const handleCreatePlan = async (newPlanData) => {
     if (!newPlanData.title || !newPlanData.date) {
-        alert("Title and Date are required."); throw new Error("Title and Date are required.");
+        alert("Title and Date are required."); 
+        return;
     }
     if (!user || !profile?.organization_id) {
-        alert("User or organization information is missing. Cannot create plan.");
-        throw new Error("User or organization information missing.");
+        alert("User or organization information is missing.");
+        return;
     }
-    let newEventId = null;
+    
     try {
       const planToInsert = {
         ...newPlanData,
@@ -155,9 +177,36 @@ const AllPlansPage = () => {
       const { data: newEvent, error: insertError } = await supabase.from('events').insert([planToInsert]).select('id').single();
       if (insertError) throw insertError;
       if (!newEvent?.id) throw new Error("Failed to retrieve new event ID.");
-      newEventId = newEvent.id;
+      const newEventId = newEvent.id;
 
-      const serviceItemsToInsert = DEFAULT_SERVICE_ITEMS.map((item, index) => ({ ...item, event_id: newEventId, sequence_number: index }));
+      let itemsTemplate = DEFAULT_SERVICE_ITEMS;
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('default_service_items')
+        .eq('id', profile.organization_id)
+        .single();
+        
+      if (orgData?.default_service_items && orgData.default_service_items.length > 0) {
+        itemsTemplate = orgData.default_service_items;
+      }
+
+      const serviceItemsToInsert = itemsTemplate.map((item, index) => ({ 
+          event_id: newEventId, 
+          sequence_number: index,
+          type: item.type,
+          title: item.title,
+          duration: item.duration,
+          details: item.details,
+          artist: item.artist,
+          chord_chart_url: item.chord_chart_url,
+          youtube_url: item.youtube_url,
+          assigned_singer_ids: item.assigned_singer_ids,
+          musical_key: item.musical_key,
+          bible_book: item.bible_book,
+          bible_chapter: item.bible_chapter,
+          bible_verse_range: item.bible_verse_range
+      }));
+
       if (serviceItemsToInsert.length > 0) {
         const { error: itemsInsertError } = await supabase.from('service_items').insert(serviceItemsToInsert);
         if (itemsInsertError) {
@@ -165,19 +214,17 @@ const AllPlansPage = () => {
           alert(`Plan created (ID: ${newEventId}), but failed to add default items. Error: ${itemsInsertError.message}`);
         }
       }
+
       setIsCreateModalOpen(false);
       navigate(`/plan/${newEventId}`);
     } catch (err) {
       console.error('Error in handleCreatePlan:', err);
       alert(`An error occurred: ${err.message}`);
-      throw err; 
     }
   };
 
-  const renderPlanListCards = (plansToRender, listTitleForEmpty) => {
-    if (!plansToRender || plansToRender.length === 0) {
-      return null; 
-    }
+  const renderPlanListCards = (plansToRender) => {
+    if (!plansToRender || plansToRender.length === 0) return null; 
     return (
       <ul className="plans-list">
         {plansToRender.map(plan => (
@@ -195,7 +242,6 @@ const AllPlansPage = () => {
     );
   };
 
-
   if (authIsLoading) { return <p className="page-status">Initializing authentication...</p>; }
   if (!user || !profile) { return <p className="page-status">User data not fully loaded. Try logging in again.</p>; }
   if (profile.role === 'ORGANIZER' && !profile.organization_id && !plansLoading) {
@@ -203,6 +249,10 @@ const AllPlansPage = () => {
   }
   if (error && !plansLoading) { return <p className="page-status error">{error}</p>; }
   if (plansLoading) { return <p className="page-status">Loading plans...</p>; }
+
+  // Helpers to determine empty states
+  const hasOrganizerPlans = upcomingOrganizerPlans.length > 0 || archivedOrganizerPlans.length > 0;
+  const hasMusicianPlans = pendingMusicianPlans.length > 0 || acceptedMusicianPlans.length > 0;
 
   return (
     <div className="all-plans-container">
@@ -217,35 +267,45 @@ const AllPlansPage = () => {
 
       {profile.role === 'ORGANIZER' && (
         <>
-          <div className="plans-section">
-            <h2>Upcoming Plans</h2>
-            {upcomingOrganizerPlans.length > 0 
-                ? renderPlanListCards(upcomingOrganizerPlans) 
-                : <p>No upcoming plans scheduled for your organization.</p>}
-          </div>
-          <div className="plans-section">
-            <h2>Archived Plans</h2>
-            {archivedOrganizerPlans.length > 0 
-                ? renderPlanListCards(archivedOrganizerPlans) 
-                : <p>No past plans found for your organization.</p>}
-          </div>
+          {!hasOrganizerPlans && (
+            <p>No plans have been scheduled for your organization.</p>
+          )}
+
+          {upcomingOrganizerPlans.length > 0 && (
+            <div className="plans-section">
+              <h2>Upcoming Plans</h2>
+              {renderPlanListCards(upcomingOrganizerPlans)}
+            </div>
+          )}
+          
+          {archivedOrganizerPlans.length > 0 && (
+            <div className="plans-section">
+              <h2>Archived Plans</h2>
+              {renderPlanListCards(archivedOrganizerPlans)}
+            </div>
+          )}
         </>
       )}
 
       {profile.role === 'MUSICIAN' && (
         <>
-          <div className="plans-section">
-            <h2>Pending Invitations</h2>
-            {pendingMusicianPlans.length > 0 
-                ? renderPlanListCards(pendingMusicianPlans) 
-                : <p>You have no pending invitations for upcoming events.</p>}
-          </div>
-          <div className="plans-section">
-            <h2>Accepted Plans</h2>
-            {acceptedMusicianPlans.length > 0 
-                ? renderPlanListCards(acceptedMusicianPlans) 
-                : <p>You have no accepted assignments for upcoming events.</p>}
-          </div>
+          {!hasMusicianPlans && (
+            <p>You have not been placed on the schedule for your organization.</p>
+          )}
+
+          {pendingMusicianPlans.length > 0 && (
+            <div className="plans-section">
+              <h2>Pending Invitations</h2>
+              {renderPlanListCards(pendingMusicianPlans)}
+            </div>
+          )}
+          
+          {acceptedMusicianPlans.length > 0 && (
+            <div className="plans-section">
+              <h2>Upcoming Plans</h2>
+              {renderPlanListCards(acceptedMusicianPlans)}
+            </div>
+          )}
         </>
       )}
       

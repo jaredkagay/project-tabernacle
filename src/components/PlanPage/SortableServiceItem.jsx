@@ -2,11 +2,11 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import './OrderOfService.css'; // All styles will be in this file
-import { FaMusic, FaYoutube, FaBookOpen, FaPencilAlt, FaTrashAlt } from 'react-icons/fa'; // Example from Font Awesome via react-icons
+import './OrderOfService.css'; 
+import { FaMusic, FaYoutube, FaBookOpen, FaPencilAlt, FaTrashAlt } from 'react-icons/fa'; 
 import { MUSICAL_KEYS } from '../../constants';
 
-export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeople, onUpdateKey, userRole }) => {
+export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeople, onUpdateKey, userRole, showTimes = true }) => {
   const isOrganizer = userRole === 'ORGANIZER';
 
   const {
@@ -42,7 +42,7 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
   const handleKeyChange = (e) => { 
     e.stopPropagation(); 
     const newKey = e.target.value; 
-    if (onUpdateKey) { // onUpdateKey is only passed for Organizers
+    if (onUpdateKey) { 
         onUpdateKey(item.id, newKey === "none" ? null : newKey); 
     }
   };
@@ -77,8 +77,8 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
       <li ref={setNodeRef} style={sortableStyle} className="service-item sortable-item item-type-divider">
         <div 
           className={`divider-draggable-content ${isOrganizer ? 'is-draggable' : ''}`}
-          {...(isOrganizer ? attributes : {})} // Only spread drag attributes if organizer
-          {...(isOrganizer ? listeners : {})}  // Only spread drag listeners if organizer
+          {...(isOrganizer ? attributes : {})} 
+          {...(isOrganizer ? listeners : {})}  
         >
           {displayTitle ? (
             <div className="divider-layout-titled">
@@ -106,8 +106,8 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
       <div className="item-main-info">
         <div 
           className={`item-drag-handle ${isOrganizer ? 'is-draggable' : ''}`}
-          {...(isOrganizer ? attributes : {})} // Only spread drag attributes if organizer
-          {...(isOrganizer ? listeners : {})}  // Only spread drag listeners if organizer
+          {...(isOrganizer ? attributes : {})} 
+          {...(isOrganizer ? listeners : {})}  
         >
           <div className="item-content">
             <span className="item-title">
@@ -135,7 +135,9 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
                 <FaBookOpen />
               </a>
             )}
-            {item.type === 'Song' && (
+            
+            {/* KEY LOGIC: Only show if showTimes is TRUE (Real Plan), otherwise hide (Default Plan) */}
+            {showTimes && item.type === 'Song' && (
               userRole === 'ORGANIZER' && onUpdateKey ? (
                 <div className="song-key-selector">
                   <select value={item.musical_key || "none"} onChange={handleKeyChange} onClick={(e) => e.stopPropagation()} title="Select musical key">
@@ -153,27 +155,27 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
                   </div>
               ) : null
             )}
+
             {onEdit && <button onClick={handleEditClick} className="item-action-btn edit-btn"><FaPencilAlt /></button>}
             {onDelete && <button onClick={handleDeleteClick} className="item-action-btn delete-btn"><FaTrashAlt /></button>}
           </div>
-          {/* Calculated Start Timestamp - only if not a divider */}
-            {item.type !== 'Divider' && item.calculatedStartTimeFormatted && (
-                <span className="item-start-time">{item.calculatedStartTimeFormatted}</span>
-            )}
+
+          {/* DURATION LOGIC: Show static duration only if showTimes is FALSE (Default Plan) */}
+          {!showTimes && item.duration && (
+            <span className="item-duration-display">{item.duration}</span>
+          )}
+
+          {/* TIME LOGIC: Show calculated time only if showTimes is TRUE (Real Plan) */}
+          {showTimes && item.type !== 'Divider' && item.calculatedStartTimeFormatted && (
+              <span className="item-start-time">{item.calculatedStartTimeFormatted}</span>
+          )}
         </div>
       </div>
 
-      {/* Scripture Reference Subtitle (if item.title exists for a Bible Verse)
-      {item.type === 'Bible Verse' && item.title && bibleReferenceText && (
-        <p className="item-details general-details">{bibleReferenceText}</p>
-      )} */}
-
-      {/* General Details (for Generic items and Songs, not for Bible Verse with separate subtitle or Dividers) */}
       {(item.details && (item.type === 'Generic' || item.type === 'Song' || item.type === 'Bible Verse')) &&
         <p className="item-details general-details">{item.details}</p>
       }
 
-      {/* Song Specific Extra Details (Singers) */}
       {item.type === 'Song' && singerNames && (
         <div className="song-extra-details item-details">
           <p>Led by <strong>{singerNames}</strong></p>

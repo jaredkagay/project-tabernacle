@@ -6,6 +6,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import './TaskDetailPage.css';
 import { DAYS_OF_WEEK } from '../../constants';
 
+const formatTaskType = (type) => {
+  if (!type) return '';
+  return type
+    .toLowerCase()
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const formatTime = (timeStr) => {
     if (!timeStr) return '';
     const [hours, minutes] = timeStr.split(':');
@@ -110,7 +119,22 @@ const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDe
         const event = eventDetailsForTaskConfig.find(e => e.id === eventId);
         return event ? { title: event.title || 'Untitled Event', date: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A', time: event.time || '' } : { title: `Event (ID: ${eventId.substring(0,8)}...) - Details Missing`, date: '', time: '' };
       };
-      const orderedEventIds = taskConfig?.event_ids || Object.keys(responseData.availabilities);
+
+      // Determine order: Use eventDetailsForTaskConfig order if available (as it is sorted by date), otherwise fallback
+      let orderedEventIds = taskConfig?.event_ids || Object.keys(responseData.availabilities);
+      
+      if (eventDetailsForTaskConfig && eventDetailsForTaskConfig.length > 0) {
+          // Create a map of ID -> Date for sorting
+          const dateMap = {};
+          eventDetailsForTaskConfig.forEach(e => dateMap[e.id] = e.date);
+          
+          orderedEventIds = [...orderedEventIds].sort((a, b) => {
+              const dateA = dateMap[a] || '9999-99-99';
+              const dateB = dateMap[b] || '9999-99-99';
+              return dateA.localeCompare(dateB);
+          });
+      }
+
       return (
         <div className="submitted-response-details">
           <h4>Your Submitted Availability:</h4>
@@ -248,7 +272,12 @@ const TaskDetailPage = () => {
 
       // Fetch event details if it's an EVENT_AVAILABILITY task
       if (data.task.type === 'EVENT_AVAILABILITY' && data.task.task_config?.event_ids?.length > 0) {
-        const { data: eventsData, error: eventsError } = await supabase.from('events').select('id, title, date, time').in('id', data.task.task_config.event_ids);
+        const { data: eventsData, error: eventsError } = await supabase
+            .from('events')
+            .select('id, title, date, time')
+            .in('id', data.task.task_config.event_ids)
+            .order('date', { ascending: true }); // Ensure sorted by date (Ascending)
+
         if (eventsError) { setError(prev => prev + " (Could not load event details for availability)"); }
         setEventDetailsForTask(eventsData || []);
         // Initialize responses if not already pre-filled from response_data
@@ -495,7 +524,7 @@ const TaskDetailPage = () => {
       
       <div className="task-header-details">
         <h1>{task.title}</h1>
-        <p className="task-page-type">Type: {task.type.replace('_', ' ')}</p>
+        <p className="task-page-type">Type: {formatTaskType(task.type)}</p>
         {task.due_date && <p className="task-page-due-date"><strong>Due:</strong> {new Date(task.due_date + 'T00:00:00').toLocaleDateString()} {!isTaskOpenForSubmission && task.is_active && <span className="task-status-chip past-due-chip">(Past Due)</span>}</p>}
         {!task.is_active && <p className="task-status-chip inactive-chip">(Task Inactive)</p>}
       </div>
@@ -584,6 +613,10 @@ const TaskDetailPage = () => {
               <div className="task-specific-form event-availability-form">
                 <h3>{isEditingResponse ? 'Edit Your Availability' : (task.task_config?.prompt || "Indicate Your Availability:")}</h3>
                 {eventDetailsForTask.length === 0 && !error && <p>Loading event details for this task...</p>}
+                
+                {/* eventDetailsForTask is already sorted by the updated fetch query.
+                    This loop will now render events in Ascending order (oldest/closest -> newest/furthest).
+                */}
                 {eventDetailsForTask.map(event => (
                   <div key={event.id} className="event-availability-item form-group">
                     <h4>{event.title} - {event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A'} {event.time || ''}</h4>

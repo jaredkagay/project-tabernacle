@@ -6,6 +6,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import './TaskResultsPage.css'; // We'll create this CSS file
 import { DAYS_OF_WEEK } from '../../constants';
 
+const formatTaskType = (type) => {
+  if (!type) return '';
+  return type
+    .toLowerCase()
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const formatTime = (timeStr) => {
     if (!timeStr) return '';
     const [hours, minutes] = timeStr.split(':');
@@ -152,7 +161,9 @@ const TaskResultsPage = () => {
         const { data: eventsData, error: eventsFetchError } = await supabase
           .from('events')
           .select('id, title, date, time')
-          .in('id', taskData.task_config.event_ids);
+          .in('id', taskData.task_config.event_ids)
+          .order('date', { ascending: true }); // Ensure sort order is correct for results view
+          
         if (eventsFetchError) {
             console.error("Error fetching event details for results:", eventsFetchError);
         }
@@ -211,16 +222,16 @@ const TaskResultsPage = () => {
     }
     const eventsMap = new Map();
     eventDetailsForTask.forEach(event => eventsMap.set(event.id, event));
-    const eventIdsInTask = task.task_config?.event_ids || [];
+    
+    // Use eventDetailsForTask to drive iteration order (it is sorted by date from the fetch)
     const resultsByEvent = {};
 
-    eventIdsInTask.forEach(eventId => {
-      const eventInfo = eventsMap.get(eventId);
-      resultsByEvent[eventId] = {
-        eventId: eventId,
-        eventTitle: eventInfo?.title || `Event ID: ${eventId.substring(0,8)}...`,
-        eventDate: eventInfo?.date ? new Date(eventInfo.date + 'T00:00:00').toLocaleDateString() : 'N/A',
-        eventTime: eventInfo?.time ? formatTime(eventInfo.time) : '',
+    eventDetailsForTask.forEach(event => {
+      resultsByEvent[event.id] = {
+        eventId: event.id,
+        eventTitle: event.title || `Event ID: ${event.id.substring(0,8)}...`,
+        eventDate: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'N/A',
+        eventTime: event.time ? formatTime(event.time) : '',
         available: [], unavailable: [], maybe: [], noResponse: []
       };
     });
@@ -243,15 +254,15 @@ const TaskResultsPage = () => {
      assignments.forEach(assignment => {
         if (assignment.status === 'PENDING') {
              const assigneeName = `${assignment.assignee?.first_name || 'User'} ${assignment.assignee?.last_name || ''}`.trim();
-             eventIdsInTask.forEach(eventId => {
-                 if (resultsByEvent[eventId]) {
-                     resultsByEvent[eventId].noResponse.push(assigneeName);
+             eventDetailsForTask.forEach(event => {
+                 if (resultsByEvent[event.id]) {
+                     resultsByEvent[event.id].noResponse.push(assigneeName);
                  }
              });
         }
      });
 
-    return eventIdsInTask.map(eventId => resultsByEvent[eventId]).filter(Boolean);
+    return eventDetailsForTask.map(event => resultsByEvent[event.id]).filter(Boolean);
   }, [task, assignments, eventDetailsForTask]);
 
   const getEventInfo = (eventId) => {
@@ -260,12 +271,24 @@ const TaskResultsPage = () => {
     return event ? { title: event.title || 'Untitled Event', date: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A', time: event.time ? formatTime(event.time) : '' } : { title: `Event ID: ${eventId.substring(0,8)}... (Details Missing)`, date: '', time: '' };
   };
   
-const renderIndividualResponseData = (responseData, taskType) => {
+const renderIndividualResponseData = (responseData, taskType, eventDetailsForTaskConfig) => {
     if (!responseData) return <span className="no-response">No response.</span>;
     if (taskType === 'ACKNOWLEDGEMENT') { return responseData.acknowledged ? `Acknowledged: ${new Date(responseData.acknowledged_at).toLocaleString()}` : "Not Acknowledged"; }
     if (taskType === 'EVENT_AVAILABILITY') {
       if (responseData.availabilities && Object.keys(responseData.availabilities).length > 0) {
-        const orderedEventIds = task.task_config?.event_ids || Object.keys(responseData.availabilities);
+        let orderedEventIds = Object.keys(responseData.availabilities);
+        
+        // Sort individual responses by date using eventDetailsForTaskConfig
+        if (eventDetailsForTaskConfig && eventDetailsForTaskConfig.length > 0) {
+            const dateMap = {};
+            eventDetailsForTaskConfig.forEach(e => dateMap[e.id] = e.date);
+            orderedEventIds = [...orderedEventIds].sort((a, b) => {
+                const dateA = dateMap[a] || '9999-99-99';
+                const dateB = dateMap[b] || '9999-99-99';
+                return dateA.localeCompare(dateB);
+            });
+        }
+
         return (<ul className="availability-response-list">{orderedEventIds.map(eventId => { const availability = responseData.availabilities[eventId]; const eventInfo = getEventInfo(eventId); return (<li key={eventId}><strong>{eventInfo.title}</strong> ({eventInfo.date} {eventInfo.time}): <span className={`response-value availability-${availability?.toLowerCase()}`}>{availability || 'N/A'}</span></li>);})}</ul>);
       } else { return <span className="no-response">No availability data.</span>; }
     }
@@ -301,7 +324,7 @@ const renderIndividualResponseData = (responseData, taskType) => {
       
       <div className="task-header-details">
         <h1>Results for: {task.title}</h1>
-        <p className="task-page-type">Type: {task.type.replace('_', ' ')}</p>
+        <p className="task-page-type">Type: {formatTaskType(task.type)}</p>
       </div>
 
       {task.type === 'EVENT_AVAILABILITY' && (
@@ -335,7 +358,7 @@ const renderIndividualResponseData = (responseData, taskType) => {
       {task.type === 'REHEARSAL_POLL' && rehearsalPollAggregatedResults.timeLabels.length > 0 && (
         <div className="rehearsal-poll-results-grid-container task-completion-area">
           <h3>Aggregated Rehearsal Availability</h3>
-          <p>{rehearsalPollAggregatedResults.totalParticipants} participant(s) responded.</p>
+          <p>{rehearsalPollAggregatedResults.totalParticipants} out of {assignments.length} participant(s) responded.</p>
           <table className="rehearsal-poll-grid results-grid">
             <thead><tr><th>Time</th>{rehearsalPollAggregatedResults.days.map(day => <th key={day}>{day.substring(0,3)}</th>)}</tr></thead>
             <tbody>
@@ -372,7 +395,8 @@ const renderIndividualResponseData = (responseData, taskType) => {
                   <td>{assign.assignee?.first_name || ''} {assign.assignee?.last_name || '(Name N/A)'}</td>
                   <td><span className={`status-badge-results status-${assign.status?.toLowerCase()}`}>{assign.status}</span></td>
                   <td>{assign.completed_at ? new Date(assign.completed_at).toLocaleString() : (assign.status === 'PENDING' ? 'Pending' : 'N/A')}</td>
-                  <td>{assign.status === 'COMPLETED' ? renderIndividualResponseData(assign.response_data, task.type) : <span className="no-response">Pending</span>}</td>
+                  {/* Updated call to pass eventDetailsForTask */}
+                  <td>{assign.status === 'COMPLETED' ? renderIndividualResponseData(assign.response_data, task.type, eventDetailsForTask) : <span className="no-response">Pending</span>}</td>
                 </tr>
               ))}
             </tbody>

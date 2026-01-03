@@ -1,8 +1,9 @@
 // src/components/PlanPage/AddItemForm.jsx
 import React, { useState, useEffect } from 'react';
-import './AddItemForm.css'; // Ensure this CSS has .form-group, .checkbox-group, etc.
+import { supabase } from '../../supabaseClient';
+import './AddItemForm.css'; 
 
-const AddItemForm = ({ onAddItem, assignedPeopleForSingerRole }) => {
+const AddItemForm = ({ onAddItem, assignedPeopleForSingerRole, allAssignedPeople }) => {
   const [type, setType] = useState('Song');
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('');
@@ -12,17 +13,24 @@ const AddItemForm = ({ onAddItem, assignedPeopleForSingerRole }) => {
   const [artist, setArtist] = useState('');
   const [chordChartUrl, setChordChartUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [selectedSingerIds, setSelectedSingerIds] = useState([]); // Array for singer IDs
+  const [selectedSingerIds, setSelectedSingerIds] = useState([]); 
 
   // Bible Verse-specific state
   const [bibleBook, setBibleBook] = useState('');
   const [bibleChapter, setBibleChapter] = useState('');
   const [bibleVerseRange, setBibleVerseRange] = useState('');
 
+  // Import Song Info State
+  const [importMode, setImportMode] = useState('NONE'); // NONE, SELECT_MUSICIAN, SELECT_SONG
+  const [importedMusicianId, setImportedMusicianId] = useState(null);
+  const [availableImportSongs, setAvailableImportSongs] = useState([]);
+  const [loadingImportSongs, setLoadingImportSongs] = useState(false);
+
   // Reset fields when type changes
   useEffect(() => {
     setArtist(''); setChordChartUrl(''); setYoutubeUrl(''); setSelectedSingerIds([]);
     setBibleBook(''); setBibleChapter(''); setBibleVerseRange('');
+    setImportMode('NONE');
 
     if (type === 'Divider') {
       setDuration('');
@@ -31,7 +39,7 @@ const AddItemForm = ({ onAddItem, assignedPeopleForSingerRole }) => {
     } else if (title === '---' && type !== 'Divider') {
       setTitle('');
     }
-  }, [type]); // Removed title from dependency here to simplify reset based on type only
+  }, [type]); 
 
   const handleSingerSelectionChange = (singerId) => {
     setSelectedSingerIds(prevSelectedIds =>
@@ -39,6 +47,48 @@ const AddItemForm = ({ onAddItem, assignedPeopleForSingerRole }) => {
         ? prevSelectedIds.filter(id => id !== singerId)
         : [...prevSelectedIds, singerId]
     );
+  };
+
+  const handleStartImport = () => {
+    setImportMode('SELECT_MUSICIAN');
+  };
+
+  const handleMusicianSelect = async (musicianId) => {
+    setImportedMusicianId(musicianId);
+    setLoadingImportSongs(true);
+    setImportMode('SELECT_SONG');
+    try {
+        const { data, error } = await supabase
+            .from('songs')
+            .select('*')
+            .eq('added_by_user_id', musicianId)
+            .eq('is_primary', false)
+            .order('title', { ascending: true });
+        
+        if (error) throw error;
+        setAvailableImportSongs(data || []);
+    } catch (err) {
+        alert('Failed to fetch songs for this musician: ' + err.message);
+        setImportMode('SELECT_MUSICIAN');
+    } finally {
+        setLoadingImportSongs(false);
+    }
+  };
+
+  const handleSongImportSelect = (song) => {
+      setTitle(song.title || '');
+      setArtist(song.artist || '');
+      setChordChartUrl(song.chord_chart_url || '');
+      setYoutubeUrl(song.youtube_url || '');
+      setImportMode('NONE');
+      setAvailableImportSongs([]);
+      setImportedMusicianId(null);
+  };
+
+  const handleCancelImport = () => {
+      setImportMode('NONE');
+      setAvailableImportSongs([]);
+      setImportedMusicianId(null);
   };
 
   const handleSubmit = (e) => {
@@ -71,7 +121,7 @@ const AddItemForm = ({ onAddItem, assignedPeopleForSingerRole }) => {
       newItemData.artist = artist.trim() || null;
       newItemData.chord_chart_url = chordChartUrl.trim() || null;
       newItemData.youtube_url = youtubeUrl.trim() || null;
-      newItemData.assigned_singer_ids = selectedSingerIds; // Assign array
+      newItemData.assigned_singer_ids = selectedSingerIds; 
     } else if (type === 'Bible Verse') {
       newItemData.bible_book = bibleBook.trim();
       newItemData.bible_chapter = bibleChapter.trim();
@@ -85,12 +135,69 @@ const AddItemForm = ({ onAddItem, assignedPeopleForSingerRole }) => {
     setDetails('');
     setArtist(''); setChordChartUrl(''); setYoutubeUrl(''); setSelectedSingerIds([]);
     setBibleBook(''); setBibleChapter(''); setBibleVerseRange('');
-    // setType('Generic'); // Optionally reset type to default
   };
 
   const showTitleInput = type !== 'Divider';
   const showDurationAndDetails = type === 'Generic' || type === 'Song' || type === 'Bible Verse';
 
+  // --- Render Import Views ---
+  if (importMode === 'SELECT_MUSICIAN') {
+      // Deduplicate musicians by ID
+      const uniqueMusicians = [];
+      const map = new Map();
+      if (allAssignedPeople) {
+          for (const person of allAssignedPeople) {
+              if(!map.has(person.id)){
+                  map.set(person.id, true);
+                  uniqueMusicians.push(person);
+              }
+          }
+      }
+
+      return (
+          <div className="add-item-form import-view">
+              <h3>Import Song Info</h3>
+              <p>Select a musician to view their songs:</p>
+              <div className="import-list">
+                  {uniqueMusicians.length > 0 ? (
+                      uniqueMusicians.map(musician => (
+                          <button key={musician.id} type="button" className="import-list-item-btn" onClick={() => handleMusicianSelect(musician.id)}>
+                              {musician.name} <span className="role-tag">({musician.role})</span>
+                          </button>
+                      ))
+                  ) : (
+                      <p>No musicians assigned to this plan.</p>
+                  )}
+              </div>
+              <button type="button" className="cancel-btn" onClick={handleCancelImport} style={{marginTop: '15px', width: '100%'}}>Cancel</button>
+          </div>
+      );
+  }
+
+  if (importMode === 'SELECT_SONG') {
+      return (
+          <div className="add-item-form import-view">
+              <h3>Select a Song</h3>
+              {loadingImportSongs ? <p>Loading songs...</p> : (
+                  <div className="import-list">
+                      {availableImportSongs.length > 0 ? (
+                          availableImportSongs.map(song => (
+                              <button key={song.id} type="button" className="import-list-item-btn" onClick={() => handleSongImportSelect(song)}>
+                                  <strong>{song.title}</strong>
+                                  {song.artist && <span style={{display:'block', fontSize:'0.85em', color:'#666'}}>{song.artist}</span>}
+                              </button>
+                          ))
+                      ) : (
+                          <p>No secondary songs found for this musician.</p>
+                      )}
+                  </div>
+              )}
+               <button type="button" className="cancel-btn" onClick={() => setImportMode('SELECT_MUSICIAN')} style={{marginTop: '15px', width: '100%'}}>Back</button>
+          </div>
+      )
+  }
+
+  // --- Render Main Form ---
   return (
     <form onSubmit={handleSubmit} className="add-item-form">
       <h3>Add New Service Item</h3>
@@ -199,6 +306,13 @@ const AddItemForm = ({ onAddItem, assignedPeopleForSingerRole }) => {
         </>
       )}
       <div className="form-actions">
+          {type === 'Song' && (
+          <>
+             <button type="button" className="import-song-btn" onClick={handleStartImport} style={{fontSize: '0.9em', padding: '5px 10px', cursor:'pointer', backgroundColor: '#f0f0f0', border:'1px solid #ccc', borderRadius:'4px'}}>
+                 Import
+              </button>
+          </>
+          )}
         <button type="submit" className="submit-btn">Add Item</button>
       </div>
     </form>

@@ -1,4 +1,4 @@
-// src/components/PlanPage/OrderOfService.js
+// src/components/PlanPage/OrderOfService.jsx
 import React from 'react';
 import {
   DndContext,
@@ -14,10 +14,11 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { SortableServiceItem } from './SortableServiceItem'; // Import the new component
+import SortableServiceItem from './SortableServiceItem'; 
 import './OrderOfService.css';
 
-const OrderOfService = ({ items, onOrderChange, onDeleteItem, onEditItem, assignedPeople, onUpdateKey, userRole }) => { // Receive onOrderChange prop
+// Added 'showTimes = true' to the props below
+const OrderOfService = ({ items, onOrderChange, onDeleteItem, onEditItem, assignedPeople, onUpdateKey, userRole, showTimes = true }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -25,7 +26,7 @@ const OrderOfService = ({ items, onOrderChange, onDeleteItem, onEditItem, assign
     })
   );
 
-  if (!items) { // Handle case where items might be null briefly during loading
+  if (!items) { 
     return <p>Loading service items...</p>;
   }
   if (items.length === 0) {
@@ -39,7 +40,7 @@ const OrderOfService = ({ items, onOrderChange, onDeleteItem, onEditItem, assign
       const oldIndex = items.findIndex((item) => item.id === active.id);
       const newIndex = items.findIndex((item) => item.id === over.id);
       const newOrderedItems = arrayMove(items, oldIndex, newIndex);
-      onOrderChange(newOrderedItems); // Call the callback with the new order
+      onOrderChange(newOrderedItems); 
     }
   };
 
@@ -50,7 +51,7 @@ const OrderOfService = ({ items, onOrderChange, onDeleteItem, onEditItem, assign
       onDragEnd={handleDragEnd}
     >
       <SortableContext
-        items={items.map(item => item.id)} // Pass array of IDs
+        items={items.map(item => item.id)} 
         strategy={verticalListSortingStrategy}
       >
         <div className="order-of-service-list">
@@ -65,7 +66,8 @@ const OrderOfService = ({ items, onOrderChange, onDeleteItem, onEditItem, assign
                 onEdit={onEditItem}
                 assignedPeople={assignedPeople}
                 onUpdateKey={onUpdateKey}
-                userRole={userRole}       // Pass down
+                userRole={userRole}
+                showTimes={showTimes} /* Passed down here */
               />
             ))}
           </ul>
