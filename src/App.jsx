@@ -12,6 +12,7 @@ import SongsPage from './components/SongsPage/SongsPage';
 import './App.css';
 import TaskDetailPage from './components/TasksPage/TaskDetailPage';
 import TaskResultsPage from './components/TasksPage/TaskResultsPage';
+import DefaultPlanPage from './components/SettingsPage/DefaultPlanPage';
 import { FaCog } from 'react-icons/fa'; // Import the gear icon
 
 // Component to protect routes
@@ -76,6 +77,7 @@ function App() {
           <Route path="/task-results/:taskId" element={<ProtectedRoute><TaskResultsPage /></ProtectedRoute>} />
           <Route path="/songs" element={<ProtectedRoute><SongsPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/settings/default-plan" element={<ProtectedRoute><DefaultPlanPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to={user ? "/plans" : "/"} replace />} />
         </Routes>
       </div>
