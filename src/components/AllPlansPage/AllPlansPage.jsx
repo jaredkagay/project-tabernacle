@@ -50,6 +50,7 @@ const AllPlansPage = () => {
             setError("Your organizer profile is not associated with an organization.");
             throw new Error("Organizer profile missing organization_id.");
           }
+          // Fetch descending (Newest dates first) to easily handle Archives
           const { data, error: fetchError } = await supabase
             .from('events')
             .select('id, title, date, theme')
@@ -61,6 +62,7 @@ const AllPlansPage = () => {
         } else if (profile.role === 'MUSICIAN') {
           const today = new Date().toISOString().split('T')[0];
           
+          // Fetch ascending (Oldest/Closest dates first) for Upcoming/Pending
           const { data: assignments, error: assignmentsError } = await supabase
             .from('event_assignments')
             .select(`
@@ -113,19 +115,43 @@ const AllPlansPage = () => {
     acceptedMusicianPlans
   } = useMemo(() => {
     if (!profile) return { upcomingOrganizerPlans: [], archivedOrganizerPlans: [], pendingMusicianPlans: [], acceptedMusicianPlans: [] };
+    
     if (profile.role === 'ORGANIZER') {
       const today = new Date(); today.setHours(0, 0, 0, 0);
-      const upcoming = []; const archived = [];
+      const upcoming = []; 
+      const archived = [];
+      
+      // fetchedData is Descending (2026, 2025...)
       (fetchedData || []).forEach(plan => {
         const planDate = new Date(plan.date + 'T00:00:00'); planDate.setHours(0,0,0,0);
         if (planDate >= today) upcoming.push(plan);
         else archived.push(plan);
       });
-      return { upcomingOrganizerPlans: upcoming, archivedOrganizerPlans: archived, pendingMusicianPlans: [], acceptedMusicianPlans: [] };
+      
+      // Archived: Desired Order is Descending (Most Recent -> Least Recent). 
+      // fetchedData is already Descending, so `archived` is correct.
+
+      // Upcoming: Desired Order is Ascending (Closest to Present -> Furthest).
+      // fetchedData is Descending, so `upcoming` is [Furthest ... Closest].
+      // We need to reverse it to be [Closest ... Furthest].
+      return { 
+        upcomingOrganizerPlans: upcoming.reverse(), 
+        archivedOrganizerPlans: archived, 
+        pendingMusicianPlans: [], 
+        acceptedMusicianPlans: [] 
+      };
+
     } else if (profile.role === 'MUSICIAN') {
+      // fetchedData is Ascending (Closest -> Furthest). This matches requirements.
       const pending = (fetchedData || []).filter(plan => plan.assignment_status === 'PENDING');
       const accepted = (fetchedData || []).filter(plan => plan.assignment_status === 'ACCEPTED');
-      return { pendingMusicianPlans: pending, acceptedMusicianPlans: accepted, upcomingOrganizerPlans: [], archivedOrganizerPlans: [] };
+      
+      return { 
+        pendingMusicianPlans: pending, 
+        acceptedMusicianPlans: accepted, 
+        upcomingOrganizerPlans: [], 
+        archivedOrganizerPlans: [] 
+      };
     }
     return { upcomingOrganizerPlans: [], archivedOrganizerPlans: [], pendingMusicianPlans: [], acceptedMusicianPlans: [] };
   }, [fetchedData, profile]);
@@ -143,7 +169,6 @@ const AllPlansPage = () => {
     }
     
     try {
-      // 1. Create the Event
       const planToInsert = {
         ...newPlanData,
         checklist_status: {},
@@ -154,7 +179,6 @@ const AllPlansPage = () => {
       if (!newEvent?.id) throw new Error("Failed to retrieve new event ID.");
       const newEventId = newEvent.id;
 
-      // 2. Fetch the Default Plan Template from Organization
       let itemsTemplate = DEFAULT_SERVICE_ITEMS;
       const { data: orgData } = await supabase
         .from('organizations')
@@ -166,9 +190,6 @@ const AllPlansPage = () => {
         itemsTemplate = orgData.default_service_items;
       }
 
-      // 3. Prepare items for insertion
-      // FIXED: Explicitly map ONLY the columns that exist in the 'service_items' table.
-      // This prevents 'id', 'updated_at', 'created_at', or any UI-only properties (like 'calculatedStartTimeFormatted') from causing errors.
       const serviceItemsToInsert = itemsTemplate.map((item, index) => ({ 
           event_id: newEventId, 
           sequence_number: index,
@@ -186,7 +207,6 @@ const AllPlansPage = () => {
           bible_verse_range: item.bible_verse_range
       }));
 
-      // 4. Insert Items
       if (serviceItemsToInsert.length > 0) {
         const { error: itemsInsertError } = await supabase.from('service_items').insert(serviceItemsToInsert);
         if (itemsInsertError) {
@@ -230,6 +250,10 @@ const AllPlansPage = () => {
   if (error && !plansLoading) { return <p className="page-status error">{error}</p>; }
   if (plansLoading) { return <p className="page-status">Loading plans...</p>; }
 
+  // Helpers to determine empty states
+  const hasOrganizerPlans = upcomingOrganizerPlans.length > 0 || archivedOrganizerPlans.length > 0;
+  const hasMusicianPlans = pendingMusicianPlans.length > 0 || acceptedMusicianPlans.length > 0;
+
   return (
     <div className="all-plans-container">
       <div className="all-plans-header">
@@ -243,35 +267,45 @@ const AllPlansPage = () => {
 
       {profile.role === 'ORGANIZER' && (
         <>
-          <div className="plans-section">
-            <h2>Upcoming Plans</h2>
-            {upcomingOrganizerPlans.length > 0 
-                ? renderPlanListCards(upcomingOrganizerPlans) 
-                : <p>No upcoming plans scheduled for your organization.</p>}
-          </div>
-          <div className="plans-section">
-            <h2>Archived Plans</h2>
-            {archivedOrganizerPlans.length > 0 
-                ? renderPlanListCards(archivedOrganizerPlans) 
-                : <p>No past plans found for your organization.</p>}
-          </div>
+          {!hasOrganizerPlans && (
+            <p>No plans have been scheduled for your organization.</p>
+          )}
+
+          {upcomingOrganizerPlans.length > 0 && (
+            <div className="plans-section">
+              <h2>Upcoming Plans</h2>
+              {renderPlanListCards(upcomingOrganizerPlans)}
+            </div>
+          )}
+          
+          {archivedOrganizerPlans.length > 0 && (
+            <div className="plans-section">
+              <h2>Archived Plans</h2>
+              {renderPlanListCards(archivedOrganizerPlans)}
+            </div>
+          )}
         </>
       )}
 
       {profile.role === 'MUSICIAN' && (
         <>
-          <div className="plans-section">
-            <h2>Pending Invitations</h2>
-            {pendingMusicianPlans.length > 0 
-                ? renderPlanListCards(pendingMusicianPlans) 
-                : <p>You have no pending invitations for upcoming events.</p>}
-          </div>
-          <div className="plans-section">
-            <h2>Accepted Plans</h2>
-            {acceptedMusicianPlans.length > 0 
-                ? renderPlanListCards(acceptedMusicianPlans) 
-                : <p>You have no accepted assignments for upcoming events.</p>}
-          </div>
+          {!hasMusicianPlans && (
+            <p>You have not been placed on the schedule for your organization.</p>
+          )}
+
+          {pendingMusicianPlans.length > 0 && (
+            <div className="plans-section">
+              <h2>Pending Invitations</h2>
+              {renderPlanListCards(pendingMusicianPlans)}
+            </div>
+          )}
+          
+          {acceptedMusicianPlans.length > 0 && (
+            <div className="plans-section">
+              <h2>Upcoming Plans</h2>
+              {renderPlanListCards(acceptedMusicianPlans)}
+            </div>
+          )}
         </>
       )}
       
