@@ -35,6 +35,8 @@
 .all-plans-content-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 0 4px 0;
+
 }
 
 /* --- HEADER --- */
