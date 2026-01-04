@@ -77,7 +77,7 @@ function App() {
 
             {/* RIGHT: User Actions */}
             <div className="nav-right">
-              {profile && <span className="hello-message hidden-mobile">{getGreeting()}, {profile.first_name}</span>}
+              {profile && <span className="hello-message hidden-mobile">{getGreeting()}, {profile.first_name}.</span>}
               
               <Link to="/settings" className="nav-icon-link settings-link" title="Settings">
                 <FaCog />
