@@ -117,11 +117,9 @@ const SongsPage = () => {
         songToUpsert.is_primary = (modalMode === 'createPrimary');
         const { error } = await supabase.from('songs').insert([songToUpsert]);
         if (error) throw error;
-        successMessage = `Song "${songDataFromForm.title}" added successfully!`;
       }
       
       closeSongModal();
-      alert(successMessage);
       logActivity(user, profile, 'SONG_ADDED', `${profile.first_name} added a new song: ${songDataFromForm.title}`);
       fetchPageData();
     } catch (err) {
@@ -138,8 +136,6 @@ const SongsPage = () => {
     try {
       const { error } = await supabase.from('songs').delete().eq('id', songId);
       if (error) throw error;
-      
-      alert(`Song "${songTitle}" deleted.`);
       
       if (isPrimary) {
         setPrimarySongs(prev => prev.filter(s => s.id !== songId));

@@ -281,20 +281,41 @@
   gap: 15px;
 }
 
+/* SHARED STYLES for strict consistency */
+.start-page-card .next-btn, 
+.start-page-card .main-submit-btn,
+.start-page-card .back-btn {
+    /* Enforce Flexbox to override any global 'inline-block' or 'inline-flex' mismatch */
+    display: flex !important; 
+    align-items: center;
+    justify-content: center;
+    
+    /* Enforce consistent text metrics */
+    line-height: 1.2;
+    height: fit-content; 
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
 .start-page-card .next-btn, 
 .start-page-card .main-submit-btn {
   flex-grow: 1;
   padding: 12px 24px;
   font-size: 1em;
   font-weight: 600;
-  border: none;
+  
+  /* Matches the 1px border of the Back button */
+  border: 1px solid transparent; 
+  
   border-radius: 8px;
   cursor: pointer;
   color: white;
-  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
   transition: transform 0.2s, box-shadow 0.2s;
+  
+  /* Prevents wrapping */
+  white-space: nowrap; 
 }
 
 .start-page-card .next-btn:hover, 
@@ -321,7 +342,6 @@
   color: #cbd5e1;
   border-radius: 8px;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
   transition: all 0.2s;
 }
 

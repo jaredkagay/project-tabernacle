@@ -276,7 +276,6 @@ const PlanPage = () => {
         setPlanPageLoading(true); setError(null);
         const { error: deleteError } = await supabase.from('events').delete().eq('id', planId);
         if (deleteError) throw deleteError;
-        alert(`Plan "${eventDetails.title}" has been deleted.`);
         navigate('/plans');
       } catch (err) {
         setError(`Failed to delete plan: ${err.message}`);
@@ -305,7 +304,6 @@ const PlanPage = () => {
     try {
       const { error } = await supabase.from('event_assignments').update({ status: 'ACCEPTED', responded_at: new Date().toISOString() }).eq('id', assignmentId);
       if (error) throw error;
-      alert("Invitation accepted!");
       logActivity(user, profile, 'INVITE_ACCEPTED', `${profile.first_name} accepted the invite for ${eventDetails.title}.`);
       fetchPlanDataAndOrgMembers();
     } catch (err) { alert(`Failed to accept: ${err.message}`); }
@@ -318,7 +316,6 @@ const PlanPage = () => {
       const { error } = await supabase.from('event_assignments').update({ status: 'DECLINED', responded_at: new Date().toISOString() }).eq('id', assignmentId);
       if (error) throw error;
       if (assignment?.id && planId) await unassignSingerFromSongs(assignment.id, planId);
-      alert("Invitation declined.");
       logActivity(user, profile, 'INVITE_DECLINED', `${profile.first_name} declined the invite for ${eventDetails.title}.`);
       fetchPlanDataAndOrgMembers();
       navigate('/plans');
@@ -333,7 +330,6 @@ const PlanPage = () => {
       const { error } = await supabase.from('event_assignments').delete().eq('id', assignmentId);
       if (error) throw error;
       if (assignment?.id && planId) await unassignSingerFromSongs(assignment.id, planId);
-      alert(`${musicianName} has been removed from the plan.`);
       fetchPlanDataAndOrgMembers();
     } catch (err) { alert(`Failed to remove: ${err.message}`);}
     finally { setPlanPageLoading(false); }
@@ -352,7 +348,6 @@ const PlanPage = () => {
       if (error) throw error;
       fetchPlanDataAndOrgMembers();
       toggleInviteModal();
-      alert("Invitation sent successfully!");
     } catch (err) {
       alert(`Failed to send invitation: ${err.message}`);
       throw err;
@@ -364,7 +359,6 @@ const PlanPage = () => {
       setPlanPageLoading(true);
       const { error: updateError } = await supabase.from('event_assignments').update(updatedData).eq('id', assignmentId);
       if (updateError) throw updateError;
-      alert('Assignment updated successfully.');
       fetchPlanDataAndOrgMembers();
       handleCloseEditAssignmentModal();
     } catch (err) {

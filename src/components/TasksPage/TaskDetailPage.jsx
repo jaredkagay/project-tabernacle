@@ -189,7 +189,6 @@ const TaskDetailPage = () => {
     setIsCompletingOrEditing(true);
     try {
         await supabase.from('task_assignments').update({ status: 'COMPLETED', completed_at: new Date().toISOString(), response_data: responsePayload }).eq('id', assignment.id);
-        alert(`Response submitted!`);
         logActivity(user, profile, 'TASK_COMPLETED', `${profile.first_name} completed: ${taskTitle}`);
         setIsEditingResponse(false);
         fetchTaskAssignmentDetails();

@@ -61,7 +61,6 @@ const DefaultPlanPage = () => {
         .eq('id', profile.organization_id);
 
       if (error) throw error;
-      alert("Default plan updated successfully!");
       navigate('/settings');
     } catch (err) {
       console.error("Error saving plan:", err);

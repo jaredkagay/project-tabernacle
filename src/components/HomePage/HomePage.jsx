@@ -237,7 +237,7 @@ const HomePage = () => {
                       <Link to="/plans" className="see-all-link">See All</Link>
                   </div>
                   {upcomingPlans.length === 0 ? (
-                      <div className="empty-state">No upcoming plans.</div>
+                      <div className="empty-state">You don't have any plans on the schedule.</div>
                   ) : (
                       <div className="card-grid-modern">
                           {upcomingPlans.slice(0, 6).map(plan => (
@@ -266,11 +266,17 @@ const HomePage = () => {
                               {activeTasks.map(task => (
                                   <Link to={`/task-results/${task.id}`} key={task.id} className="status-row">
                                       <span className="status-title">{task.title}</span>
-                                      <span className={`status-pill ${task.pendingCount === 0 ? 'pill-success' : 'pill-warning'}`}>
-                                          {task.pendingCount === 0 
-                                              ? "Complete" 
-                                              : `${task.pendingCount} Waiting`}
-                                      </span>
+                                      {!task.hasAssignments ? (
+                                        <span className="status-pill" style={{ background: '#f1f5f9', color: '#64748b' }}>
+                                          Unassigned
+                                        </span>
+                                      ) : (
+                                        <span className={`status-pill ${task.pendingCount === 0 ? 'pill-success' : 'pill-warning'}`}>
+                                            {task.pendingCount === 0 
+                                                ? "Complete" 
+                                                : `Waiting on ${task.pendingCount}`}
+                                        </span>
+                                      )}
                                   </Link>
                               ))}
                           </div>
@@ -289,7 +295,7 @@ const HomePage = () => {
                           <h2>Recent Activity</h2>
                       </div>
                       {recentActivity.length === 0 ? (
-                          <div className="empty-state-small">No recent activity.</div>
+                          <div className="empty-state-small">There has been no recent activity.</div>
                       ) : (
                           <div className="activity-feed">
                               {recentActivity.map(log => (

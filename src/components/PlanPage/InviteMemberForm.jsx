@@ -6,7 +6,6 @@ const InviteMemberForm = ({ organizationMusicians, onSendInvitation, onCancel })
   const [selectedMusicianUserId, setSelectedMusicianUserId] = useState('');
   const [selectedInstrumentsForEvent, setSelectedInstrumentsForEvent] = useState([]);
   const [availableInstrumentsForSelectedMusician, setAvailableInstrumentsForSelectedMusician] = useState([]);
-  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -30,8 +29,17 @@ const InviteMemberForm = ({ organizationMusicians, onSendInvitation, onCancel })
     }
     setIsSubmitting(true);
     try {
-      await onSendInvitation({ musician_user_id: selectedMusicianUserId, instruments: selectedInstrumentsForEvent, notes: notes.trim() });
-    } catch (error) { /* handled by parent */ } finally { setIsSubmitting(false); }
+      // Notes field removed as requested
+      await onSendInvitation({ 
+        musician_user_id: selectedMusicianUserId, 
+        instruments: selectedInstrumentsForEvent,
+        notes: null 
+      });
+    } catch (error) { 
+      /* handled by parent */ 
+    } finally { 
+      setIsSubmitting(false); 
+    }
   };
 
   return (
@@ -66,11 +74,6 @@ const InviteMemberForm = ({ organizationMusicians, onSendInvitation, onCancel })
           )}
         </div>
       )}
-
-      <div className="form-group">
-        <label htmlFor="invitation-notes">Notes</label>
-        <textarea id="invitation-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
-      </div>
 
       <div className="form-actions">
         <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>Cancel</button>

@@ -146,21 +146,29 @@ p.item-details,
 
 /* --- BUTTONS (MODERN FACELIFT) --- */
 .item-action-btn {
-  padding: 7px; 
-  font-size: 1.1em; 
+  /* CHANGED: Use fixed width/height instead of padding to ensure 
+     <a> and <button> are identical regardless of browser defaults. */
+  width: 34px;
+  height: 34px;
+  padding: 0; 
+  
+  /* Centering the icon */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  font-size: 1rem; /* Controls the size of the icon itself */
   line-height: 1; 
+  
   border: none !important;
   border-radius: 6px;
   cursor: pointer;
   color: white !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   transition: transform 0.1s ease, filter 0.2s ease;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-sizing: border-box; /* Ensures borders don't add to the width/height */
 }
-
 .item-action-btn:hover {
     filter: brightness(1.1) contrast(1.05); 
     transform: translateY(-2px);

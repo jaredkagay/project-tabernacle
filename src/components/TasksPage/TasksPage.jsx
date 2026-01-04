@@ -146,7 +146,7 @@ const TasksPage = () => {
       const { data: newTask, error: insertError } = await supabase.from('tasks').insert([taskToInsert]).select().single();
       if (insertError) throw insertError;
       fetchPageData(); 
-      toggleCreateTaskModal(); alert(`Task "${newTask.title}" created!`);
+      toggleCreateTaskModal();
     } catch (err) { setError(err.message); throw err; }
     finally { setIsSubmittingTask(false); }
   };
@@ -178,8 +178,6 @@ const TasksPage = () => {
              const { error: configError } = await supabase.from('tasks').update({ task_config: updatedConfig }).eq('id', taskToAssign.id);
              if (configError) throw configError;
         }
-
-        alert(`Task assignments updated for "${taskToAssign.title}".`);
         closeAssignTaskModal(); fetchPageData(); 
     } catch (err) { console.error("Assign Task Error:", err); setError(err.message); } 
     finally { setIsAssigningTask(false); }
@@ -192,7 +190,7 @@ const TasksPage = () => {
       const payload = { title: updatedFormData.title, due_date: updatedFormData.due_date, task_config: updatedFormData.task_config };
       const { data: updatedTask, error } = await supabase.from('tasks').update(payload).eq('id', editingTask.id).select().single();
       if (error) throw error;
-      alert(`Task "${updatedTask.title}" updated!`); fetchPageData(); closeEditTaskModal();
+      fetchPageData(); closeEditTaskModal();
     } catch (err) { setError(err.message); throw err; }
     finally { setIsUpdatingTask(false); }
   };
@@ -204,7 +202,7 @@ const TasksPage = () => {
     try {
       const { error } = await supabase.from('tasks').update({ is_active: newActive }).eq('id', taskId);
       if (error) throw error;
-      fetchPageData(); alert(`Task has been ${newActive ? "activated" : "deactivated"}.`);
+      fetchPageData();
     } catch (err) { setError(err.message); }
     finally { setActionInProgress(false); }
   };
@@ -215,7 +213,7 @@ const TasksPage = () => {
     try {
       const { error } = await supabase.from('tasks').delete().eq('id', taskId);
       if (error) throw error;
-      setCreatedTasks(prev => prev.filter(t => t.id !== taskId)); alert(`Task "${taskTitle}" has been deleted.`);
+      setCreatedTasks(prev => prev.filter(t => t.id !== taskId));
     } catch (err) { setError(err.message); }
     finally { setActionInProgress(false); }
   };
