@@ -1,72 +1,129 @@
 /* src/App.css */
-.main-nav {
-  background-color: #333;
-  padding: 10px 20px;
+
+/* Global Reset */
+html, body, #root, .App {
+  height: 100%;
+  margin: 0;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- GLASS NAVIGATION --- */
+.glass-nav {
+  /* Fixed to float over content */
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  box-sizing: border-box;
+
+  /* Ultra-transparent Glass Effect */
+  background: rgba(255, 255, 255, 0.03); 
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  
+  padding: 0.8rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
-.nav-links {
+/* Left Side (Logo + Nav Links) */
+.nav-left {
   display: flex;
   align-items: center;
-  gap: 20px;
-}
-
-.nav-links a {
-  color: white;
-  text-decoration: none;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-}
-
-.nav-links a:hover {
-  text-decoration: underline;
+  gap: 2rem;
+  flex: 1;
 }
 
 .nav-logo {
-  height: 35px;
-  margin-right: 10px;
+  height: 32px;
+  transition: transform 0.2s;
+}
+.nav-logo-link:hover .nav-logo {
+  transform: scale(1.05);
 }
 
-.nav-user-actions {
+/* Nav Links Container */
+.nav-links-container {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 1rem;
+}
+
+/* Icons */
+.nav-icon-link {
+  /* UPDATED: Much lighter for better visibility */
+  color: rgba(255, 255, 255, 0.85); 
+  font-size: 1.3rem;
+  padding: 0.6rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.nav-icon-link.active {
+  color: #60a5fa; /* Blue Highlight */
+  background: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+/* Right User Actions */
+.nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  flex: 1;
 }
 
 .hello-message {
-  color: white;
+  color: #e2e8f0;
   font-size: 0.9em;
+  font-weight: 500;
 }
 
-.logout-btn {
-  background: none;
-  border: 1px solid #fff;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
+@media (max-width: 768px) {
+  .hidden-mobile { display: none; }
+  .glass-nav { padding: 0.8rem 1rem; }
+  .nav-left { gap: 1rem; }
+}
+
+.settings-link {
+  font-size: 1.2rem;
+}
+
+.glass-logout-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #e2e8f0;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  font-family: inherit;
 }
 
-.logout-btn:hover {
-  background-color: #555;
-}
-
-.settings-icon-link {
-  color: white;
-  font-size: 1.4em; /* Controls the size of the icon */
-  display: flex;
-  align-items: center;
-  transition: color 0.2s ease;
-}
-
-.settings-icon-link:hover {
-  color: #ccc;
-  text-decoration: none; /* Prevent underline on icon hover */
+.glass-logout-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+  color: #fff;
 }
 
 .app-loading-message {
@@ -75,5 +132,5 @@
   align-items: center;
   height: 100vh;
   font-size: 1.2em;
-  font-family: sans-serif;
+  color: #64748b;
 }

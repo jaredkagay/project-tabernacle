@@ -1,6 +1,6 @@
-// src/App.js
+// src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import PlanPage from './components/PlanPage/PlanPage';
 import AllPlansPage from './components/AllPlansPage/AllPlansPage';
@@ -12,8 +12,8 @@ import SongsPage from './components/SongsPage/SongsPage';
 import TaskDetailPage from './components/TasksPage/TaskDetailPage';
 import TaskResultsPage from './components/TasksPage/TaskResultsPage';
 import DefaultPlanPage from './components/SettingsPage/DefaultPlanPage';
-import HomePage from './components/HomePage/HomePage'; // <--- IMPORT HERE
-import { FaCog } from 'react-icons/fa';
+import HomePage from './components/HomePage/HomePage';
+import { FaCog, FaCalendarAlt, FaTasks, FaMusic } from 'react-icons/fa';
 import './App.css';
 
 // Component to protect routes
@@ -27,9 +27,20 @@ const ProtectedRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading application...</div>;
-  // UPDATED: Redirect to /home instead of /plans
   return !user ? children : <Navigate to="/home" replace />;
 }
+
+// Helper to highlight active link
+const NavLink = ({ to, icon, label }) => {
+    const location = useLocation();
+    const isActive = location.pathname.startsWith(to);
+    
+    return (
+        <Link to={to} className={`nav-icon-link ${isActive ? 'active' : ''}`} title={label}>
+            {icon}
+        </Link>
+    );
+};
 
 function App() {
   const { user, profile, logout, loading } = useAuth();
@@ -50,22 +61,29 @@ function App() {
     <Router>
       <div className="App">
         {user && (
-          <nav className="main-nav">
-            <div className="nav-links">
-              {/* UPDATED: Logo now links to /home */}
-              <Link to="/home">
-                <img src="/logo.png" alt="App Logo" className="nav-logo" />
+          <nav className="glass-nav">
+            {/* LEFT: Logo + Nav Links (Docked together) */}
+            <div className="nav-left">
+              <Link to="/home" className="nav-logo-link">
+                <img src="/logo.png" alt="Logo" className="nav-logo" />
               </Link>
-              <Link to="/plans">Plans</Link>
-              <Link to="/tasks">Tasks</Link>
-              <Link to="/songs">Songs</Link>
+              
+              <div className="nav-links-container">
+                  <NavLink to="/plans" label="Plans" icon={<FaCalendarAlt />} />
+                  <NavLink to="/tasks" label="Tasks" icon={<FaTasks />} />
+                  <NavLink to="/songs" label="Songs" icon={<FaMusic />} />
+              </div>
             </div>
-            <div className="nav-user-actions">
-              {profile && <span className="hello-message">{getGreeting()}, {profile.first_name}</span>}
-              <button onClick={logout} className="logout-btn">Logout</button>
-              <Link to="/settings" className="settings-icon-link" title="Settings">
+
+            {/* RIGHT: User Actions */}
+            <div className="nav-right">
+              {profile && <span className="hello-message hidden-mobile">{getGreeting()}, {profile.first_name}</span>}
+              
+              <Link to="/settings" className="nav-icon-link settings-link" title="Settings">
                 <FaCog />
               </Link>
+              
+              <button onClick={logout} className="glass-logout-btn">Logout</button>
             </div>
           </nav>
         )}
@@ -74,7 +92,6 @@ function App() {
           <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
           <Route path="/start" element={<PublicRoute><StartPage /></PublicRoute>} />
           
-          {/* ADDED: New Home Route */}
           <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
           
           <Route path="/plans" element={<ProtectedRoute><AllPlansPage /></ProtectedRoute>} />
@@ -86,7 +103,6 @@ function App() {
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/settings/default-plan" element={<ProtectedRoute><DefaultPlanPage /></ProtectedRoute>} />
           
-          {/* UPDATED: Default fallback redirects to /home */}
           <Route path="*" element={<Navigate to={user ? "/home" : "/"} replace />} />
         </Routes>
       </div>

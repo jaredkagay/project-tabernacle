@@ -1,38 +1,52 @@
 /* src/components/HomePage/HomePage.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-.dashboard-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+/* --- MAIN WRAPPER --- */
+.dashboard-page-wrapper {
+  min-height: 100vh;
+  /* Deep Ocean Gradient */
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%);
   font-family: 'Inter', sans-serif;
-  color: #333;
+  padding: 6rem 2rem 2rem 2rem; 
+  box-sizing: border-box;
 }
 
-/* Header */
+.dashboard-content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- HEADER --- */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .dashboard-header h1 {
-  font-size: 1.8rem;
+  font-size: 2rem;
   margin: 0;
-  color: #111;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .dashboard-subtitle {
-  margin: 0.2rem 0 0 0;
-  color: #666;
-  font-size: 0.95rem;
+  margin: 0.5rem 0 0 0;
+  color: #cbd5e1;
+  font-size: 1rem;
+  font-weight: 400;
 }
 
 .header-date {
-  color: #888;
-  font-weight: 500;
+  color: #93c5fd;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
   display: none;
 }
 
@@ -40,7 +54,6 @@
   .header-date { display: block; }
 }
 
-/* Grid Layout */
 .dashboard-grid {
   display: grid;
   gap: 1.5rem;
@@ -53,38 +66,57 @@
   }
 }
 
-/* Common Panels */
+/* --- GLASSY PANELS --- */
 .dashboard-panel {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-  border: 1px solid #f0f0f0;
+  background: rgba(255, 255, 255, 0.85); 
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  color: #1e293b;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.dashboard-panel:hover {
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 0.75rem;
 }
 
 .panel-header h2 {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   margin: 0;
-  color: #444;
+  color: #0f172a;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
-/* Verse Panel */
+/* --- VERSE PANEL --- */
 .verse-panel {
-    background: linear-gradient(to right, #4f46e5, #4338ca);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(37, 99, 235, 0.9) 100%);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
 }
+
+.verse-panel:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(37, 99, 235, 0.95) 100%);
+    color: white; 
+}
+
+.verse-panel .panel-header { border-bottom-color: rgba(255, 255, 255, 0.2); }
 
 .verse-content {
     display: flex;
@@ -93,185 +125,176 @@
 }
 
 .verse-icon {
-    font-size: 2.5rem;
-    opacity: 0.8;
+    font-size: 2.2rem;
+    opacity: 0.9;
     flex-shrink: 0;
     margin-top: 0.2rem;
+    color: #bfdbfe;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
 .verse-text {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
     font-style: italic;
     line-height: 1.5;
-    margin: 0 0 0.5rem 0;
-    font-family: 'Georgia', serif;
+    margin: 0 0 0.8rem 0;
 }
 
-.verse-ref {
-    font-size: 0.9rem;
-    font-weight: 600;
-    opacity: 0.9;
-    margin: 0;
+.verse-details {
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
 }
 
-.verse-context {
-    font-weight: 400;
-    opacity: 0.7;
-    margin-left: 0.5rem;
-}
+.verse-ref { font-weight: 700; color: #eff6ff; }
+.verse-separator { margin: 0 10px; opacity: 0.6; font-size: 0.8em; }
+.verse-context { font-weight: 400; opacity: 0.9; color: #dbeafe; }
 
-/* Alert Panel (Requests) */
+/* --- ALERT PANEL --- */
 .alert-panel {
-  background: #fff8f8;
-  border-color: #ffeaea;
+  background: rgba(255, 255, 255, 0.85);
+  border-color: #fecdd3;
 }
-.alert-panel h2 { color: #d93025; }
+.alert-panel h2 { color: #be123c; }
 
 .request-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: white;
-  padding: 0.75rem;
+  padding: 1rem;
   border-radius: 8px;
-  margin-bottom: 0.5rem;
-  border: 1px solid #fce8e6;
+  margin-bottom: 0.75rem;
+  border: 1px solid #ffe4e6;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
 }
-.request-title { font-weight: 600; display: block; }
-.request-date { font-size: 0.85rem; color: #666; }
+.request-title { font-weight: 600; display: block; color: #881337; }
 
-/* Plan Cards (Grid) */
+/* --- PLAN CARDS (SHARED) --- */
 .card-grid-modern {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 1rem;
 }
 
 .modern-card {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  padding: 1rem;
-  border-radius: 8px;
+  background: white;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 1.25rem;
+  border-radius: 12px;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  transition: all 0.2s ease;
   display: block;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .modern-card:hover { 
-    transform: translateY(-3px); 
+    transform: translateY(-4px); 
     border-color: #3b82f6; 
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 12px 24px -6px rgba(59, 130, 246, 0.15);
 }
 
-.modern-card-date { font-size: 0.8rem; color: #6b7280; margin-bottom: 0.3rem; text-transform: uppercase; font-weight: 600; }
-.modern-card-title { font-weight: 700; color: #1f2937; margin-bottom: 0.3rem; }
-.modern-card-theme { font-size: 0.9rem; color: #4b5563; font-style: italic; }
+.modern-card-date { 
+    font-size: 0.75rem; 
+    color: #64748b; 
+    margin-bottom: 0.5rem; 
+    text-transform: uppercase; 
+    font-weight: 700; 
+    letter-spacing: 0.05em; 
+}
 
+.modern-card-title { 
+    font-weight: 700; 
+    color: #0f172a; 
+    margin-bottom: 0.3rem; 
+    font-size: 1.05rem; 
+}
 
-/* --- NEW: Task Cards (Modern) --- */
+.modern-card-theme { font-size: 0.9rem; color: #64748b; }
+
+/* --- TASK WIDGET SPECIFIC (2-COLUMN LAYOUT) --- */
+
 .task-card-list {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-/* We reuse .modern-card for the base style, but add specific task styling */
+/* Base card modification for Tasks */
 .task-card-modern {
-    background: white; /* Make tasks stand out as white against the grey panel if needed, or keep same */
-    padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    padding: 1rem 1.25rem; /* Slightly tighter top/bottom padding */
 }
 
-.task-card-header {
+/* The wrapper that holds "Left Info" and "Right Button" */
+.task-content-row {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.2rem;
+    gap: 1rem;
+    width: 100%;
 }
 
-.task-card-icon {
-    color: #3b82f6;
-    font-size: 0.9rem;
+/* Left Column: Title and Type */
+.task-info-col {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Takes available space */
 }
 
-.task-card-type {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    color: #6b7280;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
-
-.task-card-title {
-    font-weight: 700;
-    color: #1f2937;
+.task-card-modern .modern-card-title {
+    margin-bottom: 0.1rem; /* Very tight spacing to the type text */
     font-size: 1rem;
 }
 
-.task-card-due {
+/* The new text style replacing the pill */
+.task-type-text {
     font-size: 0.85rem;
-    color: #ef4444; /* Red for due date urgency */
+    color: #64748b; /* Slate-500 */
     font-weight: 500;
+    text-transform: capitalize;
 }
 
-.task-card-cta {
-    margin-top: 0.5rem;
+/* Right Column: Button */
+.task-action-col {
+    flex-shrink: 0;
+}
+
+/* Button Adjustments */
+.view-task-btn {
+    display: inline-block;
+    white-space: nowrap;
+    padding: 0.45rem 0.85rem;
     font-size: 0.8rem;
-    color: #3b82f6;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    opacity: 0.8;
+    pointer-events: none; /* Allows click to pass through to Link */
 }
 
-.task-card-modern:hover .task-card-cta {
-    opacity: 1;
+/* Highlight button on card hover */
+.modern-card:hover .view-task-btn {
+    background: #1d4ed8; 
 }
 
-/* Organizer Table & Status */
-.status-table { display: flex; flex-direction: column; gap: 0; }
+
+/* --- STATUS TABLE --- */
 .status-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.8rem 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 0.9rem 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
   text-decoration: none;
   color: inherit;
+  transition: background 0.2s;
 }
-.status-row:last-child { border-bottom: none; }
-.status-title { font-weight: 500; }
+.status-row:hover { background: rgba(241, 245, 249, 0.5); border-radius: 6px; }
 .status-pill { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 99px; font-weight: 600; }
-.pill-success { background: #dcfce7; color: #166534; }
-.pill-warning { background: #fef9c3; color: #854d0e; }
+.pill-success { background: #dcfce7; color: #15803d; }
+.pill-warning { background: #fef9c3; color: #a16207; }
 
-/* Quick Actions */
-.action-buttons-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-.action-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: #f3f4f6;
-    padding: 1rem 0.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #4b5563;
-    font-size: 0.85rem;
-    transition: background 0.2s;
-}
-.action-btn svg { font-size: 1.2rem; margin-bottom: 0.4rem; color: #3b82f6; }
-.action-btn:hover { background: #e5e7eb; color: #1f2937; }
-
-/* Activity Feed */
+/* --- ACTIVITY FEED --- */
 .activity-feed {
     display: flex;
     flex-direction: column;
@@ -294,8 +317,30 @@
 .activity-text { font-size: 0.9rem; color: #374151; margin: 0 0 0.2rem 0; line-height: 1.4; }
 .activity-time { font-size: 0.75rem; color: #9ca3af; }
 
-/* Misc */
-.btn-primary-small { background: #2563eb; color: white; padding: 0.4rem 0.8rem; border-radius: 4px; text-decoration: none; font-size: 0.85rem; }
-.empty-state, .empty-state-small { color: #9ca3af; font-style: italic; font-size: 0.9rem; padding: 1rem 0; }
-.see-all-link { font-size: 0.85rem; color: #3b82f6; text-decoration: none; }
-.count-badge { background: #ef4444; color: white; font-size: 0.75rem; padding: 0.1rem 0.5rem; border-radius: 10px; }
+/* --- MISC --- */
+.btn-primary-small { 
+    background: #2563eb; 
+    color: white; 
+    padding: 0.5rem 1rem; 
+    border-radius: 6px; 
+    text-decoration: none; 
+    font-size: 0.85rem; 
+    font-weight: 500; 
+    transition: background 0.2s; 
+}
+.btn-primary-small:hover { background: #1d4ed8; }
+
+.see-all-link { font-size: 0.85rem; color: #3b82f6; text-decoration: none; font-weight: 600; }
+.see-all-link:hover { color: #1d4ed8; text-decoration: underline; }
+
+.count-badge { background: #ef4444; color: white; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 99px; font-weight: 700; }
+
+.home-loading { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    color: #cbd5e1; 
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%); 
+    font-family: 'Inter', sans-serif; 
+}

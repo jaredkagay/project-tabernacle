@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../supabaseClient';
-import { FaCalendarPlus, FaClipboardList, FaMusic, FaExclamationCircle, FaBible, FaTasks, FaChevronRight } from 'react-icons/fa';
+import { FaExclamationCircle, FaBible, FaChevronRight } from 'react-icons/fa';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -28,8 +28,7 @@ const HomePage = () => {
       try {
         const today = new Date().toISOString().split('T')[0];
 
-        // --- 1. VERSE OF THE WEEK (Universal Fetch) ---
-        // Explicitly fetch the Organization's next public event to find a verse
+        // --- 1. VERSE OF THE WEEK ---
         const { data: nextOrgEvent } = await supabase
             .from('events')
             .select('id, title')
@@ -135,7 +134,7 @@ const HomePage = () => {
           });
           setActiveTasks(processedTasks);
 
-          // Fetch Recent Activity (If table exists)
+          // Fetch Recent Activity
           const { data: logs } = await supabase
              .from('activity_logs')
              .select('*')
@@ -175,167 +174,196 @@ const HomePage = () => {
   if (loading) return <div className="home-loading">Loading Dashboard...</div>;
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div>
-            <h1>{getGreeting()}, {profile?.first_name}.</h1>
-            <p className="dashboard-subtitle">Here is your ministry overview.</p>
-        </div>
-        <div className="header-date">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-        </div>
-      </header>
+    <div className="dashboard-page-wrapper">
+      <div className="dashboard-content-container">
+        
+        <header className="dashboard-header">
+          <div>
+              <h1>{getGreeting()}, {profile?.first_name}.</h1>
+              <p className="dashboard-subtitle">Here's what's going on in your organization.</p>
+          </div>
+          <div className="header-date">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </div>
+        </header>
 
-      <div className="dashboard-grid">
-          
-        {/* LEFT COLUMN */}
-        <div className="main-column">
+        <div className="dashboard-grid">
             
-            {/* 1. VERSE OF THE WEEK PANEL */}
-            {verseData && (
-                <section className="dashboard-panel verse-panel">
-                    <div className="verse-content">
-                        <FaBible className="verse-icon" />
-                        <div>
-                            <p className="verse-text">"{verseData.text ? verseData.text.trim() : '...'}"</p>
-                            <p className="verse-ref">{verseData.reference} <span className="verse-context">• From {verseData.eventTitle}</span></p>
-                        </div>
-                    </div>
-                </section>
-            )}
-
-            {/* 2. Requests (Musician Only) */}
-            {profile?.role === 'MUSICIAN' && musicianRequests.length > 0 && (
-              <section className="dashboard-panel alert-panel">
-                <div className="panel-header">
-                  <h2><FaExclamationCircle /> Action Required</h2>
-                </div>
-                <div className="requests-list">
-                  {musicianRequests.map(plan => (
-                    <div key={plan.id} className="request-row">
-                      <div className="request-info">
-                        <span className="request-title">{plan.title}</span>
-                        <span className="request-date">{formatDate(plan.date)}</span>
+          {/* LEFT COLUMN */}
+          <div className="main-column">
+              
+              {/* 1. VERSE OF THE WEEK PANEL */}
+              {verseData && (
+                  <section className="dashboard-panel verse-panel">
+                      <div className="verse-content">
+                          <FaBible className="verse-icon" />
+                          <div>
+                              <p className="verse-text">"{verseData.text ? verseData.text.trim() : '...'}"</p>
+                              <div className="verse-details">
+                                  <span className="verse-ref">{verseData.reference}</span>
+                                  <span className="verse-separator">•</span>
+                                  <span className="verse-context">from {verseData.eventTitle}</span>
+                              </div>
+                          </div>
                       </div>
-                      <Link to={`/plan/${plan.id}`} className="btn-primary-small">View Invite</Link>
-                    </div>
-                  ))}
-                </div>
+                  </section>
+              )}
+
+              {/* 2. Requests (Musician Only) */}
+              {profile?.role === 'MUSICIAN' && musicianRequests.length > 0 && (
+                <section className="dashboard-panel alert-panel">
+                  <div className="panel-header">
+                    <h2><FaExclamationCircle /> Pending Requests</h2>
+                  </div>
+                  <div className="requests-list">
+                    {musicianRequests.map(plan => (
+                      <div key={plan.id} className="request-row">
+                        <div className="request-info">
+                          <span className="request-title">{plan.title}</span>
+                          <span className="request-date">{formatDate(plan.date)}</span>
+                        </div>
+                        <Link to={`/plan/${plan.id}`} className="btn-primary-small">View Plan</Link>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 3. Upcoming Plans */}
+              <section className="dashboard-panel">
+                  <div className="panel-header">
+                      <h2>Upcoming Plans</h2>
+                      {/* UPDATED: "See All" is now visible for everyone */}
+                      <Link to="/plans" className="see-all-link">See All</Link>
+                  </div>
+                  {upcomingPlans.length === 0 ? (
+                      <div className="empty-state">No upcoming plans.</div>
+                  ) : (
+                      <div className="card-grid-modern">
+                          {upcomingPlans.slice(0, 6).map(plan => (
+                              <Link to={`/plan/${plan.id}`} key={plan.id} className="modern-card">
+                                  <div className="modern-card-date">{formatDate(plan.date)}</div>
+                                  <div className="modern-card-title">{plan.title}</div>
+                                  <div className="modern-card-theme">{plan.theme || ""}</div>
+                              </Link>
+                          ))}
+                      </div>
+                  )}
               </section>
-            )}
+              
+              {/* 4. Active Tasks Table (Organizer View) */}
+              {profile?.role === 'ORGANIZER' && (
+                  <section className="dashboard-panel">
+                      <div className="panel-header">
+                          <h2>Active Tasks Status</h2>
+                          {/* UPDATED: Added "See All" for Organizer Tasks */}
+                          <Link to="/tasks" className="see-all-link">See All</Link>
+                      </div>
+                       {activeTasks.length === 0 ? (
+                          <div className="empty-state">No active tasks.</div>
+                      ) : (
+                          <div className="status-table">
+                              {activeTasks.map(task => (
+                                  <Link to={`/task-results/${task.id}`} key={task.id} className="status-row">
+                                      <span className="status-title">{task.title}</span>
+                                      <span className={`status-pill ${task.pendingCount === 0 ? 'pill-success' : 'pill-warning'}`}>
+                                          {task.pendingCount === 0 
+                                              ? "Complete" 
+                                              : `${task.pendingCount} Waiting`}
+                                      </span>
+                                  </Link>
+                              ))}
+                          </div>
+                      )}
+                  </section>
+              )}
+          </div>
 
-            {/* 3. Upcoming Plans */}
-            <section className="dashboard-panel">
-                <div className="panel-header">
-                    <h2>Upcoming Plans</h2>
-                    {profile?.role === 'ORGANIZER' && <Link to="/plans" className="see-all-link">See All</Link>}
-                </div>
-                {upcomingPlans.length === 0 ? (
-                    <div className="empty-state">No upcoming plans.</div>
-                ) : (
-                    <div className="card-grid-modern">
-                        {upcomingPlans.slice(0, 6).map(plan => (
-                            <Link to={`/plan/${plan.id}`} key={plan.id} className="modern-card">
-                                <div className="modern-card-date">{formatDate(plan.date)}</div>
-                                <div className="modern-card-title">{plan.title}</div>
-                                <div className="modern-card-theme">{plan.theme || "No theme"}</div>
-                            </Link>
-                        ))}
-                    </div>
-                )}
-            </section>
-            
-            {/* 4. Active Tasks Table (Organizer View) */}
-            {profile?.role === 'ORGANIZER' && (
-                <section className="dashboard-panel">
-                    <div className="panel-header">
-                        <h2>Active Tasks Status</h2>
-                    </div>
-                     {activeTasks.length === 0 ? (
-                        <div className="empty-state">No active tasks.</div>
-                    ) : (
-                        <div className="status-table">
-                            {activeTasks.map(task => (
-                                <Link to={`/task-results/${task.id}`} key={task.id} className="status-row">
-                                    <span className="status-title">{task.title}</span>
-                                    <span className={`status-pill ${task.pendingCount === 0 ? 'pill-success' : 'pill-warning'}`}>
-                                        {task.pendingCount === 0 
-                                            ? "Complete" 
-                                            : `${task.pendingCount} Waiting`}
-                                    </span>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </section>
-            )}
-        </div>
+          {/* RIGHT COLUMN */}
+          <div className="side-column">
+               
+              {/* Organizer: Recent Activity */}
+              {profile?.role === 'ORGANIZER' && (
+                  <section className="dashboard-panel">
+                      <div className="panel-header">
+                          <h2>Recent Activity</h2>
+                      </div>
+                      {recentActivity.length === 0 ? (
+                          <div className="empty-state-small">No recent activity.</div>
+                      ) : (
+                          <div className="activity-feed">
+                              {recentActivity.map(log => (
+                                  <div key={log.id} className="activity-item">
+                                      <div className="activity-dot"></div>
+                                      <div className="activity-content">
+                                          <p className="activity-text">{log.description}</p>
+                                          <span className="activity-time">
+                                          {new Date(log.created_at).toLocaleDateString()}
+                                          </span>
+                                      </div>
+                                  </div>
+                              ))}
+                          </div>
+                      )}
+                  </section>
+              )}
 
-        {/* RIGHT COLUMN */}
-        <div className="side-column">
-             
-            {/* Organizer: Quick Actions & Activity */}
-            {profile?.role === 'ORGANIZER' && (
-                <>
-                    
-                    {/* Recent Activity Feed */}
-                    <section className="dashboard-panel">
-                        <div className="panel-header">
-                            <h2>Recent Activity</h2>
-                        </div>
-                        {recentActivity.length === 0 ? (
-                            <div className="empty-state-small">No recent activity.</div>
-                        ) : (
-                            <div className="activity-feed">
-                                {recentActivity.map(log => (
-                                    <div key={log.id} className="activity-item">
-                                        <div className="activity-dot"></div>
-                                        <div className="activity-content">
-                                            <p className="activity-text">{log.description}</p>
-                                            <span className="activity-time">
-                                            {new Date(log.created_at).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-                </>
-            )}
-
-             {/* Musician: Tasks Widget (UPDATED DESIGN) */}
-             {profile?.role === 'MUSICIAN' && (
+              {/* Musician: Tasks Widget */}
+              {profile?.role === 'MUSICIAN' && (
                 <section className="dashboard-panel task-widget">
-                    <div className="panel-header">
-                        <h2>Your Tasks</h2>
-                        {incompleteTasks.length > 0 && <span className="count-badge">{incompleteTasks.length}</span>}
+                  <div className="panel-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h2>Your Tasks</h2>
+                      {incompleteTasks.length > 0 && <span className="count-badge">{incompleteTasks.length}</span>}
                     </div>
-                    {incompleteTasks.length === 0 ? (
-                        <div className="empty-state-small">All caught up!</div>
-                    ) : (
-                        <div className="task-card-list">
-                            {incompleteTasks.map(assignment => (
-                                <Link to={`/task/${assignment.id}`} key={assignment.id} className="modern-card task-card-modern">
-                                    <div className="task-card-header">
-                                        <FaTasks className="task-card-icon" />
-                                        <span className="task-card-type">{formatTaskType(assignment.task.type)}</span>
-                                    </div>
-                                    <div className="task-card-title">{assignment.task.title}</div>
-                                    {assignment.task.due_date && (
-                                        <div className="task-card-due">
-                                            Due: {new Date(assignment.task.due_date).toLocaleDateString()}
-                                        </div>
-                                    )}
-                                    <div className="task-card-cta">
-                                        Tap to Complete <FaChevronRight />
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
+                    <Link to="/tasks" className="see-all-link">See All</Link>
+                  </div>
+                  {incompleteTasks.length === 0 ? (
+                    <div className="empty-state-small">All caught up!</div>
+                  ) : (
+                    <div className="task-card-list">
+                      {incompleteTasks.slice(0, 5).map(assignment => (
+                        <Link 
+                          to={`/task/${assignment.id}`} 
+                          key={assignment.id} 
+                          className="modern-card task-card-modern"
+                        >
+                          {/* 1. Date Header (Only if due date exists) */}
+                          {assignment.task.due_date && (
+                            <div className="modern-card-date">
+                              Due {new Date(assignment.task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </div>
+                          )}
+
+                          {/* 2. Content Row: Left (Info) vs Right (Button) */}
+                          <div className="task-content-row">
+                            
+                            {/* Left Col: Title & Type */}
+                            <div className="task-info-col">
+                              <div className="modern-card-title">
+                                {assignment.task.title}
+                              </div>
+                              {/* Changed from Pill to subtle text */}
+                              <div className="task-type-text">
+                                {formatTaskType(assignment.task.type)}
+                              </div>
+                            </div>
+
+                            {/* Right Col: Action Button */}
+                            <div className="task-action-col">
+                              <span className="btn-primary-small view-task-btn">
+                                View Task
+                              </span>
+                            </div>
+
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </section>
-             )}
+              )}
+          </div>
         </div>
       </div>
     </div>
