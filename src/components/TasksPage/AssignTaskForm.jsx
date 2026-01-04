@@ -63,20 +63,20 @@ const AssignTaskForm = ({ task, organizationMusicians, upcomingOrgEvents, onAssi
 
   return (
     <form onSubmit={handleAssignSubmit} className="glass-form">
-      <h3>Assign Task: {task.title}</h3>
+      <h3>Assign Task {task.title}</h3>
       
       {isLoadingExisting && <p style={{color:'#64748b'}}>Loading current assignments...</p>}
 
       {task.type === 'REHEARSAL_POLL' && (
           <div className="form-group">
-            <label>Link to Plan Roster (Optional)</label>
+            <label>Assign to Plan</label>
             <select value={selectedPlanId} onChange={(e) => loadFromPlan(e.target.value)} disabled={isSubmitting || isLoadingExisting}>
-                <option value="">-- Select a Plan to import musicians --</option>
+                <option value="">Select</option>
                 {upcomingOrgEvents.map(evt => (
                     <option key={evt.id} value={evt.id}>{new Date(evt.date).toLocaleDateString()} - {evt.title}</option>
                 ))}
             </select>
-            <p style={{fontSize:'0.85rem', color:'#64748b', marginTop:'5px'}}>Selecting a plan will select its musicians and link this poll to that event.</p>
+            <p style={{fontSize:'0.85rem', color:'#64748b', marginTop:'5px'}}>Selecting a plan will select its assigned musicians.</p>
           </div>
       )}
 

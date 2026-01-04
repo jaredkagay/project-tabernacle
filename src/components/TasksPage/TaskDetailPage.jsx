@@ -7,6 +7,8 @@ import './TaskDetailPage.css';
 import { DAYS_OF_WEEK } from '../../constants';
 import { logActivity } from '../../utils/activityLogger';
 
+import { FaCheckDouble } from 'react-icons/fa';
+
 const formatTaskType = (type) => {
   if (!type) return '';
   return type.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -63,11 +65,11 @@ const summarizeSlots = (selectedSlots, intervalMinutes = 30) => {
     for(const d in summary) ret[d] = summary[d].map(r => `${fmt(r.s)} - ${fmt(r.e)}`);
     return ret;
 };
-
+<FaCheckDouble />
 const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDetails) => {
   if (!responseData) return <p className="no-response-display"><em>No response was recorded.</em></p>;
   if (taskType === 'ACKNOWLEDGEMENT') {
-    return <p>You acknowledged this on: {responseData.acknowledged_at ? new Date(responseData.acknowledged_at).toLocaleString() : 'N/A'}</p>;
+    return <div className="submitted-response-details" style={{fontStyle: 'italic', color: '#166534'}}><FaCheckDouble /> Acknowledged</div>;
   }
   if (taskType === 'EVENT_AVAILABILITY') {
       const ids = taskConfig?.event_ids || Object.keys(responseData.availabilities || {});
@@ -123,7 +125,7 @@ const TaskDetailPage = () => {
     try {
       const { data, error: fetchError } = await supabase
         .from('task_assignments')
-        .select(`id, status, response_data, assigned_to_user_id, task:tasks!inner ( id, title, type, task_config, due_date, is_active )`)
+        .select(`id, status, response_data, completed_at, assigned_to_user_id, task:tasks!inner ( id, title, type, task_config, due_date, is_active )`)
         .eq('id', assignmentId)
         .eq('assigned_to_user_id', user.id)
         .single();

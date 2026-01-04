@@ -76,11 +76,20 @@ const renderIndividualResponseData = (data, type, taskConfig, eventDetails) => {
     }
 
     if (type === 'EVENT_AVAILABILITY') {
-        const entries = Object.entries(data.availabilities || {});
-        if (entries.length === 0) return <span className="no-response">No selections</span>;
+        const availabilities = data.availabilities || {};
+        // Sort keys based on event date
+        const sortedIds = Object.keys(availabilities).sort((a, b) => {
+            const evtA = eventDetails.find(e => e.id === a);
+            const evtB = eventDetails.find(e => e.id === b);
+            if (!evtA || !evtB) return 0;
+            return new Date(evtA.date) - new Date(evtB.date);
+        });
+
+        if (sortedIds.length === 0) return <span className="no-response">No selections</span>;
         return (
             <div className="response-detail-list">
-                {entries.map(([eid, status]) => {
+                {sortedIds.map((eid) => {
+                    const status = availabilities[eid];
                     const evt = eventDetails.find(e => e.id === eid);
                     const label = evt ? evt.title : 'Event';
                     const statusClass = status === 'YES' ? 'avail-yes' : status === 'NO' ? 'avail-no' : 'avail-maybe';

@@ -211,7 +211,7 @@
 
 .summary-table { width: 100%; border-collapse: collapse; }
 .summary-table th {
-  background: #f8fafc; padding: 1rem; font-size: 0.85rem; font-weight: 600; color: #475569; text-align: center; border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc; padding: 0.25rem 0.5rem; font-size: 0.85rem; font-weight: 600; color: #475569; text-align: center; border-bottom: 1px solid #e2e8f0;
 }
 .summary-table td {
   padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 0.9rem; color: #334155;
