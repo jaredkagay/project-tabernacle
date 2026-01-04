@@ -260,7 +260,7 @@ const HomePage = () => {
                           <Link to="/tasks" className="see-all-link">See All</Link>
                       </div>
                        {activeTasks.length === 0 ? (
-                          <div className="empty-state">No active tasks.</div>
+                          <div className="empty-state">You haven't assigned any tasks yet.</div>
                       ) : (
                           <div className="status-table">
                               {activeTasks.map(task => (

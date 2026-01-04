@@ -1,378 +1,275 @@
 /* src/components/TasksPage/TaskDetailPage.css */
 
-/* CSS Variables for Rehearsal Poll - easier theming */
-:root {
-  --poll-border-color: #ccc;
-  --poll-header-bg: #f7f7f7;
-  --poll-time-label-bg: #f7f7f7;
-  --poll-time-label-font-size: 0.75em; /* Adjusted for clarity */
-  --poll-header-font-size: 0.9em; /* Adjusted for clarity */
-
-  --poll-slot-min-size: 24px; /* Slightly larger for easier interaction */
-  --poll-slot-padding: 4px; /* Reduced padding inside slot */
-
-  --poll-available-bg: #ffffff;
-  --poll-available-border: #e0e0e0; /* Softer border for available slots */
-  --poll-available-hover-bg: #e6f4ea; /* Softer green hover */
-
-  --poll-selected-bg: #2ecc71; /* Your existing selected green */
-  --poll-selected-border: #27ae60; /* Slightly darker border for selected */
-  --poll-selected-hover-bg: #29b864; /* Slightly lighter hover for selected */
-
-  --poll-unavailable-bg: #f1f1f1;
-  --poll-unavailable-border: #e0e0e0;
-  --poll-unavailable-cursor: not-allowed;
-
-  --poll-dragging-select-bg: rgba(46, 204, 113, 0.45); /* Transparent version of selected green, slightly more opaque */
-  --poll-dragging-select-border: #2ecc71;
-  --poll-dragging-deselect-bg: rgba(231, 76, 60, 0.45); /* Transparent red, slightly more opaque */
-  --poll-dragging-deselect-border: #e74c3c;
-
-  --poll-transition-duration: 0.15s;
+/* --- LAYOUT WRAPPER (Matching TasksPage) --- */
+.task-detail-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  padding: 7rem 2rem 4rem 2rem;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  z-index: 0;
 }
 
-.task-detail-page-container {
+.task-detail-wrapper::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%);
+  z-index: -1;
+}
+
+/* --- MAIN CARD --- */
+.task-detail-card {
   max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  font-family: sans-serif;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+  color: #1e293b;
 }
 
-.task-detail-page-container h1 {
-  color: #333;
-  margin-bottom: 10px;
-  font-size: 2em;
-}
-
-.task-page-type, .task-page-description, .task-page-due-date {
-  font-size: 1em;
-  color: #555;
-  margin-bottom: 8px;
-}
-.task-page-type { font-style: italic; color: #777; }
-.task-page-description strong { color: #333; }
-
-
-.task-completion-area {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-}
-
-.task-completion-area h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #34495e;
-}
-
-.acknowledgement-text-box {
-  max-height: 300px; /* Or your preferred height */
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 15px;
-  margin-bottom: 20px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  line-height: 1.6;
-}
-.acknowledgement-text-box p {
-  margin-bottom: 0.75em;
-}
-.acknowledgement-text-box p:last-child {
-  margin-bottom: 0;
-}
-
-.complete-task-btn, .back-to-tasks-btn { /* Reusing .submit-btn styles could work */
-  padding: 10px 20px;
-  font-size: 1em;
-  font-weight: bold;
-  color: white;
-  background-color: #28a745; /* Green for complete */
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-.complete-task-btn:hover:not(:disabled), .back-to-tasks-btn:hover {
-  background-color: #218838;
-}
-.complete-task-btn:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
+/* --- HEADER SECTION --- */
 .back-to-tasks-btn {
-    background-color: #6c757d; /* Gray for back button */
-    margin-right: 10px; /* if on same line as other buttons */
-}
-.back-to-tasks-btn:hover {
-    background-color: #5a6268;
-}
-
-/* Reusable page-status and form-error/success from other CSS files if needed */
-.page-status { text-align: center; font-size: 1.2em; margin-top: 40px; padding: 20px; }
-.page-status.error { color: #e74c3c; }
-.form-success { background-color: #d4edda; color: #155724; /* ... */ }
-.form-error { background-color: #f8d7da; color: #721c24; /* ... */ }
-
-.event-availability-form {
-  /* Styles for the overall availability section if needed */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s;
 }
 
+.back-to-tasks-btn:hover { color: #3b82f6; }
+
+.task-detail-header h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.02em;
+}
+
+.task-detail-meta {
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.meta-value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.chip-status {
+  display: inline-block;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.8rem;
+  border-radius: 99px;
+  background: #e2e8f0;
+  color: #475569;
+  font-weight: 600;
+}
+.chip-status.past-due { background: #fee2e2; color: #b91c1c; }
+
+/* --- COMPLETION AREA --- */
+.task-completion-area h3 {
+  font-size: 1.25rem;
+  color: #0f172a;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+/* Text Box (Acknowledgement) */
+.acknowledgement-text-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  line-height: 1.6;
+  color: #334155;
+  margin-bottom: 2rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* --- BUTTONS --- */
+.complete-task-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 0.8rem 2rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+  transition: all 0.2s;
+}
+
+.complete-task-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+.complete-task-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-btn {
+  margin-left: 1rem;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-btn:hover { color: #0f172a; text-decoration: underline; }
+
+/* --- REHEARSAL POLL GRID (Modernized) --- */
+:root {
+  --poll-border: #e2e8f0;
+  --poll-bg: #ffffff;
+  --poll-header-bg: #f1f5f9;
+  --poll-selected-bg: #10b981; /* Emerald Green */
+  --poll-hover-bg: #e2e8f0;
+}
+
+.rehearsal-poll-grid-container {
+  border: 1px solid var(--poll-border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.rehearsal-poll-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rehearsal-poll-grid th {
+  background: var(--poll-header-bg);
+  padding: 1rem 0.5rem;
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 600;
+  border-bottom: 1px solid var(--poll-border);
+  border-right: 1px solid var(--poll-border);
+}
+
+.rehearsal-poll-grid td {
+  border-right: 1px solid var(--poll-border);
+  border-bottom: 1px solid var(--poll-border);
+  height: 36px;
+  padding: 0;
+}
+
+.rehearsal-poll-grid td:first-child {
+  background: #f8fafc;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.poll-slot {
+  cursor: pointer;
+  background: white;
+  transition: background 0.1s;
+}
+
+.poll-slot:hover { background: #f1f5f9; }
+
+.poll-slot.selected {
+  background: var(--poll-selected-bg);
+}
+
+.poll-slot.selected:hover {
+  background: #059669; /* Darker emerald */
+}
+
+/* Dragging visual cues */
+.poll-slot.dragging-to-select {
+  background: rgba(16, 185, 129, 0.4) !important;
+}
+.poll-slot.dragging-to-deselect {
+  background: rgba(239, 68, 68, 0.4) !important; /* Red tint */
+}
+
+/* --- EVENT AVAILABILITY --- */
 .event-availability-item {
-  padding: 15px;
-  margin-bottom: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  background-color: #fdfdfd;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
 }
 
 .event-availability-item h4 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #333;
+  margin: 0 0 0.8rem 0;
+  color: #334155;
+  font-weight: 600;
 }
 
 .availability-options {
   display: flex;
-  gap: 15px; /* Space between radio buttons */
-  flex-wrap: wrap; /* Allow wrapping if options are many */
+  gap: 1.5rem;
 }
 
 .radio-label {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   cursor: pointer;
-  font-size: 0.95em;
+  font-weight: 500;
+  color: #475569;
 }
 
-.radio-label input[type="radio"] {
-  margin-right: 5px;
-  transform: scale(1.1);
-}
-
-/* --- REHEARSAL POLL STYLES --- */
-.rehearsal-poll-form {
-  /* Styles for the overall poll section if needed */
-  margin-top: 20px; /* Added some top margin */
-}
-
-.rehearsal-poll-grid-container {
-  overflow-x: auto; /* Allow horizontal scrolling for many days */
-  margin-bottom: 20px;
-  border: 1px solid var(--poll-border-color); /* Added border around container */
-  border-radius: 4px; /* Soften container edges */
-}
-
-/* --- REHEARSAL POLL STYLES --- */
-/* ... (your existing poll styles) ... */
-
-/* Prevent text selection within the poll grid and its container */
-.rehearsal-poll-grid-container,
-.rehearsal-poll-grid th,
-.rehearsal-poll-grid td {
-  user-select: none; /* Standard */
-  -webkit-user-select: none; /* Safari, Chrome, Opera */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
-}
-
-/* ... (rest of your poll styles like .poll-slot, .dragging-to-select etc.) ... */
-
-.rehearsal-poll-grid {
-  border-collapse: collapse;
-  width: 100%; /* Changed from 30% to use container width */
-  min-width: max-content; /* Ensures table expands if content is wider */
-  table-layout: fixed; /* Helps with column widths */
-}
-
-/* Consolidated and updated th, td styles */
-.rehearsal-poll-grid th,
-.rehearsal-poll-grid td {
-  border: 1px solid var(--poll-border-color);
-  padding: var(--poll-slot-padding); /* Using variable, consistent padding */
+/* --- MESSAGES --- */
+.task-closed-message {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  padding: 1.5rem;
+  border-radius: 12px;
   text-align: center;
-  line-height: 1.3; /* Slightly increased for readability */
-  box-sizing: border-box; /* Ensures padding is included in width/height */
 }
-
-.rehearsal-poll-grid th { /* Day headers */
-  background-color: var(--poll-header-bg);
-  font-size: var(--poll-header-font-size);
-  font-weight: bold; /* Ensure headers are bold */
-  padding: 8px var(--poll-slot-padding); /* More vertical padding for headers */
-  min-width: 60px; /* Min width for day columns */
-}
-
-.rehearsal-poll-grid td:first-child { /* Time labels column */
-  background-color: var(--poll-time-label-bg);
-  font-size: var(--poll-time-label-font-size);
-  font-weight: bold;
-  min-width: 70px; /* Slightly wider for time labels like "10:00 AM" */
-  padding: 6px var(--poll-slot-padding); /* Adjusted padding */
-}
-
-/* Poll Slot specific styles */
-.poll-slot {
-  min-width: var(--poll-slot-min-size);
-  height: var(--poll-slot-min-size);
-  padding: 0; /* Remove padding, as content/visuals fill it. Size controlled by height/min-width */
-  cursor: pointer;
-  background-color: var(--poll-available-bg);
-  border: 1px solid var(--poll-available-border); /* Default border for available slots */
-  transition: background-color var(--poll-transition-duration) ease,
-              border-color var(--poll-transition-duration) ease;
-  vertical-align: middle; /* Ensure content (if any) is centered */
-}
-
-.poll-slot:not(.unavailable-slot-placeholder):hover { /* Hover for available, unselected slots */
-  background-color: var(--poll-available-hover-bg);
-}
-
-.poll-slot.selected {
-  background-color: var(--poll-selected-bg);
-  border-color: var(--poll-selected-border);
-  color: white; /* If you ever put text/icons inside */
-}
-
-.poll-slot.selected:hover {
-  background-color: var(--poll-selected-hover-bg);
-  border-color: var(--poll-selected-border); /* Keep border consistent */
-}
-
-.unavailable-slot-placeholder,
-.poll-slot.disabled-interaction { /* Combined rule for visual consistency */
-  background-color: var(--poll-unavailable-bg);
-  border-color: var(--poll-unavailable-border);
-  cursor: var(--poll-unavailable-cursor);
-}
-
-.unavailable-slot-placeholder:hover, /* Ensure no hover effect on unavailable */
-.poll-slot.disabled-interaction:hover {
-  background-color: var(--poll-unavailable-bg); /* Keep background static */
-}
-
-
-/* Dragging Feedback Styles - Refined */
-.poll-slot.dragging-to-select {
-  background-color: var(--poll-dragging-select-bg) !important;
-  border: 2px dashed var(--poll-dragging-select-border) !important; /* Changed to dashed border for clearer visual */
-  /* box-shadow: inset 0 0 0 2px var(--poll-dragging-select-border) !important; */ /* Alternative visual */
-
-}
-
-.poll-slot.dragging-to-deselect {
-  background-color: var(--poll-dragging-deselect-bg) !important;
-  border: 2px dashed var(--poll-dragging-deselect-border) !important; /* Changed to dashed border */
-  /* box-shadow: inset 0 0 0 2px var(--poll-dragging-deselect-border) !important; */ /* Alternative visual */
-}
-/* --- END OF REHEARSAL POLL STYLES --- */
-
 
 .task-already-completed {
-  padding: 20px;
-  border: 1px solid #2ecc71; /* Green border */
-  background-color: #e9f7ef;
-  border-radius: 6px;
-  margin-top: 20px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 1.5rem;
+  border-radius: 12px;
 }
 
-.task-already-completed h3.form-success { /* Override general form-success if needed */
-  color: #155724;
-  margin-top: 0;
-  margin-bottom: 10px;
-  text-align: left;
-}
-.task-already-completed p {
-  margin-bottom: 8px;
-  color: #333;
-}
-.task-already-completed h4 {
-  margin-top: 15px;
-  margin-bottom: 5px;
-  color: #2c3e50;
-}
-
-.submitted-response-details {
-  margin-top: 10px;
-  padding: 10px; /* Added padding to submitted response details */
-  background-color: #f9f9f9; /* Added background */
-  border: 1px solid #eee; /* Added border */
-  border-radius: 4px; /* Added border-radius */
-}
-.submitted-response-details h4 { /* Existing style, confirmed */
-    margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 1.1em;
-}
-
-
-.availability-response-list.view-only { /* For displaying submitted availability */
-  list-style-type: none;
-  padding-left: 0;
-}
-.availability-response-list.view-only li {
-  margin-bottom: 5px;
-  font-size: 0.95em;
-}
-
-.raw-slot-list.view-only { /* For displaying submitted rehearsal slots */
-  list-style-type: disc;
-  padding-left: 20px;
-  font-size: 0.9em;
-}
-.raw-slot-list.view-only li {
-  margin-bottom: 3px;
-}
-
-.no-response-display {
-  font-style: italic;
-  color: #777;
-}
-
-.edit-response-btn {
-  background-color: #007bff; /* Blue for edit */
-  color: white;
-  padding: 8px 15px;
-  font-size: 0.95em;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none; /* Added for consistency */
-  transition: background-color 0.2s ease; /* Added transition */
-}
-.edit-response-btn:hover {
-  background-color: #0056b3;
-}
-
-.task-closed-message {
-  padding: 20px;
-  background-color: #fff3cd; /* Light yellow warning */
-  border: 1px solid #ffeeba;
-  color: #856404;
-  border-radius: 4px;
-  text-align: center;
-}
-.task-closed-message h3 {
-    margin-top: 0;
-}
-
-.task-status-chip {
-    font-size: 0.8em;
-    font-weight: bold;
-    padding: 3px 8px;
-    border-radius: 10px;
-    margin-left: 10px;
-    display: inline-block; /* Or inline-flex */
-    vertical-align: middle;
-}
-.inactive-chip {
-    background-color: #6c757d; /* Gray */
-    color: white;
-}
-.past-due-chip {
-    background-color: #dc3545; /* Red */
-    color: white;
-}
+.task-already-completed h3 { color: #166534; margin: 0 0 0.5rem 0; }
