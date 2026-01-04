@@ -36,11 +36,11 @@ const InviteMemberForm = ({ organizationMusicians, onSendInvitation, onCancel })
 
   return (
     <form onSubmit={handleSubmit} className="glass-form">
-      <h3>Invite Team Member</h3>
+      <h3>Invite Musician</h3>
       <div className="form-group">
-        <label htmlFor="select-musician">Select Musician</label>
+        <label htmlFor="select-musician">Musician</label>
         <select id="select-musician" value={selectedMusicianUserId} onChange={(e) => setSelectedMusicianUserId(e.target.value)} required>
-          <option value="">-- Choose a musician --</option>
+          <option value="">Select</option>
           {organizationMusicians.map(m => (
             <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>
           ))}
@@ -49,7 +49,7 @@ const InviteMemberForm = ({ organizationMusicians, onSendInvitation, onCancel })
 
       {selectedMusicianUserId && (
         <div className="form-group">
-          <label>Assign Instrument(s)</label>
+          <label>Instruments</label>
           {availableInstrumentsForSelectedMusician.length > 0 ? (
             <div className="checkbox-group">
               {availableInstrumentsForSelectedMusician.map(inst => (
@@ -68,8 +68,8 @@ const InviteMemberForm = ({ organizationMusicians, onSendInvitation, onCancel })
       )}
 
       <div className="form-group">
-        <label htmlFor="invitation-notes">Notes (Optional)</label>
-        <textarea id="invitation-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g., Arrival time 8:30am..." rows={3} />
+        <label htmlFor="invitation-notes">Notes</label>
+        <textarea id="invitation-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
       </div>
 
       <div className="form-actions">

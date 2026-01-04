@@ -1,6 +1,5 @@
 // src/components/TasksPage/EditTaskForm.jsx
 import React, { useState, useEffect } from 'react';
-import '../AllPlansPage/CreatePlanForm.css'; // Reusing styles
 import { DAYS_OF_WEEK } from '../../constants';
 
 const TASK_TYPES_DISPLAY = {

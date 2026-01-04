@@ -135,3 +135,134 @@ html, body, #root, .App {
   color: #64748b;
 }
 
+/* src/App.css */
+
+/* ... existing code ... */
+
+/* --- SHARED GLASS FORM STYLES --- */
+/* Applies to CreatePlanForm, AddItemForm, EditItemForm, etc. */
+
+.glass-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  font-family: 'Inter', sans-serif; /* Ensure you have the font or inherit */
+  width: 100%;
+}
+
+.glass-form h3 {
+  margin: 0 0 0.5rem 0;
+  text-align: left;
+  color: #0f172a;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem; /* Fallback spacing */
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  margin-left: 2px;
+}
+
+/* --- UNIFIED MODERN INPUTS --- */
+/* Targets all text-like inputs to ensure 10px roundness */
+.glass-form input[type="text"],
+.glass-form input[type="date"],
+.glass-form input[type="time"],
+.glass-form input[type="url"],
+.glass-form input[type="email"],
+.glass-form input[type="number"],
+.glass-form select,
+.glass-form textarea {
+  padding: 0.75rem 1rem;
+  background: #f8fafc; /* Very light slate */
+  border: 1px solid #e2e8f0;
+  border-radius: 10px; /* The round look you want */
+  font-size: 0.95rem;
+  color: #1e293b;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) inset;
+}
+
+.glass-form textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Focus States */
+.glass-form input:focus,
+.glass-form select:focus,
+.glass-form textarea:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #3b82f6; /* Primary Blue */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); /* Blue Glow Ring */
+}
+
+/* --- SHARED BUTTONS --- */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.form-actions button {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+/* Submit Button (Gradient Blue) */
+.glass-form .submit-btn {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+.glass-form .submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+}
+
+.glass-form .submit-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Cancel Button */
+.glass-form .cancel-btn {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid transparent; /* Prevent jump on hover if you add border */
+}
+
+.glass-form .cancel-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}

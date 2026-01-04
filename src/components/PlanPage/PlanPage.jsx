@@ -475,7 +475,7 @@ const PlanPage = () => {
                 />
                 {profile?.role === 'ORGANIZER' && (
                   <button onClick={toggleInviteModal} className="glass-btn-block action-accent">
-                    <FaUserPlus /> Invite/Assign Musician
+                    <FaUserPlus /> Invite Musician
                   </button>
                 )}
               </div>

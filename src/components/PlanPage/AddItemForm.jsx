@@ -1,7 +1,7 @@
 // src/components/PlanPage/AddItemForm.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-// CSS handled by PlanPage.css (Shared Form Styles)
+// CSS handled by App.css (Global .glass-form)
 
 const AddItemForm = ({ onAddItem, onCancel, assignedPeopleForSingerRole, allAssignedPeople }) => {
   const [type, setType] = useState('Song');
@@ -161,8 +161,10 @@ const AddItemForm = ({ onAddItem, onCancel, assignedPeopleForSingerRole, allAssi
 
   // --- Render Main Form ---
   return (
-    <form onSubmit={handleSubmit} className="glass-form">
+    <form onSubmit={handleSubmit} className="glass-form" style={{ gap: '0.85rem' }}>
       <h3>Add New Service Item</h3>
+      
+      {/* RESTORED: Type on its own row */}
       <div className="form-group">
         <label htmlFor="item-type">Type</label>
         <select id="item-type" value={type} onChange={(e) => setType(e.target.value)}>
@@ -177,18 +179,18 @@ const AddItemForm = ({ onAddItem, onCancel, assignedPeopleForSingerRole, allAssi
       {type === 'Song' ? (
         <div className="form-group" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem'}}>
            <div>
-              <label htmlFor="item-title">Song Title</label>
+              <label htmlFor="item-title">Name</label>
               <input type="text" id="item-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
            </div>
            <div>
               <label htmlFor="song-artist">Artist</label>
-              <input type="text" id="song-artist" value={artist} onChange={(e) => setArtist(e.target.value)} placeholder="e.g., Hillsong" />
+              <input type="text" id="song-artist" value={artist} onChange={(e) => setArtist(e.target.value)} />
            </div>
         </div>
       ) : (
         showTitleInput && (
             <div className="form-group">
-                <label htmlFor="item-title">{type === 'Bible Verse' ? 'Reading Title (optional)' : 'Title'}</label>
+                <label htmlFor="item-title">Title</label>
                 <input type="text" id="item-title" value={title} onChange={(e) => setTitle(e.target.value)} required={type === 'Generic'} />
             </div>
         )
@@ -196,28 +198,29 @@ const AddItemForm = ({ onAddItem, onCancel, assignedPeopleForSingerRole, allAssi
 
       {type === 'Divider' && (
          <div className="form-group">
-            <label htmlFor="item-title">Divider Text (Optional)</label>
-            <input type="text" id="item-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., ---, Transition" />
+            <label htmlFor="item-title">Label</label>
+            <input type="text" id="item-title" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
       )}
 
+      {/* LINKS ROW & SINGERS (Song only) */}
       {type === 'Song' && (
         <>
-          {/* COMPACT ROW FOR LINKS */}
           <div className="form-group" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem'}}>
              <div>
-                <label htmlFor="song-chord-chart">Chord Chart URL</label>
+                <label htmlFor="song-chord-chart">Chord Chart</label>
                 <input type="url" id="song-chord-chart" value={chordChartUrl} onChange={(e) => setChordChartUrl(e.target.value)} />
              </div>
              <div>
-                <label htmlFor="song-youtube">YouTube URL</label>
+                <label htmlFor="song-youtube">Music Video</label>
                 <input type="url" id="song-youtube" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} />
              </div>
           </div>
           
           <div className="form-group">
-            <label>Assign Singer(s)</label>
-            <div className="checkbox-group">
+            <label>Singers</label>
+            {/* INLINE STYLE: Force scroll after ~120px (approx 3 items) */}
+            <div className="checkbox-group" style={{ maxHeight: '120px', padding: '0.75rem' }}>
               {(assignedPeopleForSingerRole && assignedPeopleForSingerRole.length > 0) ? (
                 assignedPeopleForSingerRole.map(person => (
                   <label key={person.id} className="checkbox-label">
@@ -231,7 +234,7 @@ const AddItemForm = ({ onAddItem, onCancel, assignedPeopleForSingerRole, allAssi
                   </label>
                 ))
               ) : (
-                <p style={{fontStyle:'italic', color:'#94a3b8', fontSize:'0.9rem'}}>No singers assigned to this plan.</p>
+                <p style={{fontStyle:'italic', color:'#94a3b8', fontSize:'0.9rem', margin: 0}}>No singers assigned.</p>
               )}
             </div>
           </div>
@@ -240,21 +243,22 @@ const AddItemForm = ({ onAddItem, onCancel, assignedPeopleForSingerRole, allAssi
 
       {type === 'Bible Verse' && (
         <div className="form-group" style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.5rem'}}>
-            <div><label>Book</label><input type="text" value={bibleBook} onChange={(e) => setBibleBook(e.target.value)} placeholder="John" required /></div>
-            <div><label>Chapter</label><input type="text" value={bibleChapter} onChange={(e) => setBibleChapter(e.target.value)} placeholder="3" required /></div>
-            <div><label>Verse(s)</label><input type="text" value={bibleVerseRange} onChange={(e) => setBibleVerseRange(e.target.value)} placeholder="16" required /></div>
+            <div><label>Book</label><input type="text" value={bibleBook} onChange={(e) => setBibleBook(e.target.value)} required /></div>
+            <div><label>Chapter</label><input type="text" value={bibleChapter} onChange={(e) => setBibleChapter(e.target.value)} required /></div>
+            <div><label>Verses</label><input type="text" value={bibleVerseRange} onChange={(e) => setBibleVerseRange(e.target.value)} required /></div>
         </div>
       )}
 
+      {/* RESTORED: Duration and Details at the bottom */}
       {showDurationAndDetails && (
         <>
           <div className="form-group">
-            <label htmlFor="item-duration">Duration (optional)</label>
-            <input type="text" id="item-duration" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="e.g., 5 min" />
+            <label htmlFor="item-duration">Duration</label>
+            <input type="text" id="item-duration" value={duration} onChange={(e) => setDuration(e.target.value)} />
           </div>
           <div className="form-group">
-            <label htmlFor="item-details">Details (optional)</label>
-            <textarea id="item-details" value={details} onChange={(e) => setDetails(e.target.value)} />
+            <label htmlFor="item-details">Details</label>
+            <textarea id="item-details" value={details} onChange={(e) => setDetails(e.target.value)} style={{ minHeight: '80px' }} />
           </div>
         </>
       )}
@@ -265,7 +269,6 @@ const AddItemForm = ({ onAddItem, onCancel, assignedPeopleForSingerRole, allAssi
                  Import Info
               </button>
           )}
-        {/* CANCEL BUTTON ADDED HERE */}
         <button type="button" className="cancel-btn" onClick={onCancel}>Cancel</button>
         <button type="submit" className="submit-btn">Add Item</button>
       </div>

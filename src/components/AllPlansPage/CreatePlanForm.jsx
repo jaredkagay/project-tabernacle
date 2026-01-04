@@ -1,7 +1,5 @@
 // src/components/AllPlansPage/CreatePlanForm.jsx
 import React, { useState } from 'react';
-// We can keep the import, but we'll clear the CSS file next so it doesn't conflict
-import './CreatePlanForm.css'; 
 
 const CreatePlanForm = ({ onCreatePlan, onCancel }) => {
   const [title, setTitle] = useState('');
@@ -75,7 +73,6 @@ const CreatePlanForm = ({ onCreatePlan, onCancel }) => {
           id="plan-theme"
           value={theme}
           onChange={(e) => setTheme(e.target.value)}
-          placeholder="e.g., Easter Service"
         />
       </div>
 
@@ -85,7 +82,6 @@ const CreatePlanForm = ({ onCreatePlan, onCancel }) => {
           id="plan-notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Internal notes..."
         />
       </div>
 

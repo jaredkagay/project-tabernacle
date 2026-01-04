@@ -226,21 +226,25 @@
 input:checked + .slider { background-color: #3b82f6; }
 input:checked + .slider:before { transform: translateX(22px); }
 
+/* ... (Keep existing layout styles above) ... */
+
 /* --- MODALS OVERRIDE --- */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(15, 23, 42, 0.65); /* Darker, bluer overlay */
+  
+  background-color: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(8px);
   z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  
+  /* ALLOW SCROLLING OF THE WHOLE OVERLAY */
+  overflow-y: auto; 
+  display: block; /* Switch to block to let margins handle positioning easily */
+  
   animation: fadeIn 0.2s ease-out;
 }
 
 .modal-content {
-  /* The Glass Effect */
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -256,11 +260,15 @@ input:checked + .slider:before { transform: translateX(22px); }
   max-width: 550px;
   position: relative;
   
-  /* --- NEW: SCROLLING FIX --- */
-  max-height: 85vh; /* Max height is 85% of the viewport */
-  overflow-y: auto; /* Scroll internally if content is taller */
+  /* POSITIONING & SCROLLING FIX */
+  /* Top margin clears the navbar (6rem). Bottom margin ensures space at the end. */
+  /* 'auto' for left/right centers it horizontally. */
+  margin: 6rem auto 4rem auto; 
   
+  /* REMOVED max-height and overflow-y to allow full growth */
+  height: auto;
   color: #1e293b;
+  
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -291,6 +299,8 @@ input:checked + .slider:before { transform: translateX(22px); }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* ... (Keep existing shared form styles if you left them here, otherwise rely on App.css) ... */
 
 /* --- SHARED FORM STYLES (Use this for AddItem, EditItem, Invite, etc) --- */
 .glass-form h3 {

@@ -1,6 +1,5 @@
 // src/components/PlanPage/EditAssignmentForm.jsx
 import React, { useState, useEffect } from 'react';
-import '../AllPlansPage/CreatePlanForm.css'; // Reusing styles
 
 const EditAssignmentForm = ({ assignmentToEdit, onUpdateAssignment, onCancel }) => {
   // assignmentToEdit should contain:

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import '../PlanPage/AddItemForm.css';
 
 const DefaultPlanEditItemForm = ({ itemToEdit, onUpdateItem, onCancel }) => {
   const [title, setTitle] = useState(itemToEdit?.title || '');

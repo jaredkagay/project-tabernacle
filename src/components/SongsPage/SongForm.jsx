@@ -1,7 +1,6 @@
 // src/components/SongsPage/SongForm.jsx
 import React, { useState, useEffect } from 'react';
-import '../AllPlansPage/CreatePlanForm.css'; 
-import { MUSICAL_KEYS } from '../../constants'; // Import the keys
+import { MUSICAL_KEYS } from '../../constants';
 
 const SongForm = ({ initialData = {}, onSubmit, onCancel, isSubmitting, formType = "Create", songType }) => {
   const [title, setTitle] = useState('');

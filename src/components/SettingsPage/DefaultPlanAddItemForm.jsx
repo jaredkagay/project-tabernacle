@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import '../PlanPage/AddItemForm.css';
 
 const DefaultPlanAddItemForm = ({ onAddItem }) => {
   const [type, setType] = useState('Generic');

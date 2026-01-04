@@ -1,6 +1,5 @@
 // src/components/TasksPage/CreateTaskForm.jsx
 import React, { useState, useEffect } from 'react';
-import '../AllPlansPage/CreatePlanForm.css';
 import { DAYS_OF_WEEK } from '../../constants';
 
 const TASK_TYPES = [

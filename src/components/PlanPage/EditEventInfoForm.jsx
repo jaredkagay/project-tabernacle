@@ -54,12 +54,12 @@ const EditEventInfoForm = ({ initialData, onUpdateEvent, onCancel }) => {
 
       <div className="form-group">
         <label htmlFor="event-theme">Theme</label>
-        <input type="text" id="event-theme" value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="e.g., Christmas Service" />
+        <input type="text" id="event-theme" value={theme} onChange={(e) => setTheme(e.target.value)} />
       </div>
       
       <div className="form-group">
         <label htmlFor="event-notes">Notes</label>
-        <textarea id="event-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Internal notes for the team..." />
+        <textarea id="event-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
       
       <div className="form-actions">

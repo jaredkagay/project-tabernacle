@@ -1,7 +1,6 @@
 // src/components/TasksPage/AssignTaskForm.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import '../AllPlansPage/CreatePlanForm.css'; 
 
 const AssignTaskForm = ({ task, organizationMusicians, upcomingOrgEvents, onAssignTask, onCancel, isSubmitting }) => {
   const [selectedMusicianIds, setSelectedMusicianIds] = useState([]);
