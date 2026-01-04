@@ -1,28 +1,22 @@
 // src/components/PlanPage/EditServiceItemForm.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import './AddItemForm.css'; 
+// CSS handled by PlanPage.css (Shared Form Styles)
 
 const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopleForSingerRole, allAssignedPeople }) => {
+  // ... (Keep existing state logic) ...
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('');
   const [details, setDetails] = useState('');
-
-  // Song-specific fields
   const [artist, setArtist] = useState('');
   const [chordChartUrl, setChordChartUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [selectedSingerIds, setSelectedSingerIds] = useState([]); 
-
-  // Bible Verse-specific fields
   const [bibleBook, setBibleBook] = useState('');
   const [bibleChapter, setBibleChapter] = useState('');
   const [bibleVerseRange, setBibleVerseRange] = useState('');
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Import Song Info State
-  const [importMode, setImportMode] = useState('NONE'); // NONE, SELECT_MUSICIAN, SELECT_SONG
+  const [importMode, setImportMode] = useState('NONE'); 
   const [importedMusicianId, setImportedMusicianId] = useState(null);
   const [availableImportSongs, setAvailableImportSongs] = useState([]);
   const [loadingImportSongs, setLoadingImportSongs] = useState(false);
@@ -32,85 +26,41 @@ const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopl
       setTitle(itemToEdit.title || (itemToEdit.type === 'Divider' ? '---' : ''));
       setDuration(itemToEdit.duration || '');
       setDetails(itemToEdit.details || '');
-
       setArtist(itemToEdit.type === 'Song' ? itemToEdit.artist || '' : '');
       setChordChartUrl(itemToEdit.type === 'Song' ? itemToEdit.chord_chart_url || '' : '');
       setYoutubeUrl(itemToEdit.type === 'Song' ? itemToEdit.youtube_url || '' : '');
       setSelectedSingerIds(itemToEdit.type === 'Song' ? itemToEdit.assigned_singer_ids || [] : []);
-
       setBibleBook(itemToEdit.type === 'Bible Verse' ? itemToEdit.bible_book || '' : '');
       setBibleChapter(itemToEdit.type === 'Bible Verse' ? itemToEdit.bible_chapter || '' : '');
       setBibleVerseRange(itemToEdit.type === 'Bible Verse' ? itemToEdit.bible_verse_range || '' : '');
     }
   }, [itemToEdit]);
 
-  const handleSingerSelectionChange = (singerId) => {
-    setSelectedSingerIds(prevSelectedIds =>
-      prevSelectedIds.includes(singerId)
-        ? prevSelectedIds.filter(id => id !== singerId)
-        : [...prevSelectedIds, singerId]
-    );
-  };
-
-  const handleStartImport = () => {
-    setImportMode('SELECT_MUSICIAN');
-  };
-
+  // ... (Keep existing handler logic: handleSingerSelectionChange, handleStartImport, etc) ...
+  const handleSingerSelectionChange = (singerId) => { setSelectedSingerIds(prev => prev.includes(singerId) ? prev.filter(id => id !== singerId) : [...prev, singerId]); };
+  const handleStartImport = () => setImportMode('SELECT_MUSICIAN');
   const handleMusicianSelect = async (musicianId) => {
-    setImportedMusicianId(musicianId);
-    setLoadingImportSongs(true);
-    setImportMode('SELECT_SONG');
+    setImportedMusicianId(musicianId); setLoadingImportSongs(true); setImportMode('SELECT_SONG');
     try {
-        const { data, error } = await supabase
-            .from('songs')
-            .select('*')
-            .eq('added_by_user_id', musicianId)
-            .eq('is_primary', false)
-            .order('title', { ascending: true });
-        
-        if (error) throw error;
-        setAvailableImportSongs(data || []);
-    } catch (err) {
-        alert('Failed to fetch songs for this musician: ' + err.message);
-        setImportMode('SELECT_MUSICIAN');
-    } finally {
-        setLoadingImportSongs(false);
-    }
+        const { data, error } = await supabase.from('songs').select('*').eq('added_by_user_id', musicianId).eq('is_primary', false).order('title', { ascending: true });
+        if (error) throw error; setAvailableImportSongs(data || []);
+    } catch (err) { alert(err.message); setImportMode('SELECT_MUSICIAN'); } finally { setLoadingImportSongs(false); }
   };
-
   const handleSongImportSelect = (song) => {
-      setTitle(song.title || '');
-      setArtist(song.artist || '');
-      setChordChartUrl(song.chord_chart_url || '');
-      setYoutubeUrl(song.youtube_url || '');
-      setImportMode('NONE');
-      setAvailableImportSongs([]);
-      setImportedMusicianId(null);
+      setTitle(song.title || ''); setArtist(song.artist || ''); setChordChartUrl(song.chord_chart_url || '');
+      setYoutubeUrl(song.youtube_url || ''); setImportMode('NONE'); setAvailableImportSongs([]); setImportedMusicianId(null);
   };
-
-  const handleCancelImport = () => {
-      setImportMode('NONE');
-      setAvailableImportSongs([]);
-      setImportedMusicianId(null);
-  };
+  const handleCancelImport = () => { setImportMode('NONE'); setAvailableImportSongs([]); setImportedMusicianId(null); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     let autoGeneratedTitle = title.trim();
-    if (itemToEdit.type === 'Bible Verse' && !autoGeneratedTitle && bibleBook.trim() && bibleChapter.trim() && bibleVerseRange.trim()) {
+    if (itemToEdit.type === 'Bible Verse' && !autoGeneratedTitle && bibleBook.trim()) {
         autoGeneratedTitle = `${bibleBook.trim()} ${bibleChapter.trim()}:${bibleVerseRange.trim()}`;
     }
-
-    if (itemToEdit.type !== 'Divider' && itemToEdit.type !== 'Bible Verse' && !autoGeneratedTitle) {
-      alert('Please enter a title for the item.');
-      return;
-    }
-    if (itemToEdit.type === 'Bible Verse' && (!bibleBook.trim() || !bibleChapter.trim() || !bibleVerseRange.trim())) {
-      alert('Please fill in Book, Chapter, and Verse(s) for a Bible Verse item.');
-      return;
-    }
+    if (itemToEdit.type !== 'Divider' && itemToEdit.type !== 'Bible Verse' && !autoGeneratedTitle) { alert('Title required'); return; }
     setIsSubmitting(true);
-
+    // ... Payload construction ...
     let payload = {
       title: itemToEdit.type === 'Divider' ? (title.trim() || '---') : autoGeneratedTitle,
       duration: (itemToEdit.type === 'Divider') ? null : (duration.trim() || null),
@@ -118,193 +68,121 @@ const EditServiceItemForm = ({ itemToEdit, onUpdateItem, onCancel, assignedPeopl
       artist: itemToEdit.type === 'Song' ? (artist.trim() || null) : null,
       chord_chart_url: itemToEdit.type === 'Song' ? (chordChartUrl.trim() || null) : null,
       youtube_url: itemToEdit.type === 'Song' ? (youtubeUrl.trim() || null) : null,
-      assigned_singer_ids: itemToEdit.type === 'Song' ? selectedSingerIds : [], // Send empty array if not a song
+      assigned_singer_ids: itemToEdit.type === 'Song' ? selectedSingerIds : [],
       bible_book: itemToEdit.type === 'Bible Verse' ? (bibleBook.trim() || null) : null,
       bible_chapter: itemToEdit.type === 'Bible Verse' ? (bibleChapter.trim() || null) : null,
       bible_verse_range: itemToEdit.type === 'Bible Verse' ? (bibleVerseRange.trim() || null) : null,
-      musical_key: itemToEdit.musical_key, // Preserve existing key, edited inline
+      musical_key: itemToEdit.musical_key,
     };
-
-    try {
-      await onUpdateItem(payload);
-    } catch (error) {
-      // Error alert handled by PlanPage
-    } finally {
-      setIsSubmitting(false);
-    }
+    try { await onUpdateItem(payload); } catch (error) { /* handled by parent */ } finally { setIsSubmitting(false); }
   };
 
   if (!itemToEdit) return null;
-
   const showTitleInput = itemToEdit.type !== 'Divider';
   const showDurationAndDetails = itemToEdit.type === 'Generic' || itemToEdit.type === 'Song' || itemToEdit.type === 'Bible Verse';
 
-  // --- Render Import Views ---
+  // --- RENDER (Import Mode logic same as AddItemForm) ---
   if (importMode === 'SELECT_MUSICIAN') {
-    // Deduplicate musicians by ID
-    const uniqueMusicians = [];
-    const map = new Map();
-    if (allAssignedPeople) {
-        for (const person of allAssignedPeople) {
-            if(!map.has(person.id)){
-                map.set(person.id, true);
-                uniqueMusicians.push(person);
-            }
-        }
-    }
-
+    // ... (same as AddItemForm) ...
+    const uniqueMusicians = []; const map = new Map();
+    if (allAssignedPeople) { allAssignedPeople.forEach(p => { if(!map.has(p.id)){ map.set(p.id, true); uniqueMusicians.push(p); } }); }
     return (
-        <div className="add-item-form edit-item-form import-view">
+        <div className="glass-form import-view">
             <h3>Import Song Info</h3>
-            <p>Select a musician to view their songs:</p>
+            <p className="form-group">Select a musician:</p>
             <div className="import-list">
-                {uniqueMusicians.length > 0 ? (
-                    uniqueMusicians.map(musician => (
-                        <button key={musician.id} type="button" className="import-list-item-btn" onClick={() => handleMusicianSelect(musician.id)}>
-                            {musician.name} <span className="role-tag">({musician.role})</span>
-                        </button>
-                    ))
-                ) : (
-                    <p>No musicians assigned to this plan.</p>
-                )}
+                {uniqueMusicians.length > 0 ? uniqueMusicians.map(m => (
+                    <button key={m.id} type="button" className="import-list-item-btn" onClick={() => handleMusicianSelect(m.id)}>
+                        {m.name} <span className="role-tag">({m.role})</span>
+                    </button>
+                )) : <p>No musicians assigned.</p>}
             </div>
-            <button type="button" className="cancel-btn" onClick={handleCancelImport} style={{marginTop: '15px', width: '100%'}}>Cancel</button>
+            <button type="button" className="cancel-btn" style={{width: '100%'}} onClick={handleCancelImport}>Cancel</button>
         </div>
     );
   }
 
   if (importMode === 'SELECT_SONG') {
-    return (
-        <div className="add-item-form edit-item-form import-view">
-            <h3>Select a Song</h3>
-            {loadingImportSongs ? <p>Loading songs...</p> : (
-                <div className="import-list">
-                    {availableImportSongs.length > 0 ? (
-                        availableImportSongs.map(song => (
-                            <button key={song.id} type="button" className="import-list-item-btn" onClick={() => handleSongImportSelect(song)}>
-                                <strong>{song.title}</strong>
-                                {song.artist && <span style={{display:'block', fontSize:'0.85em', color:'#666'}}>{song.artist}</span>}
-                            </button>
-                        ))
-                    ) : (
-                        <p>No secondary songs found for this musician.</p>
-                    )}
-                </div>
-            )}
-             <button type="button" className="cancel-btn" onClick={() => setImportMode('SELECT_MUSICIAN')} style={{marginTop: '15px', width: '100%'}}>Back</button>
-        </div>
-    )
+      return (
+          <div className="glass-form import-view">
+              <h3>Select a Song</h3>
+              {loadingImportSongs ? <p>Loading...</p> : (
+                  <div className="import-list">
+                      {availableImportSongs.map(s => (
+                          <button key={s.id} type="button" className="import-list-item-btn" onClick={() => handleSongImportSelect(s)}>
+                              <strong>{s.title}</strong>
+                              {s.artist && <span style={{display:'block', fontSize:'0.8em', color:'#64748b'}}>{s.artist}</span>}
+                          </button>
+                      ))}
+                  </div>
+              )}
+               <button type="button" className="cancel-btn" style={{width: '100%'}} onClick={() => setImportMode('SELECT_MUSICIAN')}>Back</button>
+          </div>
+      )
   }
 
-  // --- Main Form Render ---
+  // --- Main Render ---
   return (
-    <form onSubmit={handleSubmit} className="add-item-form edit-item-form">
-      <h3>Edit: {itemToEdit.title || itemToEdit.type}</h3>
-      <p style={{ marginBottom: '15px', color: '#555', fontSize: '0.9em' }}>
-        Type: <strong>{itemToEdit.type}</strong> (Cannot be changed during edit)
-      </p>
-
+    <form onSubmit={handleSubmit} className="glass-form">
+      <h3>Edit: {itemToEdit.type}</h3>
+      
       {showTitleInput && (
         <div className="form-group">
-          <label htmlFor="edit-item-title">
-            {itemToEdit.type === 'Song' ? 'Song Title:' : 
-            (itemToEdit.type === 'Bible Verse' ? 'Reading Title (optional):' : 'Title:')}
-          </label>
-          <input type="text" id="edit-item-title" value={title} onChange={(e) => setTitle(e.target.value)} required={itemToEdit.type === 'Generic' || itemToEdit.type === 'Song'}/>
+          <label>{itemToEdit.type === 'Song' ? 'Song Title' : 'Title'}</label>
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </div>
       )}
       {itemToEdit.type === 'Divider' && (
          <div className="form-group">
-            <label htmlFor="edit-item-title">Divider Text (Optional):</label>
-            <input type="text" id="edit-item-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., ---, Transition"/>
+            <label>Divider Text</label>
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., ---" />
         </div>
       )}
 
       {itemToEdit.type === 'Song' && (
         <>
-          <div className="form-group">
-            <label htmlFor="edit-song-artist">Artist:</label>
-            <input type="text" id="edit-song-artist" value={artist} onChange={(e) => setArtist(e.target.value)} />
+          <div className="form-group"><label>Artist</label><input type="text" value={artist} onChange={(e) => setArtist(e.target.value)} /></div>
+          <div className="form-group" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem'}}>
+              <div><label>Chord Chart</label><input type="url" value={chordChartUrl} onChange={(e) => setChordChartUrl(e.target.value)} /></div>
+              <div><label>YouTube</label><input type="url" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} /></div>
           </div>
           <div className="form-group">
-            <label htmlFor="edit-song-chord-chart">Chord Chart URL:</label>
-            <input type="url" id="edit-song-chord-chart" value={chordChartUrl} onChange={(e) => setChordChartUrl(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="edit-song-youtube">YouTube URL:</label>
-            <input type="url" id="edit-song-youtube" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Assign Singer(s) (must have "Vocals" for this event):</label>
-            <div className="checkbox-group multi-select-singer-group">
-              {(assignedPeopleForSingerRole && assignedPeopleForSingerRole.length > 0) ? (
-                assignedPeopleForSingerRole.map(person => (
-                  <label key={person.id} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      value={person.id}
-                      checked={selectedSingerIds.includes(person.id)}
-                      onChange={() => handleSingerSelectionChange(person.id)}
-                    />
-                    {person.name}
+            <label>Assign Singers</label>
+            <div className="checkbox-group">
+              {(assignedPeopleForSingerRole?.length > 0) ? assignedPeopleForSingerRole.map(p => (
+                  <label key={p.id} className="checkbox-label">
+                    <input type="checkbox" value={p.id} checked={selectedSingerIds.includes(p.id)} onChange={() => handleSingerSelectionChange(p.id)} />
+                    {p.name}
                   </label>
-                ))
-              ) : (
-                 <p className="no-singers-message">No team members assigned "Vocals" for this plan yet, or none are pending/accepted.</p>
-              )}
+                )) : <span style={{fontStyle:'italic', color:'#94a3b8'}}>No vocalists available.</span>}
             </div>
           </div>
         </>
       )}
 
       {itemToEdit.type === 'Bible Verse' && (
-        <>
-          <div className="form-group">
-            <label htmlFor="edit-bible-book">Book:</label>
-            <input type="text" id="edit-bible-book" value={bibleBook} onChange={(e) => setBibleBook(e.target.value)} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="edit-bible-chapter">Chapter:</label>
-            <input type="text" id="edit-bible-chapter" value={bibleChapter} onChange={(e) => setBibleChapter(e.target.value)} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="edit-bible-verse-range">Verse(s):</label>
-            <input type="text" id="edit-bible-verse-range" value={bibleVerseRange} onChange={(e) => setBibleVerseRange(e.target.value)} required />
-          </div>
-        </>
+         <div className="form-group" style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.5rem'}}>
+            <div><label>Book</label><input type="text" value={bibleBook} onChange={(e) => setBibleBook(e.target.value)} required /></div>
+            <div><label>Chapter</label><input type="text" value={bibleChapter} onChange={(e) => setBibleChapter(e.target.value)} required /></div>
+            <div><label>Verse(s)</label><input type="text" value={bibleVerseRange} onChange={(e) => setBibleVerseRange(e.target.value)} required /></div>
+        </div>
       )}
 
       {showDurationAndDetails && (
         <>
-          <div className="form-group">
-            <label htmlFor="edit-item-duration">Duration (optional):</label>
-            <input type="text" id="edit-item-duration" value={duration} onChange={(e) => setDuration(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="edit-item-details">Details (optional):</label>
-            <textarea id="edit-item-details" value={details} onChange={(e) => setDetails(e.target.value)} />
-          </div>
+          <div className="form-group"><label>Duration</label><input type="text" value={duration} onChange={(e) => setDuration(e.target.value)} /></div>
+          <div className="form-group"><label>Details</label><textarea value={details} onChange={(e) => setDetails(e.target.value)} /></div>
         </>
       )}
 
-      <div className="form-actions" style={{ marginTop: '20px' }}>
+      <div className="form-actions">
         {itemToEdit.type === 'Song' && (
-          <>
-            <button type="button" className="import-song-btn" onClick={handleStartImport} style={{fontSize: '0.9em', padding: '5px 10px', cursor:'pointer', backgroundColor: '#f0f0f0', border:'1px solid #ccc', borderRadius:'4px'}}>
-              Import
-            </button>
-          </>
+            <button type="button" className="cancel-btn" onClick={handleStartImport} style={{marginRight:'auto'}}>Import</button>
         )}
-        
-        <button type="submit" className="submit-btn" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
-        </button>
-        <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
-        </button>
+        <button type="button" className="cancel-btn" onClick={onCancel}>Cancel</button>
+        <button type="submit" className="submit-btn" disabled={isSubmitting}>Save</button>
       </div>
     </form>
   );
 };
-
 export default EditServiceItemForm;

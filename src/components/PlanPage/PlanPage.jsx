@@ -450,7 +450,7 @@ const PlanPage = () => {
                   />
                   {profile?.role === 'ORGANIZER' && (
                     <button onClick={handleToggleAddItem} className={`glass-btn-block ${isAddItemFormVisible ? 'cancel-style' : ''}`}>
-                      {isAddItemFormVisible ? 'Cancel Adding Item' : <><FaPlus /> Add Service Item</>}
+                      {isAddItemFormVisible ? 'Cancel Adding Item' : <>Add Service Item</>}
                     </button>
                   )}
               </div>
@@ -501,7 +501,12 @@ const PlanPage = () => {
         <div className="modal-overlay" onClick={toggleAddItemForm}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={toggleAddItemForm}>&times;</button>
-            <AddItemForm onAddItem={handleAddItem} assignedPeopleForSingerRole={potentialSingersForSongs} allAssignedPeople={assignedPeople} />
+            <AddItemForm 
+              onAddItem={handleAddItem} 
+              onCancel={toggleAddItemForm} /* <--- ADD THIS LINE */
+              assignedPeopleForSingerRole={potentialSingersForSongs} 
+              allAssignedPeople={assignedPeople} 
+            />
           </div>
         </div>
       )}
