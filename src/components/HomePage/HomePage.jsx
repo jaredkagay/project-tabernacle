@@ -255,7 +255,7 @@ const HomePage = () => {
               {profile?.role === 'ORGANIZER' && (
                   <section className="dashboard-panel">
                       <div className="panel-header">
-                          <h2>Active Tasks Status</h2>
+                          <h2>Assigned Tasks</h2>
                           {/* UPDATED: Added "See All" for Organizer Tasks */}
                           <Link to="/tasks" className="see-all-link">See All</Link>
                       </div>
@@ -313,7 +313,7 @@ const HomePage = () => {
                 <section className="dashboard-panel task-widget">
                   <div className="panel-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <h2>Your Tasks</h2>
+                      <h2>Pending Tasks</h2>
                       {incompleteTasks.length > 0 && <span className="count-badge">{incompleteTasks.length}</span>}
                     </div>
                     <Link to="/tasks" className="see-all-link">See All</Link>
