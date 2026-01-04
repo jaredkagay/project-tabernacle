@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import CreatePlanForm from './CreatePlanForm';
 import './AllPlansPage.css';
 import '../PlanPage/PlanPage.css'; 
+import { logActivity } from '../../utils/activityLogger';
 
 // Fallback items in case the organization hasn't set up a default plan yet
 const DEFAULT_SERVICE_ITEMS = [
@@ -216,6 +217,7 @@ const AllPlansPage = () => {
       }
 
       setIsCreateModalOpen(false);
+      logActivity(user, profile, 'PLAN_CREATED', `${profile.first_name} created a new plan: ${newPlanData.title}`);
       navigate(`/plan/${newEventId}`);
     } catch (err) {
       console.error('Error in handleCreatePlan:', err);

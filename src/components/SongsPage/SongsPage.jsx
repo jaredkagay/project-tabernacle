@@ -7,6 +7,7 @@ import './SongsPage.css';
 import '../PlanPage/PlanPage.css'; // For modal styles
 import { Link } from 'react-router-dom';
 import { FaMusic, FaYoutube, FaPencilAlt, FaTrashAlt } from 'react-icons/fa';
+import { logActivity } from '../../utils/activityLogger';
 
 const SongsPage = () => {
   const { user, profile, loading: authIsLoading } = useAuth();
@@ -119,6 +120,7 @@ const SongsPage = () => {
       
       closeSongModal();
       alert(successMessage);
+      logActivity(user, profile, 'SONG_ADDED', `${profile.first_name} added a new song: ${songDataFromForm.title}`);
       fetchPageData();
     } catch (err) {
       setError(err.message || "Failed to save song.");

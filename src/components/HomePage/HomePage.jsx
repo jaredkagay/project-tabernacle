@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../supabaseClient';
-import { FaCalendarPlus, FaClipboardList, FaMusic, FaCheckCircle, FaExclamationCircle, FaBible } from 'react-icons/fa';
+import { FaCalendarPlus, FaClipboardList, FaMusic, FaExclamationCircle, FaBible, FaTasks, FaChevronRight } from 'react-icons/fa';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -14,43 +14,62 @@ const HomePage = () => {
   const [musicianRequests, setMusicianRequests] = useState([]);
   const [upcomingPlans, setUpcomingPlans] = useState([]); 
   const [incompleteTasks, setIncompleteTasks] = useState([]); 
-  const [activeTasks, setActiveTasks] = useState([]); 
+  const [activeTasks, setActiveTasks] = useState([]); // Organizer view
+  const [recentActivity, setRecentActivity] = useState([]); // Activity Feed
   
   // New State for Verse
   const [verseData, setVerseData] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user || !profile) return;
+      if (!user || !profile || !profile.organization_id) return;
       setLoading(true);
 
       try {
         const today = new Date().toISOString().split('T')[0];
-        let fetchedEvents = [];
 
-        // --- FETCH EVENTS (Shared Logic) ---
-        // We need events for both roles to find the Verse of the Week
-        const query = supabase
+        // --- 1. VERSE OF THE WEEK (Universal Fetch) ---
+        // Explicitly fetch the Organization's next public event to find a verse
+        const { data: nextOrgEvent } = await supabase
             .from('events')
-            .select('id, title, date, theme, organization_id')
+            .select('id, title')
+            .eq('organization_id', profile.organization_id)
             .gte('date', today)
-            .order('date', { ascending: true });
+            .order('date', { ascending: true })
+            .limit(1)
+            .single();
 
-        // Filter by org if organizer, or verify access later if musician 
-        // (Simpler here to just fetch broadly for the "Verse" feature, 
-        // but for safety in production you'd rely on RLS)
-        if (profile.role === 'ORGANIZER' && profile.organization_id) {
-            query.eq('organization_id', profile.organization_id);
-        } else if (profile.role === 'MUSICIAN') {
-            // Musicians need to find events they are part of OR the org's public events.
-            // For now, let's assume we find the Verse from the 'next' event the user is assigned to
-            // OR we can fetch the org's next event if we knew the org ID. 
-            // Let's rely on the assignments fetch below for the list, 
-            // but we need ONE event for the verse.
+        if (nextOrgEvent) {
+            const { data: serviceItems } = await supabase
+                .from('service_items')
+                .select('bible_book, bible_chapter, bible_verse_range')
+                .eq('event_id', nextOrgEvent.id)
+                .not('bible_book', 'is', null)
+                .limit(1);
+
+            if (serviceItems && serviceItems.length > 0) {
+                const item = serviceItems[0];
+                const reference = `${item.bible_book} ${item.bible_chapter}:${item.bible_verse_range}`;
+                try {
+                    const res = await fetch(`https://bible-api.com/${encodeURIComponent(reference)}`);
+                    const json = await res.json();
+                    if (json.text) {
+                        setVerseData({
+                            reference: json.reference || reference,
+                            text: json.text,
+                            eventTitle: nextOrgEvent.title
+                        });
+                    }
+                } catch (apiErr) {
+                    console.error("Bible API fetch failed", apiErr);
+                    setVerseData({ reference, text: null, eventTitle: nextOrgEvent.title });
+                }
+            }
         }
 
-        // --- MUSICIAN SPECIFIC ---
+        // --- 2. MUSICIAN DATA ---
         if (profile.role === 'MUSICIAN') {
+          // Fetch Requests & Upcoming Plans
           const { data: assignments, error: planError } = await supabase
             .from('event_assignments')
             .select(`status, events!inner (id, title, date, theme)`)
@@ -70,14 +89,11 @@ const HomePage = () => {
 
           setMusicianRequests(requests);
           setUpcomingPlans(upcoming);
-          
-          // Use the first upcoming accepted plan for the verse
-          if (upcoming.length > 0) fetchedEvents = [upcoming[0]];
-          else if (requests.length > 0) fetchedEvents = [requests[0]];
 
+          // Fetch Tasks
           const { data: tasks, error: taskError } = await supabase
             .from('task_assignments')
-            .select(`id, status, task:tasks!inner (id, title, is_active, due_date)`)
+            .select(`id, status, task:tasks!inner (id, title, is_active, due_date, type)`)
             .eq('assigned_to_user_id', user.id)
             .eq('status', 'PENDING')
             .eq('task.is_active', true);
@@ -86,13 +102,20 @@ const HomePage = () => {
           setIncompleteTasks(tasks || []);
         }
 
-        // --- ORGANIZER SPECIFIC ---
-        if (profile.role === 'ORGANIZER' && profile.organization_id) {
-          const { data: events, error: eventError } = await query;
+        // --- 3. ORGANIZER DATA ---
+        if (profile.role === 'ORGANIZER') {
+          // Fetch All Upcoming Plans
+          const { data: events, error: eventError } = await supabase
+            .from('events')
+            .select('id, title, date, theme')
+            .eq('organization_id', profile.organization_id)
+            .gte('date', today)
+            .order('date', { ascending: true });
+
           if (eventError) throw eventError;
           setUpcomingPlans(events || []);
-          fetchedEvents = events || [];
 
+          // Fetch Active Tasks Overview
           const { data: tasks, error: taskError } = await supabase
             .from('tasks')
             .select(`id, title, task_assignments (status)`)
@@ -111,41 +134,15 @@ const HomePage = () => {
             };
           });
           setActiveTasks(processedTasks);
-        }
 
-        // --- VERSE OF THE WEEK FETCH ---
-        if (fetchedEvents.length > 0) {
-            const nextEventId = fetchedEvents[0].id;
-            
-            // Find items with bible info
-            const { data: serviceItems } = await supabase
-                .from('service_items')
-                .select('bible_book, bible_chapter, bible_verse_range')
-                .eq('event_id', nextEventId)
-                .not('bible_book', 'is', null) // Only items with books
-                .limit(1);
-
-            if (serviceItems && serviceItems.length > 0) {
-                const item = serviceItems[0];
-                const reference = `${item.bible_book} ${item.bible_chapter}:${item.bible_verse_range}`;
-                
-                // Fetch text from public API
-                try {
-                    const res = await fetch(`https://bible-api.com/${encodeURIComponent(reference)}`);
-                    const json = await res.json();
-                    if (json.text) {
-                        setVerseData({
-                            reference: json.reference || reference,
-                            text: json.text,
-                            eventTitle: fetchedEvents[0].title
-                        });
-                    }
-                } catch (apiErr) {
-                    console.error("Bible API fetch failed", apiErr);
-                    // Fallback to just reference if API fails
-                    setVerseData({ reference, text: null, eventTitle: fetchedEvents[0].title });
-                }
-            }
+          // Fetch Recent Activity (If table exists)
+          const { data: logs } = await supabase
+             .from('activity_logs')
+             .select('*')
+             .eq('organization_id', profile.organization_id)
+             .order('created_at', { ascending: false })
+             .limit(10);
+          if (logs) setRecentActivity(logs);
         }
 
       } catch (err) {
@@ -170,6 +167,10 @@ const HomePage = () => {
     const options = { weekday: 'short', month: 'short', day: 'numeric' };
     return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', options);
   };
+  
+  const formatTaskType = (type) => {
+     return type ? type.replace(/_/g, ' ').toLowerCase() : 'Task';
+  };
 
   if (loading) return <div className="home-loading">Loading Dashboard...</div>;
 
@@ -185,13 +186,12 @@ const HomePage = () => {
         </div>
       </header>
 
-      {/* --- DASHBOARD GRID --- */}
       <div className="dashboard-grid">
           
         {/* LEFT COLUMN */}
         <div className="main-column">
             
-            {/* 1. VERSE OF THE WEEK PANEL (NEW) */}
+            {/* 1. VERSE OF THE WEEK PANEL */}
             {verseData && (
                 <section className="dashboard-panel verse-panel">
                     <div className="verse-content">
@@ -224,7 +224,7 @@ const HomePage = () => {
               </section>
             )}
 
-            {/* 3. Upcoming Plans (Shared Logic for display, though data differs) */}
+            {/* 3. Upcoming Plans */}
             <section className="dashboard-panel">
                 <div className="panel-header">
                     <h2>Upcoming Plans</h2>
@@ -233,9 +233,6 @@ const HomePage = () => {
                 {upcomingPlans.length === 0 ? (
                     <div className="empty-state">No upcoming plans.</div>
                 ) : (
-                     // Different layouts for Organizer vs Musician based on your preference?
-                     // I'll stick to the "Modern Grid" for Organizer and "List" for Musician as discussed, 
-                     // or unify them. Let's unify to the Card Grid for consistency.
                     <div className="card-grid-modern">
                         {upcomingPlans.slice(0, 6).map(plan => (
                             <Link to={`/plan/${plan.id}`} key={plan.id} className="modern-card">
@@ -248,7 +245,7 @@ const HomePage = () => {
                 )}
             </section>
             
-            {/* 4. Active Tasks Table (Organizer Only) */}
+            {/* 4. Active Tasks Table (Organizer View) */}
             {profile?.role === 'ORGANIZER' && (
                 <section className="dashboard-panel">
                     <div className="panel-header">
@@ -277,44 +274,62 @@ const HomePage = () => {
         {/* RIGHT COLUMN */}
         <div className="side-column">
              
-            {/* Organizer Quick Actions */}
+            {/* Organizer: Quick Actions & Activity */}
             {profile?.role === 'ORGANIZER' && (
-                <section className="dashboard-panel quick-actions-panel">
-                    <div className="panel-header">
-                        <h2>Quick Actions</h2>
-                    </div>
-                    <div className="action-buttons-grid">
-                        <Link to="/plans" className="action-btn">
-                            <FaCalendarPlus />
-                            <span>Plan</span>
-                        </Link>
-                        <Link to="/tasks" className="action-btn">
-                            <FaClipboardList />
-                            <span>Task</span>
-                        </Link>
-                        <Link to="/songs" className="action-btn">
-                            <FaMusic />
-                            <span>Song</span>
-                        </Link>
-                    </div>
-                </section>
+                <>
+                    
+                    {/* Recent Activity Feed */}
+                    <section className="dashboard-panel">
+                        <div className="panel-header">
+                            <h2>Recent Activity</h2>
+                        </div>
+                        {recentActivity.length === 0 ? (
+                            <div className="empty-state-small">No recent activity.</div>
+                        ) : (
+                            <div className="activity-feed">
+                                {recentActivity.map(log => (
+                                    <div key={log.id} className="activity-item">
+                                        <div className="activity-dot"></div>
+                                        <div className="activity-content">
+                                            <p className="activity-text">{log.description}</p>
+                                            <span className="activity-time">
+                                            {new Date(log.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </>
             )}
 
-             {/* Musician Tasks Widget */}
+             {/* Musician: Tasks Widget (UPDATED DESIGN) */}
              {profile?.role === 'MUSICIAN' && (
                 <section className="dashboard-panel task-widget">
                     <div className="panel-header">
                         <h2>Your Tasks</h2>
-                        <span className="count-badge">{incompleteTasks.length}</span>
+                        {incompleteTasks.length > 0 && <span className="count-badge">{incompleteTasks.length}</span>}
                     </div>
                     {incompleteTasks.length === 0 ? (
                         <div className="empty-state-small">All caught up!</div>
                     ) : (
-                        <div className="task-list-small">
+                        <div className="task-card-list">
                             {incompleteTasks.map(assignment => (
-                                <Link to={`/task/${assignment.id}`} key={assignment.id} className="task-item-small">
-                                    <div className="checkbox-visual"></div>
-                                    <span>{assignment.task.title}</span>
+                                <Link to={`/task/${assignment.id}`} key={assignment.id} className="modern-card task-card-modern">
+                                    <div className="task-card-header">
+                                        <FaTasks className="task-card-icon" />
+                                        <span className="task-card-type">{formatTaskType(assignment.task.type)}</span>
+                                    </div>
+                                    <div className="task-card-title">{assignment.task.title}</div>
+                                    {assignment.task.due_date && (
+                                        <div className="task-card-due">
+                                            Due: {new Date(assignment.task.due_date).toLocaleDateString()}
+                                        </div>
+                                    )}
+                                    <div className="task-card-cta">
+                                        Tap to Complete <FaChevronRight />
+                                    </div>
                                 </Link>
                             ))}
                         </div>

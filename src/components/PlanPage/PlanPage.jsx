@@ -13,6 +13,7 @@ import EditEventInfoForm from './EditEventInfoForm';
 import WeeklyChecklist from './WeeklyChecklist';
 import InviteMemberForm from './InviteMemberForm';
 import EditAssignmentForm from './EditAssignmentForm';
+import { logActivity } from '../../utils/activityLogger';
 
 import './PlanPage.css';
 
@@ -305,6 +306,7 @@ const PlanPage = () => {
       const { error } = await supabase.from('event_assignments').update({ status: 'ACCEPTED', responded_at: new Date().toISOString() }).eq('id', assignmentId);
       if (error) throw error;
       alert("Invitation accepted!");
+      logActivity(user, profile, 'INVITE_ACCEPTED', `${profile.first_name} accepted the invite for ${eventDetails.title}.`);
       fetchPlanDataAndOrgMembers();
     } catch (err) { alert(`Failed to accept: ${err.message}`); }
   };
@@ -317,6 +319,7 @@ const PlanPage = () => {
       if (error) throw error;
       if (assignment?.id && planId) await unassignSingerFromSongs(assignment.id, planId);
       alert("Invitation declined.");
+      logActivity(user, profile, 'INVITE_DECLINED', `${profile.first_name} declined the invite for ${eventDetails.title}.`);
       fetchPlanDataAndOrgMembers();
       navigate('/plans');
     } catch (err) { alert(`Failed to decline: ${err.message}`); }
