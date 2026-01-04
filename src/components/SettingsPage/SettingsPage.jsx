@@ -5,33 +5,38 @@ import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import './SettingsPage.css';
 
-// --- Join Organization Form (for org-less users) ---
+// --- Join Organization Form ---
 const JoinOrgForm = ({ onJoin, onCancel, isSubmitting }) => {
   const [orgCode, setOrgCode] = useState('');
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onJoin(orgCode); }} className="settings-form" style={{marginTop: '20px'}}>
-      <h4>Join an Organization</h4>
-      <p>Enter the Organization ID/Code. Your email must be pre-approved by an organizer of that organization.</p>
+    <form onSubmit={(e) => { e.preventDefault(); onJoin(orgCode); }} className="glass-form">
+      <h3>Join an Organization</h3>
+      <p style={{marginBottom: '1rem', color: '#64748b'}}>Enter the Organization ID/Code provided by your leader.</p>
       <div className="form-group">
-        <label htmlFor="join-org-code-settings">Organization Code/ID:</label>
-        <input type="text" id="join-org-code-settings" value={orgCode} onChange={(e) => setOrgCode(e.target.value)} required disabled={isSubmitting} />
+        <label htmlFor="join-org-code">Organization Code/ID</label>
+        <input 
+            type="text" 
+            id="join-org-code" 
+            value={orgCode} 
+            onChange={(e) => setOrgCode(e.target.value)} 
+            required 
+            disabled={isSubmitting} 
+            placeholder="e.g. 123-abc-456"
+        />
       </div>
       <div className="form-actions">
         <button type="submit" className="submit-btn" disabled={isSubmitting || !orgCode.trim()}>
-          {isSubmitting ? 'Attempting to Join...' : 'Join Organization'}
+          {isSubmitting ? 'Joining...' : 'Join Organization'}
         </button>
-        {onCancel && <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>Cancel</button>}
       </div>
     </form>
   );
 };
 
-
 const SettingsPage = () => {
   const { user, profile, loading: authIsLoading, refreshProfile, login } = useAuth();
-  const [activeTab, setActiveTab] = useState('user');
-
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('user');
 
   // User Settings State
   const [firstName, setFirstName] = useState('');
@@ -55,13 +60,13 @@ const SettingsPage = () => {
   const [newPreApprovalEmail, setNewPreApprovalEmail] = useState('');
   const [newPreApprovalRole, setNewPreApprovalRole] = useState('MUSICIAN');
   const [currentOrgMembersList, setCurrentOrgMembersList] = useState([]);
-  
   const [orgInstrumentList, setOrgInstrumentList] = useState([]);
   const [newInstrumentName, setNewInstrumentName] = useState('');
   
   const [orgDetailsLoading, setOrgDetailsLoading] = useState(false);
   const [orgActionStatus, setOrgActionStatus] = useState({ message: '', error: '', loading: false });
 
+  // --- INITIAL DATA LOADING ---
   useEffect(() => {
     if (profile) {
       setFirstName(profile.first_name || '');
@@ -119,6 +124,7 @@ const SettingsPage = () => {
     }
   }, [user, authIsLoading, fetchCurrentOrganizationDetails]);
 
+  // --- HANDLERS: USER SETTINGS ---
   const handleInstrumentCheckboxChange = (instrument) => setSelectedInstruments(prev => prev.includes(instrument) ? prev.filter(i => i !== instrument) : [...prev, instrument]);
 
   const handleUpdateNameSubmit = async (e) => {
@@ -179,7 +185,8 @@ const SettingsPage = () => {
     } catch (err) { console.error("Error updating instruments:", err); setUserSettingsError(err.message || "Failed to update instruments."); }
     finally { setIsUpdatingInstruments(false); }
   };
-  
+
+  // --- HANDLERS: ORGANIZATION ---
   const handleUpdateOrgNameSubmit = async (e) => {
     e.preventDefault();
     if (!orgName.trim()) { setOrgActionStatus({loading: false, error:"Organization name cannot be empty.", message:''}); return; }
@@ -344,170 +351,238 @@ const SettingsPage = () => {
     } catch (err) { console.error("Error joining org:", err); setOrgActionStatus(prev => ({...prev, loading:false, error:err.message})); }
   };
 
-  if (authIsLoading) return <p className="page-status">Loading user data...</p>;
-  if (!user || !profile) return <p className="page-status">User data not available. Please log in again.</p>;
-
-  const isOrgActionInProgress = orgActionStatus.loading;
+  if (authIsLoading) return <div className="loading-text">Loading settings...</div>;
 
   return (
-    <div className="settings-page-container">
-      <div className="settings-header"><h1>Settings</h1></div>
-      <div className="settings-tabs">
-        <button className={`tab-button ${activeTab === 'user' ? 'active' : ''}`} onClick={() => setActiveTab('user')}>User Settings</button>
-        <button className={`tab-button ${activeTab === 'organization' ? 'active' : ''}`} onClick={() => setActiveTab('organization')}>Organization</button>
-      </div>
-      <div className="settings-content">
-        {activeTab === 'user' && (
-          <div className="settings-section user-settings-section">
-            <h2>User Profile</h2>
-            {(userSettingsError || userSettingsMessage) && (<p className={userSettingsError ? "form-error" : "form-success"}>{userSettingsError || userSettingsMessage}</p>)}
-            <form onSubmit={handleUpdateNameSubmit} className="settings-form">
-              <p><strong>Email:</strong> {user.email} <em style={{fontSize: '0.8em'}}>(cannot be changed here)</em></p>
-              <p><strong>Current Role:</strong> {profile.role || 'N/A'}{profile.organization_id ? ` (in Org: ${profile.organization_id})` : ' (Not in an organization)'}</p>
-              <div className="form-group"><label htmlFor="firstNameS">First Name:</label><input type="text" id="firstNameS" value={firstName} onChange={(e) => setFirstName(e.target.value)} required disabled={isUpdatingUserName} /></div>
-              <div className="form-group"><label htmlFor="lastNameS">Last Name:</label><input type="text" id="lastNameS" value={lastName} onChange={(e) => setLastName(e.target.value)} required disabled={isUpdatingUserName} /></div>
-              <button type="submit" className="submit-btn" disabled={isUpdatingUserName}>{isUpdatingUserName ? 'Saving...' : 'Update Name'}</button>
-            </form>
+    <div className="settings-page-wrapper">
+      <div className="settings-content-container">
+        
+        {/* Header with Tabs embedded */}
+        <header className="settings-glass-header">
+            <div>
+                <h1>Settings</h1>
+            </div>
+            <div className="settings-tabs-container">
+                <button 
+                    className={`glass-tab ${activeTab === 'user' ? 'active' : ''}`} 
+                    onClick={() => setActiveTab('user')}
+                >
+                    User Profile
+                </button>
+                <button 
+                    className={`glass-tab ${activeTab === 'organization' ? 'active' : ''}`} 
+                    onClick={() => setActiveTab('organization')}
+                >
+                    Organization
+                </button>
+            </div>
+        </header>
 
-            <form onSubmit={handleUpdatePasswordSubmit} className="settings-form password-form">
-                <h3>Change Password</h3>
-                <div className="form-group">
-                    <label htmlFor="current-password">Current Password:</label>
-                    <input type="password" id="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required disabled={isUpdatingPassword} />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="new-password">New Password (min. 6 characters):</label>
-                    <input type="password" id="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength="6" disabled={isUpdatingPassword} />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="confirm-password">Confirm New Password:</label>
-                    <input type="password" id="confirm-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength="6" disabled={isUpdatingPassword} />
-                </div>
-                <button type="submit" className="submit-btn" disabled={isUpdatingPassword}>
-                    {isUpdatingPassword ? 'Saving...' : 'Update Password'}
-                </button>
-            </form>
-            
+        {/* --- USER TAB --- */}
+        {activeTab === 'user' && (
+          <>
+            {/* Status Messages */}
+            {userSettingsMessage && <div className="status-box status-success">{userSettingsMessage}</div>}
+            {userSettingsError && <div className="status-box status-error">{userSettingsError}</div>}
+
+            <div className="settings-panel">
+                <h2>Profile Details</h2>
+                <form onSubmit={handleUpdateNameSubmit} className="glass-form">
+                    <div className="form-group">
+                        <label>Email Address</label>
+                        <input type="text" value={user.email} disabled style={{opacity: 0.7}} />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="firstName">First Name</label>
+                        <input type="text" id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} disabled={isUpdatingUserName} />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="lastName">Last Name</label>
+                        <input type="text" id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} disabled={isUpdatingUserName} />
+                    </div>
+                    <div className="form-actions">
+                        <button type="submit" className="submit-btn" disabled={isUpdatingUserName}>Save Profile</button>
+                    </div>
+                </form>
+            </div>
+
+            <div className="settings-panel">
+                <h2>Security</h2>
+                <form onSubmit={handleUpdatePasswordSubmit} className="glass-form">
+                    <h3>Change Password</h3>
+                    <div className="form-group">
+                        <label>Current Password</label>
+                        <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} disabled={isUpdatingPassword} />
+                    </div>
+                    <div className="form-group">
+                        <label>New Password</label>
+                        <input type="password" value={password} onChange={e => setPassword(e.target.value)} disabled={isUpdatingPassword} />
+                    </div>
+                    <div className="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={isUpdatingPassword} />
+                    </div>
+                    <div className="form-actions">
+                        <button type="submit" className="submit-btn" disabled={isUpdatingPassword}>Update Password</button>
+                    </div>
+                </form>
+            </div>
+
             {profile.role === 'MUSICIAN' && profile.organization_id && (
-              <form onSubmit={handleUpdateInstrumentsSubmit} className="settings-form instrument-form">
-                <h3>Your Instruments</h3>
-                <div className="form-group">
-                  <label>Select all instruments you play from your organization's list:</label>
-                  <div className="checkbox-group settings-checkbox-group">
-                    {orgDetailsLoading ? <p>Loading instruments...</p> : 
-                      orgInstrumentList.map(inst => (
-                        <label key={inst} className="checkbox-label">
-                          <input type="checkbox" value={inst} checked={selectedInstruments.includes(inst)} onChange={() => handleInstrumentCheckboxChange(inst)} disabled={isUpdatingInstruments}/>{inst}
-                        </label>
-                      ))
-                    }
-                    {(!orgDetailsLoading && orgInstrumentList.length === 0) && <p>Your organization has not defined any instruments yet.</p>}
-                  </div>
-                </div>
-                <button type="submit" className="submit-btn" disabled={isUpdatingInstruments || orgInstrumentList.length === 0}>
-                  {isUpdatingInstruments ? 'Saving...' : 'Update Instruments'}
-                </button>
-              </form>
-            )}
-          </div>
-        )}
-        {activeTab === 'organization' && (
-          <div className="settings-section organization-settings-section">
-            {orgActionStatus.error && <p className="form-error">{orgActionStatus.error}</p>}
-            {orgActionStatus.message && <p className="form-success">{orgActionStatus.message}</p>}
-            {!profile.organization_id && !orgDetailsLoading && !isOrgActionInProgress && (
-              <JoinOrgForm onJoin={handleJoinOrgSubmit} isSubmitting={isOrgActionInProgress} />
-            )}
-            {profile.organization_id && organization && !orgDetailsLoading && (
-              <>
-                <h2>{orgName} <span style={{fontSize: '0.7em', color: '#777'}}>({organization.id})</span></h2>
-                <button onClick={handleLeaveOrganization} className="submit-btn leave-org-btn" disabled={isOrgActionInProgress} style={{backgroundColor: '#e74c3c', marginBottom:'20px', display:'block'}}>{isOrgActionInProgress ? 'Processing...' : 'Leave This Organization'}</button>
-                <hr style={{margin: "20px 0"}}/>
-                {profile.role === 'ORGANIZER' && (
-                  <>
-                    <form onSubmit={handleUpdateOrgNameSubmit} className="settings-form">
-                      <h3>Manage Organization Details</h3>
-                      <div className="form-group"><label htmlFor="orgNameS">Organization Name:</label><input type="text" id="orgNameS" value={orgName} onChange={(e) => setOrgName(e.target.value)} required disabled={isOrgActionInProgress}/></div>
-                      <button type="submit" className="submit-btn" disabled={isOrgActionInProgress}>{isOrgActionInProgress ? 'Saving...' : 'Update Name'}</button>
-                    </form>
-                    <div className="instrument-manager settings-form">
-                        <h3>Manage Organization Instruments</h3>
-                        {orgInstrumentList.length === 0 && !isOrgActionInProgress && <p>No instruments defined yet.</p>}
-                        <ul className="checklist-display-list">
-                        {orgInstrumentList.map((instrument) => (<li key={instrument} className="checklist-display-item"><span>{instrument}</span><button onClick={() => handleDeleteInstrument(instrument)} className="delete-task-btn" disabled={isOrgActionInProgress} title="Delete Instrument">&times;</button></li>))}
-                        </ul>
-                        <div className="add-task-form-group">
-                        <input type="text" value={newInstrumentName} onChange={(e) => setNewInstrumentName(e.target.value)} placeholder="Enter new instrument name" disabled={isOrgActionInProgress}/>
-                        <button type="button" onClick={handleAddInstrument} className="add-task-btn" disabled={isOrgActionInProgress || !newInstrumentName.trim()}>+ Add Instrument</button>
-                        </div>
-                    </div>
-                    <div className="checklist-manager settings-form">
-                        <h3>Default Pre-Service Checklist</h3>
-                        {orgChecklist.length === 0 && !isOrgActionInProgress && <p>No default checklist tasks defined yet.</p>}
-                        <ul className="checklist-display-list">
-                        {orgChecklist.map((task, index) => (<li key={index} className="checklist-display-item"><span>{task}</span><button onClick={() => handleDeleteChecklistTask(index)} className="delete-task-btn" disabled={isOrgActionInProgress} title="Delete Task">&times;</button></li>))}
-                        </ul>
-                        <div className="add-task-form-group">
-                        <input type="text" value={newChecklistTask} onChange={(e) => setNewChecklistTask(e.target.value)} placeholder="Enter new checklist task" disabled={isOrgActionInProgress}/>
-                        <button type="button" onClick={handleAddChecklistTask} className="add-task-btn" disabled={isOrgActionInProgress || !newChecklistTask.trim()}>+ Add Task</button>
-                        </div>
-                    </div>
-                    <div className="settings-form">
-                      <h3>Plan Templates</h3>
-                      <p>Configure the default items added to every new plan.</p>
-                      <button 
-                          onClick={() => navigate('/settings/default-plan')} // Ensure useNavigate is imported and hooked
-                          className="submit-btn" 
-                          style={{ marginTop: '10px' }}
-                      >
-                          Edit Default Plan
-                      </button>
-                  </div>
-                    <div className="pre-approval-manager settings-form">
-                        <h3>Manage Pre-Approved Emails</h3>
-                        <p>Add emails to allow users to join your organization ({organization.id}).</p>
-                        <form onSubmit={handleAddPreApprovedEmail} className="add-preapproval-form">
-                            <div className="form-group"><label htmlFor="preApprovalEmailS">Email to Pre-Approve:</label><input type="email" id="preApprovalEmailS" value={newPreApprovalEmail} onChange={(e) => setNewPreApprovalEmail(e.target.value)} placeholder="user@example.com" required disabled={isOrgActionInProgress}/></div>
-                            <div className="form-group"><label htmlFor="preApprovalRoleS">Assign Role:</label><select id="preApprovalRoleS" value={newPreApprovalRole} onChange={(e) => setNewPreApprovalRole(e.target.value)} disabled={isOrgActionInProgress}><option value="MUSICIAN">Musician</option><option value="ORGANIZER">Organizer</option></select></div>
-                            <button type="submit" className="submit-btn add-task-btn" disabled={isOrgActionInProgress || !newPreApprovalEmail.trim()}>{isOrgActionInProgress ? 'Adding...' : '+ Add Pre-Approval'}</button>
-                        </form>
-                        <h4>Currently Pre-Approved:</h4>
-                        {preApprovedEmails.length === 0 && !orgDetailsLoading && <p>No emails pre-approved yet.</p>}
-                        {orgDetailsLoading && <p>Loading pre-approved list...</p>}
-                        {!orgDetailsLoading && preApprovedEmails.length > 0 && (
-                          <ul className="preapproval-list checklist-display-list">
-                            {preApprovedEmails.map(approval => (<li key={approval.id} className="preapproval-item checklist-display-item"><span><strong>{approval.email}</strong> as <em>{approval.role_to_assign}</em></span><button onClick={() => handleRemovePreApprovedEmail(approval.id)} className="delete-task-btn" disabled={isOrgActionInProgress} title="Remove Pre-approval">&times;</button></li>))}
-                          </ul>
-                        )}
-                    </div>
-                    <div className="org-members-manager settings-form">
-                        <h3>Organization Members</h3>
-                        {orgDetailsLoading && <p>Loading members...</p>}
-                        {!orgDetailsLoading && currentOrgMembersList.length === 0 && <p>No other members found.</p>}
-                        {!orgDetailsLoading && currentOrgMembersList.length > 0 && (
-                        <ul className="org-members-list checklist-display-list">
-                            {currentOrgMembersList.map(member => (
-                            <li key={member.id} className="org-member-item checklist-display-item">
-                                <div className="member-details">
-                                <span className="member-name"><strong>{member.first_name} {member.last_name}</strong> ({member.email})</span>
-                                <span className="member-role-org">Role: <em>{member.role}</em></span>
-                                </div>
-                                {member.id !== organization.created_by && member.id !== user.id && (<button onClick={() => handleRemoveMemberFromOrgByOrganizer(member.id, `${member.first_name} ${member.last_name}`)} className="delete-task-btn remove-member-btn" disabled={isOrgActionInProgress} title="Remove Member">Remove</button>)}
-                                {member.id === organization.created_by && (<span className="creator-tag">(Creator)</span>)}
-                                {member.id === user.id && (<span className="creator-tag">(You)</span>)}
-                            </li>
+                 <div className="settings-panel">
+                    <h2>My Instruments</h2>
+                    <form onSubmit={handleUpdateInstrumentsSubmit} className="glass-form">
+                        <p style={{marginBottom:'1rem'}}>Select the instruments you play from the organization's list.</p>
+                        <div className="checkbox-group">
+                            {orgInstrumentList.map(inst => (
+                                <label key={inst} className="checkbox-label">
+                                    <input type="checkbox" checked={selectedInstruments.includes(inst)} onChange={() => handleInstrumentCheckboxChange(inst)} />
+                                    {inst}
+                                </label>
                             ))}
-                        </ul>
+                            {orgInstrumentList.length === 0 && <p>No instruments defined by organization.</p>}
+                        </div>
+                        <div className="form-actions">
+                            <button type="submit" className="submit-btn" disabled={isUpdatingInstruments}>Save Instruments</button>
+                        </div>
+                    </form>
+                 </div>
+            )}
+          </>
+        )}
+
+        {/* --- ORGANIZATION TAB --- */}
+        {activeTab === 'organization' && (
+          <>
+            {orgActionStatus.message && <div className="status-box status-success">{orgActionStatus.message}</div>}
+            {orgActionStatus.error && <div className="status-box status-error">{orgActionStatus.error}</div>}
+
+            {/* Case: Not in Org */}
+            {!profile.organization_id && (
+                <div className="settings-panel">
+                    <JoinOrgForm onJoin={handleJoinOrgSubmit} isSubmitting={orgActionStatus.loading} />
+                </div>
+            )}
+
+            {/* Case: In Org */}
+            {profile.organization_id && organization && (
+                <>
+                    <div className="settings-panel">
+                        {/* REVISED HEADER: Name + Leave Button in one row */}
+                        <div className="settings-org-header-row">
+                            <h2>{organization.name} <span style={{fontSize:'0.6em', opacity: 0.6, fontWeight:400}}>ID: {organization.id}</span></h2>
+                            <button onClick={handleLeaveOrganization} className="btn-danger-outline-small">
+                                Leave Organization
+                            </button>
+                        </div>
+                        
+                        {profile.role === 'ORGANIZER' ? (
+                            <form onSubmit={handleUpdateOrgNameSubmit} className="glass-form">
+                                <div className="form-group">
+                                    <label>Edit Organization Name</label>
+                                    <input type="text" value={orgName} onChange={e => setOrgName(e.target.value)} />
+                                </div>
+                                <div className="form-actions">
+                                    <button className="submit-btn">Update Name</button>
+                                </div>
+                            </form>
+                        ) : (
+                             <p>You are a member of this organization.</p>
                         )}
                     </div>
-                  </>
-                )}
-                {profile.role === 'MUSICIAN' && (<p>You are a Musician in this organization. To manage organization settings, please contact an organizer.</p>)}
-              </>
+
+                    {profile.role === 'ORGANIZER' && (
+                        <>
+                            {/* PLAN TEMPLATES */}
+                            <div className="settings-panel">
+                                <h2>Plan Templates</h2>
+                                <p style={{marginBottom: '1rem'}}>Customize the items that appear on every new plan.</p>
+                                <button onClick={() => navigate('/settings/default-plan')} className="submit-btn">
+                                    Edit Default Plan
+                                </button>
+                            </div>
+
+                            {/* INSTRUMENTS */}
+                            <div className="settings-panel">
+                                <h2>Instruments</h2>
+                                <ul className="glass-list">
+                                    {orgInstrumentList.map(inst => (
+                                        <li key={inst} className="glass-list-item">
+                                            <span className="item-main-text">{inst}</span>
+                                            <button onClick={() => handleDeleteInstrument(inst)} className="icon-btn-danger">&times;</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <div className="glass-form add-row">
+                                    <input type="text" value={newInstrumentName} onChange={e => setNewInstrumentName(e.target.value)} placeholder="New instrument..." />
+                                    <button onClick={handleAddInstrument} className="submit-btn" style={{whiteSpace:'nowrap'}}>Add</button>
+                                </div>
+                            </div>
+
+                            {/* CHECKLIST */}
+                            <div className="settings-panel">
+                                <h2>Checklist Tasks</h2>
+                                <ul className="glass-list">
+                                    {orgChecklist.map((task, idx) => (
+                                        <li key={idx} className="glass-list-item">
+                                            <span className="item-main-text">{task}</span>
+                                            <button onClick={() => handleDeleteChecklistTask(idx)} className="icon-btn-danger">&times;</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <div className="glass-form add-row">
+                                    <input type="text" value={newChecklistTask} onChange={e => setNewChecklistTask(e.target.value)} placeholder="New task..." />
+                                    <button onClick={handleAddChecklistTask} className="submit-btn" style={{whiteSpace:'nowrap'}}>Add</button>
+                                </div>
+                            </div>
+
+                            {/* MEMBERS */}
+                            <div className="settings-panel">
+                                <h2>Members & Invites</h2>
+                                
+                                <form onSubmit={handleAddPreApprovedEmail} className="glass-form" style={{marginBottom: '2rem'}}>
+                                    <h3>Pre-Approve Email</h3>
+                                    <div className="add-row">
+                                        <input type="email" value={newPreApprovalEmail} onChange={e => setNewPreApprovalEmail(e.target.value)} placeholder="user@email.com" />
+                                        <select value={newPreApprovalRole} onChange={e => setNewPreApprovalRole(e.target.value)} style={{width: '140px'}}>
+                                            <option value="MUSICIAN">Musician</option>
+                                            <option value="ORGANIZER">Organizer</option>
+                                        </select>
+                                        <button type="submit" className="submit-btn">Approve</button>
+                                    </div>
+                                </form>
+                                {preApprovedEmails.length > 0 && (
+                                    <ul className="glass-list" style={{marginBottom: '2rem'}}>
+                                        {preApprovedEmails.map(approval => (
+                                            <li key={approval.id} className="glass-list-item">
+                                                <span className="item-main-text">{approval.email} <em style={{fontSize:'0.8em', color:'#64748b'}}>({approval.role_to_assign})</em></span>
+                                                <button onClick={() => handleRemovePreApprovedEmail(approval.id)} className="icon-btn-danger">&times;</button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+
+                                <h3>Current Members</h3>
+                                <ul className="glass-list">
+                                    {currentOrgMembersList.map(member => (
+                                        <li key={member.id} className="glass-list-item">
+                                            <div>
+                                                <span className="item-main-text"><strong>{member.first_name} {member.last_name}</strong></span>
+                                                <span className="item-sub-text">{member.role}</span>
+                                                {member.id === user.id && <span className="item-sub-text">(You)</span>}
+                                            </div>
+                                            {member.id !== user.id && member.id !== organization.created_by && (
+                                                <button onClick={() => handleRemoveMemberFromOrgByOrganizer(member.id, member.first_name)} className="icon-btn-danger" title="Remove">&times;</button>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </>
+                    )}
+                </>
             )}
-            {profile.organization_id && !organization && (orgDetailsLoading || isOrgActionInProgress) && <p>Loading...</p>}
-            {profile.organization_id && !organization && !orgDetailsLoading && !isOrgActionInProgress && !orgActionStatus.error && (<p className="form-error">Could not load details for your org: {profile.organization_id}</p>)}
-          </div>
+          </>
         )}
       </div>
     </div>

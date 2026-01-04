@@ -1,6 +1,7 @@
+// src/components/SettingsPage/DefaultPlanAddItemForm.jsx
 import React, { useState, useEffect } from 'react';
 
-const DefaultPlanAddItemForm = ({ onAddItem }) => {
+const DefaultPlanAddItemForm = ({ onAddItem, onCancel }) => {
   const [type, setType] = useState('Generic');
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('');
@@ -51,7 +52,7 @@ const DefaultPlanAddItemForm = ({ onAddItem }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="add-item-form">
+    <form onSubmit={handleSubmit} className="glass-form">
       <h3>Add Template Item</h3>
       <div className="form-group">
         <label>Type:</label>
@@ -84,13 +85,14 @@ const DefaultPlanAddItemForm = ({ onAddItem }) => {
       )}
 
       {(type === 'Song' || type === 'Bible Verse') && (
-          <p className="form-help-text">
+          <p style={{fontSize:'0.9rem', color: '#64748b', marginBottom: '1rem'}}>
               {type} items in the default plan are placeholders. 
               {type === 'Song' ? ' Duration defaults to 3 min.' : ' Duration defaults to 1 min.'}
           </p>
       )}
 
       <div className="form-actions">
+        {onCancel && <button type="button" className="cancel-btn" onClick={onCancel}>Cancel</button>}
         <button type="submit" className="submit-btn">Add Item</button>
       </div>
     </form>

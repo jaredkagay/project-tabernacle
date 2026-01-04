@@ -1,3 +1,4 @@
+// src/components/SettingsPage/DefaultPlanPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
@@ -5,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import OrderOfService from '../PlanPage/OrderOfService';
 import DefaultPlanAddItemForm from './DefaultPlanAddItemForm';
 import DefaultPlanEditItemForm from './DefaultPlanEditItemForm';
-import '../PlanPage/PlanPage.css'; // Reuse plan styles
+import '../PlanPage/PlanPage.css'; // Inheriting styles
 
 const DefaultPlanPage = () => {
   const { user, profile, loading: authLoading } = useAuth();
@@ -16,7 +17,6 @@ const DefaultPlanPage = () => {
   const [isAddItemVisible, setIsAddItemVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
-  // Load existing default plan
   useEffect(() => {
     if (!profile?.organization_id) return;
     
@@ -71,78 +71,78 @@ const DefaultPlanPage = () => {
     }
   };
 
-  const handleOrderChange = (newItems) => setItems(newItems);
-
   const handleAddItem = (newItem) => {
     const itemWithId = { ...newItem, id: `temp-${Math.random().toString(36).substr(2, 9)}` };
     setItems(prev => [...prev, itemWithId]);
     setIsAddItemVisible(false);
   };
 
-  const handleDeleteItem = (id) => {
-    setItems(prev => prev.filter(i => i.id !== id));
-  };
-
-  const handleUpdateItem = (updatedItem) => {
-    setItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i));
-    setEditingItem(null);
-  };
-
-  if (authLoading || loading) return <div className="page-status">Loading...</div>;
-  if (profile?.role !== 'ORGANIZER') return <div className="page-status error">Access Denied</div>;
+  if (authLoading || loading) return <div className="page-status-message">Loading...</div>;
+  if (profile?.role !== 'ORGANIZER') return <div className="page-status-message error-message">Access Denied</div>;
 
   return (
-    <div className="plan-page-container">
-        <header className="plan-header">
-            <div className="plan-header-title-group">
-                <h1>Edit Default Plan</h1>
-                <p>Define the template used when creating new plans.</p>
-            </div>
-            <div className="plan-header-actions">
-                <button onClick={() => navigate('/settings')} className="cancel-btn">Cancel</button>
-                <button onClick={handleSave} className="submit-btn" disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save Default Plan'}
+    <div className="plan-page-wrapper">
+        <div className="plan-content-container">
+            {/* Glass Header */}
+            <header className="plan-glass-header">
+                <div className="plan-header-title-group">
+                    <h1>Default Plan Template</h1>
+                    <span className="plan-date-subtitle">Items here appear on all new plans.</span>
+                </div>
+                <div className="plan-header-actions">
+                    <button onClick={() => navigate('/settings')} className="glass-action-btn delete-btn">
+                        Cancel
+                    </button>
+                    <button onClick={handleSave} className="glass-action-btn" disabled={isSaving}>
+                        {isSaving ? 'Saving...' : 'Save Template'}
+                    </button>
+                </div>
+            </header>
+
+            {/* Main Panel */}
+            <div className="plan-panel">
+                <div className="panel-header-row">
+                     <h2>Service Order</h2>
+                </div>
+                
+                <OrderOfService 
+                    items={items}
+                    onOrderChange={setItems}
+                    onDeleteItem={(id) => setItems(prev => prev.filter(i => i.id !== id))}
+                    onEditItem={setEditingItem}
+                    userRole="ORGANIZER"
+                    showTimes={false} 
+                />
+                
+                <button 
+                    onClick={() => setIsAddItemVisible(true)} 
+                    className="glass-btn-block"
+                >
+                    + Add Default Item
                 </button>
             </div>
-        </header>
-
-        <div className="plan-main-content" style={{ display: 'block', maxWidth: '800px', margin: '0 auto' }}>
-            <OrderOfService 
-                items={items}
-                onOrderChange={handleOrderChange}
-                onDeleteItem={handleDeleteItem}
-                onEditItem={setEditingItem}
-                userRole="ORGANIZER"
-                showTimes={false} // Hide timestamps
-            />
-            
-            <button 
-                onClick={() => setIsAddItemVisible(true)} 
-                className="toggle-add-item-form-btn" 
-                style={{marginTop: '20px', width: '100%'}}
-            >
-                + Add Service Item
-            </button>
         </div>
 
-        {/* Add Modal */}
+        {/* Modals using App.css global modal styles */}
         {isAddItemVisible && (
             <div className="modal-overlay" onClick={() => setIsAddItemVisible(false)}>
                 <div className="modal-content" onClick={e => e.stopPropagation()}>
                     <button className="modal-close-btn" onClick={() => setIsAddItemVisible(false)}>&times;</button>
-                    <DefaultPlanAddItemForm onAddItem={handleAddItem} />
+                    <DefaultPlanAddItemForm onAddItem={handleAddItem} onCancel={() => setIsAddItemVisible(false)} />
                 </div>
             </div>
         )}
 
-        {/* Edit Modal */}
         {editingItem && (
             <div className="modal-overlay" onClick={() => setEditingItem(null)}>
                 <div className="modal-content" onClick={e => e.stopPropagation()}>
                     <button className="modal-close-btn" onClick={() => setEditingItem(null)}>&times;</button>
                     <DefaultPlanEditItemForm 
                         itemToEdit={editingItem} 
-                        onUpdateItem={handleUpdateItem} 
+                        onUpdateItem={(updated) => {
+                            setItems(prev => prev.map(i => i.id === updated.id ? updated : i));
+                            setEditingItem(null);
+                        }} 
                         onCancel={() => setEditingItem(null)} 
                     />
                 </div>
