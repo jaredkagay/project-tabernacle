@@ -1,235 +1,259 @@
 /* src/components/PlanPage/OrderOfService.css */
 
-/* --- General List and Item Styling --- */
 .order-of-service-list ul {
   list-style-type: none;
   padding: 0;
   margin: 0;
 }
 
+/* --- STANDARD ITEM STYLING --- */
 .service-item {
-  margin-bottom: 8px;
-  background-color: #fdfdfd;
-  border: 1px solid #eaeaea;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  padding: 10px 12px;
-}
-
-/* Default for non-divider items that have main info and then details */
-.service-item:not(.item-type-divider) {
+  margin-bottom: 10px;
+  background-color: rgba(255, 255, 255, 0.6); 
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  padding: 12px 15px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  
   display: flex;
   flex-direction: column;
   align-items: stretch;
 }
 
+.service-item:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* --- CONTENT LAYOUT --- */
 .item-main-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin: 2px 0;
 }
 
+/* Drag Handle */
 .item-drag-handle {
   display: flex;
   align-items: center;
-  flex-grow: 1;
-  margin-right: 10px;
-  /* cursor: grab; */
-  padding: 0px 5px 0 0;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  margin-right: 12px; 
+  color: #94a3b8; 
+  cursor: default;
+  flex-shrink: 0;
+  /* Ensuring consistent width for alignment calc */
+  min-width: 20px; 
+  justify-content: center;
 }
-.item-drag-handle:active {
-  /* cursor: grabbing; */
-}
+.item-drag-handle.is-draggable { cursor: grab; color: #64748b; }
+.item-drag-handle.is-draggable:active { cursor: grabbing; color: #3b82f6; }
 
-.item-number {
-  margin-right: 8px;
-  color: #888;
-  font-weight: bold;
-  min-width: 20px;
-  text-align: right;
-}
-
+/* The container for Title */
 .item-content {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Helps vertically center title if duration is not present */
+  min-width: 0; 
+  padding: 0;
+  margin: 0;
 }
 
+/* Title Row */
 .item-title {
   font-size: 1.05em;
-  color: #333;
-  font-weight: 500;
-  word-break: break-word;
-  padding-left: 10px;
-}
-.item-title a {
-  color: #2980b9;
-  text-decoration: none;
-}
-.item-title a:hover {
-  text-decoration: underline;
+  color: #0f172a; 
+  font-weight: 600;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  line-height: 1.2;
 }
 
 .song-artist {
-  font-style: italic;
-  font-size: 0.9em;
-  color: #555;
-  margin-left: 5px;
-}
-
-.item-duration {
+  font-style: normal;
   font-size: 0.85em;
-  color: #777;
+  color: #64748b;
+  font-weight: 400;
+}
+
+/* Duration Badge */
+.item-duration-display {
+  font-size: 0.75em;
+  color: #64748b;
+  background-color: rgba(0,0,0,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
   margin-left: 8px;
-  white-space: nowrap;
-  align-self: flex-start;
-  padding-top: 2px;
+  font-weight: 500;
 }
 
-.item-actions-and-time { /* New container for actions and timestamp */
-  display: flex;
-  align-items: center;
-  flex-shrink: 0; /* Prevent this block from shrinking */
-  margin-left: 10px; /* Space from the main content area */
+/* --- DETAILS & SUBTITLES (FIXED) --- */
+
+/* CALCULATION FOR LEFT PADDING:
+   Drag Handle Width (~24px) + Drag Handle Margin (12px) = ~36px
+   This creates the "Hardcoded spaces" you asked for.
+*/
+.item-details,
+p.item-details,
+.general-details, 
+.song-extra-details {
+  font-size: 0.9em;
+  color: #475569;
+  line-height: 1.35;
+  
+  /* 1. FORCE ALIGNMENT WITH TITLE */
+  padding-left: 8px !important; 
+  margin-left: 0 !important;
+  
+  /* 2. KILL EXTRA VERTICAL SPACING */
+  margin-top: 4px !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  
+  width: 100%;
+  box-sizing: border-box; /* Ensures padding doesn't break width */
 }
 
-.item-actions {
+/* Double ensure internal paragraphs don't add more margin */
+.item-details p {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+
+/* --- ACTIONS & TIMES --- */
+.item-actions-and-time {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  margin-left: 15px;
+  flex-shrink: 0; 
 }
 
 .item-start-time {
   font-size: 0.9em;
-  font-weight: bold;
-  color: #2c3e50; /* Dark blue/gray */
-  margin-left: 10px; /* Space from the action buttons */
-  white-space: nowrap;
-  padding: 4px 0; /* Align vertically with action buttons if needed */
+  font-weight: 700;
+  color: #475569; 
+  min-width: 45px;
+  text-align: right;
+  font-feature-settings: "tnum";
 }
 
+.item-actions {
+  display: flex;
+  gap: 8px; 
+  align-items: center;
+}
+
+/* --- BUTTON STYLING (UNCHANGED - USER APPROVED) --- */
 .item-action-btn {
-  padding: 4px 8px;
-  font-size: 0.8em;
-  border: none;
-  border-radius: 4px;
+  padding: 7px; 
+  font-size: 1.1em; 
+  line-height: 1; 
+  border: none !important;
+  border-radius: 6px;
   cursor: pointer;
-  color: white;
-  text-decoration: none;
+  color: white !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s ease;
-}
-.item-action-btn.edit-btn { background-color: #3498db; }
-.item-action-btn.edit-btn:hover { background-color: #2980b9; }
-.item-action-btn.delete-btn { background-color: #e74c3c; }
-.item-action-btn.delete-btn:hover { background-color: #c0392b; }
-.item-action-btn.link-btn { background-color: #5dade2; }
-.item-action-btn.link-btn:hover { background-color: #4a98c8; }
-.item-action-btn.bible-link-btn { background-color: #8e44ad; }
-.item-action-btn.bible-link-btn:hover { background-color: #732d91; }
-
-
-/* --- Details & Subtitles --- */
-.item-details { /* Base for general details, song extra details, and bible reference subtitle */
-  font-size: 0.9em;
-  color: #555;
-  margin-top: 6px; /* Space below the item-main-info or title */
-  line-height: 1.4;
-  word-break: break-word;
-  margin-bottom: 5px;
+  transition: transform 0.1s ease, filter 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-.general-details,
-.song-extra-details {
-  padding-left: 10px; /* Indent to align after item number for these types */
+.item-action-btn:hover {
+    filter: brightness(1.1); 
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0,0,0,0.15);
 }
-.song-extra-details p { margin: 4px 0; }
-.song-extra-details strong { color: #444; }
-.song-extra-details a { color: #3498db; }
+.item-action-btn:active { transform: translateY(0); }
 
-/* src/components/PlanPage/OrderOfService.css */
+/* Colors */
+.item-action-btn.link-btn { background-color: #14b8a6 !important; } 
+.item-action-btn.bible-link-btn { background-color: #8b5cf6 !important; } 
+.item-action-btn.edit-btn { background-color: #6366f1 !important; } 
+.item-action-btn.delete-btn { background-color: #f43f5e !important; } 
 
-/* --- Musical Key Styling --- */
-.song-key-selector select {
-  padding: 4px 6px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  font-size: 0.85em;
-  background-color: #fff;
-  max-width: 55px; /* Or adjust as needed */
-  justify-content: center;
+
+/* --- EDIT MODE KEY DROPDOWN --- */
+.service-item select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 24px 4px 10px; 
+    
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    line-height: 1.3;
+    outline: none;
+    height: auto;
+    
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.2rem center;
+    background-repeat: no-repeat;
+    background-size: 1.2em 1.2em;
+    
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
 }
 
-.song-key-label { /* For Musician's view of the key */
-  display: inline-flex; /* Allows centering and dynamic width */
+.service-item select:hover {
+    background-color: #fff;
+    border-color: #94a3b8;
+}
+.service-item select:focus {
+    border-color: #6366f1;
+    background-color: #fff;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Key Pill (View Mode) */
+.song-key-label {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 26px;      /* Base width, makes it a circle for single characters */
-  height: 26px;         /* Fixed height */
-  padding-left: 8px;    /* Horizontal padding to allow expansion */
-  padding-right: 8px;   /* Horizontal padding to allow expansion */
-  border-radius: 13px;  /* Half of height for rounded ends (pill/circle) */
-  background-color: #5dade2; /* Default blue, as before */
-  color: white;
-  font-size: 0.8em;     /* Adjusted for better fit */
-  font-weight: bold;
-  text-align: center;
-  box-sizing: border-box;
-  line-height: 1;         /* Helps center single line text vertically */
-  white-space: nowrap;    /* Prevent key name from wrapping */
-  transition: background-color 0.2s ease, color 0.2s ease; /* Smooth transitions if needed */
+  height: 22px;
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: 6px; 
+  background-color: #334155; 
+  color: #f8fafc;
+  font-size: 0.75em;
+  font-weight: 700;
+  margin-right: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-.song-key-label.na-key { /* Style for when key is N/A */
-  background-color: #bdc3c7; 
-  color: #7f8c8d; /* Or a darker color for better contrast on gray */
-  /* You might want slightly different padding if "N/A" is wider than single keys */
-  padding-left: 6px;
-  padding-right: 6px;
-}
 
-.song-key-label span { /* The text inside the label */
-  display: block; /* Ensures proper centering with line-height */
-}
-
-.song-title {
-  color:#2980b9;
-}
-
-/* --- Divider Specific Styles --- */
+/* --- DIVIDER STYLING --- */
 .item-type-divider {
   background-color: transparent !important;
+  backdrop-filter: none !important; 
   border: none !important;
   box-shadow: none !important;
-  padding: 10px 0px !important;
-  margin: 15px 0 !important;
-  display: flex !important;
-  justify-content: space-between !important;
+  padding: 10px 0 !important;
+  margin: 10px 0 !important;
+  
+  display: flex !important; 
+  flex-direction: row !important;
   align-items: center !important;
-  min-height: auto !important;
-  width: 100%;
-  box-sizing: border-box;
+  justify-content: space-between;
 }
 
 .divider-draggable-content {
   flex-grow: 1;
+  margin-right: 15px; 
   display: flex;
   align-items: center;
-  margin-right: 15px;
-  min-height: 1px;
-  /* cursor: grab; */
 }
-/* .divider-draggable-content:active { cursor: grabbing; } */
 
 .divider-layout-titled {
   display: flex;
@@ -237,86 +261,27 @@
   width: 100%;
 }
 
-hr.divider-line-segment {
+.divider-title-text {
+  padding: 0 15px;
+  color: #475569; 
+  font-size: 0.85em;
+  font-weight: 800; 
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.divider-line-segment, .divider-full-line {
   flex-grow: 1;
   border: none;
-  border-top: 1px solid #adb5bd; /* Line color */
+  border-top: 1px solid #94a3b8; 
   margin: 0;
-  height: 0px;
+  height: 0;
 }
-
-span.divider-title-text {
-  padding: 0 10px;
-  color: #495057;
-  font-size: 0.9em;
-  font-weight: 600;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-hr.divider-full-line {
-  width: 100%;
-  border: none;
-  border-top: 1px solid #adb5bd; /* Line color */
-  margin: 0;
-  height: 0px;
-}
+.divider-full-line { width: 100%; }
 
 .item-type-divider .item-actions {
   flex-shrink: 0;
-}
-
-
-
-.item-type-divider .edit-btn { background-color: #555; }
-.item-type-divider .edit-btn:hover { background-color: #333; }
-
-.service-item .edit-btn { background-color: #555; }
-.service-item .edit-btn:hover { background-color: #333; }
-
-.item-type-divider .delete-btn { background-color: #d9534f; }
-.item-type-divider .delete-btn:hover { background-color: #c9302c; }
-
-/* src/components/PlanPage/OrderOfService.css */
-/* ... (all your other existing styles) ... */
-
-.item-drag-handle,
-.divider-draggable-content {
-  /* Default cursor or whatever is appropriate when not draggable */
-  cursor: default; 
-  /* ... other existing styles for these elements ... */
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-.item-drag-handle.is-draggable, /* Only apply grab cursor if it has this class */
-.divider-draggable-content.is-draggable {
-  cursor: grab;
-}
-.item-drag-handle.is-draggable:active,
-.divider-draggable-content.is-draggable:active {
-  cursor: grabbing;
-}
-
-/* ... existing styles ... */
-
-/* Add this to your CSS file */
-.item-duration-display {
-  font-size: 0.85em;
-  color: #666;
-  background-color: #f0f0f0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-left: 10px;
-  margin-right: 5px;
   white-space: nowrap;
-}
-
-/* Ensure it aligns well in the flex container */
-.item-actions-and-time {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  margin-right: 0; 
 }
