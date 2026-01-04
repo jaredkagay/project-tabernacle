@@ -66,6 +66,10 @@ const SettingsPage = () => {
   const [orgDetailsLoading, setOrgDetailsLoading] = useState(false);
   const [orgActionStatus, setOrgActionStatus] = useState({ message: '', error: '', loading: false });
 
+  useEffect(() => {
+    document.title = 'tabernacle - Settings';
+  }, []);
+
   // --- INITIAL DATA LOADING ---
   useEffect(() => {
     if (profile) {

@@ -21,6 +21,10 @@ const HomePage = () => {
   const [verseData, setVerseData] = useState(null);
 
   useEffect(() => {
+    document.title = 'tabernacle - Home';
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
       if (!user || !profile || !profile.organization_id) return;
       setLoading(true);

@@ -1,5 +1,5 @@
 // src/components/StartPage/StartPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient'; // Adjust path if needed
 import './StartPage.css'; // Make sure this CSS file exists and is styled
@@ -9,6 +9,10 @@ const DEFAULT_INSTRUMENTS = ["Vocals", "Piano", "Acoustic", "Bass", "Cajon", "Or
 const StartPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState(''); // 'MUSICIAN' or 'ORGANIZER'
+
+  useEffect(() => {
+    document.title = 'tabernacle - Start';
+  }, []);
 
   // Step 2 - Musician Details
   const [selectedInstruments, setSelectedInstruments] = useState([]);

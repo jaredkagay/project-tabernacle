@@ -58,6 +58,14 @@ const PlanPage = () => {
 
   const orderOfServiceRole = profile?.role === 'ORGANIZER' && isEditMode ? 'ORGANIZER' : 'MUSICIAN';
 
+  useEffect(() => {
+    if (eventDetails && eventDetails.title) {
+      document.title = `tabernacle - ${eventDetails.title}`;
+    } else {
+      document.title = 'tabernacle - Plan';
+    }
+  }, [eventDetails]);
+
   const orderOfServiceWithTimes = React.useMemo(() => {
     let runningTimeInMinutes = 0;
     return orderOfService.map(item => {

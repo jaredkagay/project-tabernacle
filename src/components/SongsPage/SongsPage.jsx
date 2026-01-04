@@ -29,6 +29,10 @@ const SongsPage = () => {
   // Search Filter State
   const [searchTerm, setSearchTerm] = useState('');
 
+  useEffect(() => {
+    document.title = 'tabernacle - Songs';
+  }, []);
+
   const fetchPageData = useCallback(async () => {
     if (!profile?.organization_id) {
       if (!authIsLoading) setError("You must be part of an organization to manage or view songs.");

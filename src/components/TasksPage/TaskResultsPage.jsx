@@ -137,6 +137,14 @@ const TaskResultsPage = () => {
   const [pollGrid, setPollGrid] = useState({ times: [], days: [], counts: {} });
   const [eventBreakdown, setEventBreakdown] = useState({});
 
+  useEffect(() => {
+    if (task && task.title) {
+      document.title = `tabernacle - ${task.title}`;
+    } else {
+      document.title = 'tabernacle - Task Results';
+    }
+  }, [task]);
+
   const fetchData = useCallback(async () => {
     if (!taskId || !user) return;
     setLoading(true); setError('');

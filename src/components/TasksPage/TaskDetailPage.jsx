@@ -119,6 +119,14 @@ const TaskDetailPage = () => {
   const [dragStartInfo, setDragStartInfo] = useState(null);
   const [slotsToUpdate, setSlotsToUpdate] = useState(new Set());
 
+  useEffect(() => {
+    if (task && task.title) {
+      document.title = `tabernacle - ${task.title}`;
+    } else {
+      document.title = 'tabernacle - Task';
+    }
+  }, [task]);
+
   const fetchTaskAssignmentDetails = useCallback(async () => {
     if (!assignmentId || !user?.id) return;
     setLoading(true); setError('');

@@ -36,6 +36,10 @@ const AllPlansPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.title = 'tabernacle - Plans';
+  }, []);
+
+  useEffect(() => {
     const fetchPlans = async () => {
       if (!user || !profile) {
         setFetchedData([]);

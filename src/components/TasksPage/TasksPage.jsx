@@ -43,6 +43,10 @@ const TasksPage = () => {
   const [actionInProgress, setActionInProgress] = useState(false);
   const [upcomingOrgEvents, setUpcomingOrgEvents] = useState([]);
 
+  useEffect(() => {
+    document.title = 'tabernacle - Tasks';
+  }, []);
+
   const fetchPageData = useCallback(async () => {
       if (!profile || !user) {
         setIsLoadingTasks(false);

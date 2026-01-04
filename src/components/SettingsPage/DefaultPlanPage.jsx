@@ -18,6 +18,10 @@ const DefaultPlanPage = () => {
   const [editingItem, setEditingItem] = useState(null);
 
   useEffect(() => {
+    document.title = 'tabernacle - Settings';
+  }, []);
+
+  useEffect(() => {
     if (!profile?.organization_id) return;
     
     const fetchDefaultPlan = async () => {
