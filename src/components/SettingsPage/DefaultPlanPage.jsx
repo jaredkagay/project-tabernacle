@@ -86,15 +86,15 @@ const DefaultPlanPage = () => {
             {/* Glass Header */}
             <header className="plan-glass-header">
                 <div className="plan-header-title-group">
-                    <h1>Default Plan Template</h1>
-                    <span className="plan-date-subtitle">Items here appear on all new plans.</span>
+                    <h1>Plan Template</h1>
+                    <span className="plan-date-subtitle">Items here added to new plans.</span>
                 </div>
                 <div className="plan-header-actions">
                     <button onClick={() => navigate('/settings')} className="glass-action-btn delete-btn">
                         Cancel
                     </button>
                     <button onClick={handleSave} className="glass-action-btn" disabled={isSaving}>
-                        {isSaving ? 'Saving...' : 'Save Template'}
+                        {isSaving ? 'Saving...' : 'Save'}
                     </button>
                 </div>
             </header>
@@ -118,7 +118,7 @@ const DefaultPlanPage = () => {
                     onClick={() => setIsAddItemVisible(true)} 
                     className="glass-btn-block"
                 >
-                    + Add Default Item
+                  Add Service Item
                 </button>
             </div>
         </div>

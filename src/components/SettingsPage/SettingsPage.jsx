@@ -367,7 +367,7 @@ const SettingsPage = () => {
                     className={`glass-tab ${activeTab === 'user' ? 'active' : ''}`} 
                     onClick={() => setActiveTab('user')}
                 >
-                    User Profile
+                    User
                 </button>
                 <button 
                     className={`glass-tab ${activeTab === 'organization' ? 'active' : ''}`} 
@@ -386,7 +386,7 @@ const SettingsPage = () => {
             {userSettingsError && <div className="status-box status-error">{userSettingsError}</div>}
 
             <div className="settings-panel">
-                <h2>Profile Details</h2>
+                <h2>Profile</h2>
                 <form onSubmit={handleUpdateNameSubmit} className="glass-form">
                     <div className="form-group">
                         <label>Email Address</label>
@@ -401,7 +401,7 @@ const SettingsPage = () => {
                         <input type="text" id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} disabled={isUpdatingUserName} />
                     </div>
                     <div className="form-actions">
-                        <button type="submit" className="submit-btn" disabled={isUpdatingUserName}>Save Profile</button>
+                        <button type="submit" className="submit-btn" disabled={isUpdatingUserName}>Update</button>
                     </div>
                 </form>
             </div>
@@ -423,7 +423,7 @@ const SettingsPage = () => {
                         <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={isUpdatingPassword} />
                     </div>
                     <div className="form-actions">
-                        <button type="submit" className="submit-btn" disabled={isUpdatingPassword}>Update Password</button>
+                        <button type="submit" className="submit-btn" disabled={isUpdatingPassword}>Update</button>
                     </div>
                 </form>
             </div>
@@ -470,20 +470,23 @@ const SettingsPage = () => {
                     <div className="settings-panel">
                         {/* REVISED HEADER: Name + Leave Button in one row */}
                         <div className="settings-org-header-row">
-                            <h2>{organization.name} <span style={{fontSize:'0.6em', opacity: 0.6, fontWeight:400}}>ID: {organization.id}</span></h2>
+                            <span>
+                              <h2>{organization.name}</h2>
+                              <span style={{fontSize:'0.6em', opacity: 0.6, fontWeight:400}}>ID: {organization.id}</span>
+                            </span>
                             <button onClick={handleLeaveOrganization} className="btn-danger-outline-small">
-                                Leave Organization
+                                Leave
                             </button>
                         </div>
                         
                         {profile.role === 'ORGANIZER' ? (
                             <form onSubmit={handleUpdateOrgNameSubmit} className="glass-form">
                                 <div className="form-group">
-                                    <label>Edit Organization Name</label>
+                                    <label>Organization Name</label>
                                     <input type="text" value={orgName} onChange={e => setOrgName(e.target.value)} />
                                 </div>
                                 <div className="form-actions">
-                                    <button className="submit-btn">Update Name</button>
+                                    <button className="submit-btn">Update</button>
                                 </div>
                             </form>
                         ) : (
@@ -495,8 +498,8 @@ const SettingsPage = () => {
                         <>
                             {/* PLAN TEMPLATES */}
                             <div className="settings-panel">
-                                <h2>Plan Templates</h2>
-                                <p style={{marginBottom: '1rem'}}>Customize the items that appear on every new plan.</p>
+                                <h2>Plan Template</h2>
+                                <p style={{marginBottom: '1rem'}}>Customize the items that are added to new plans.</p>
                                 <button onClick={() => navigate('/settings/default-plan')} className="submit-btn">
                                     Edit Default Plan
                                 </button>
@@ -514,14 +517,14 @@ const SettingsPage = () => {
                                     ))}
                                 </ul>
                                 <div className="glass-form add-row">
-                                    <input type="text" value={newInstrumentName} onChange={e => setNewInstrumentName(e.target.value)} placeholder="New instrument..." />
+                                    <input type="text" value={newInstrumentName} onChange={e => setNewInstrumentName(e.target.value)} placeholder="New Instrument" />
                                     <button onClick={handleAddInstrument} className="submit-btn" style={{whiteSpace:'nowrap'}}>Add</button>
                                 </div>
                             </div>
 
                             {/* CHECKLIST */}
                             <div className="settings-panel">
-                                <h2>Checklist Tasks</h2>
+                                <h2>Checklist</h2>
                                 <ul className="glass-list">
                                     {orgChecklist.map((task, idx) => (
                                         <li key={idx} className="glass-list-item">
@@ -531,19 +534,19 @@ const SettingsPage = () => {
                                     ))}
                                 </ul>
                                 <div className="glass-form add-row">
-                                    <input type="text" value={newChecklistTask} onChange={e => setNewChecklistTask(e.target.value)} placeholder="New task..." />
+                                    <input type="text" value={newChecklistTask} onChange={e => setNewChecklistTask(e.target.value)} placeholder="New Task" />
                                     <button onClick={handleAddChecklistTask} className="submit-btn" style={{whiteSpace:'nowrap'}}>Add</button>
                                 </div>
                             </div>
 
                             {/* MEMBERS */}
                             <div className="settings-panel">
-                                <h2>Members & Invites</h2>
+                                <h2>Members</h2>
                                 
                                 <form onSubmit={handleAddPreApprovedEmail} className="glass-form" style={{marginBottom: '2rem'}}>
-                                    <h3>Pre-Approve Email</h3>
+                                    <h3>Pre-Approvals</h3>
                                     <div className="add-row">
-                                        <input type="email" value={newPreApprovalEmail} onChange={e => setNewPreApprovalEmail(e.target.value)} placeholder="user@email.com" />
+                                        <input type="email" value={newPreApprovalEmail} onChange={e => setNewPreApprovalEmail(e.target.value)} placeholder="New Pre-Approval" />
                                         <select value={newPreApprovalRole} onChange={e => setNewPreApprovalRole(e.target.value)} style={{width: '140px'}}>
                                             <option value="MUSICIAN">Musician</option>
                                             <option value="ORGANIZER">Organizer</option>

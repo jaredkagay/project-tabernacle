@@ -10,10 +10,6 @@ const DefaultPlanAddItemForm = ({ onAddItem, onCancel }) => {
   useEffect(() => {
     setTitle('');
     setDuration('');
-    
-    if (type === 'Divider') {
-        setTitle('---');
-    }
   }, [type]);
 
   const handleSubmit = (e) => {
@@ -55,11 +51,11 @@ const DefaultPlanAddItemForm = ({ onAddItem, onCancel }) => {
     <form onSubmit={handleSubmit} className="glass-form">
       <h3>Add Template Item</h3>
       <div className="form-group">
-        <label>Type:</label>
+        <label>Type</label>
         <select value={type} onChange={(e) => setType(e.target.value)}>
-          <option value="Generic">Service Item (Generic)</option>
-          <option value="Song">Song (Template)</option>
-          <option value="Bible Verse">Bible Verse (Template)</option>
+          <option value="Generic">Service Item</option>
+          <option value="Song">Song</option>
+          <option value="Bible Verse">Bible Verse</option>
           <option value="Divider">Divider</option>
         </select>
       </div>
@@ -67,27 +63,26 @@ const DefaultPlanAddItemForm = ({ onAddItem, onCancel }) => {
       {(type === 'Generic') && (
         <>
             <div className="form-group">
-                <label>Title:</label>
+                <label>Title</label>
                 <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
             <div className="form-group">
-                <label>Duration:</label>
-                <input type="text" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="e.g. 5 min" />
+                <label>Duration</label>
+                <input type="text" value={duration} onChange={(e) => setDuration(e.target.value)} />
             </div>
         </>
       )}
 
       {type === 'Divider' && (
         <div className="form-group">
-            <label>Divider Title:</label>
+            <label>Title</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
       )}
 
       {(type === 'Song' || type === 'Bible Verse') && (
           <p style={{fontSize:'0.9rem', color: '#64748b', marginBottom: '1rem'}}>
-              {type} items in the default plan are placeholders. 
-              {type === 'Song' ? ' Duration defaults to 3 min.' : ' Duration defaults to 1 min.'}
+              {type === 'Song' ? ' Duration defaults to three minutes.' : ' Duration defaults to one minute.'}
           </p>
       )}
 

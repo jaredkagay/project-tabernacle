@@ -410,7 +410,7 @@ const PlanPage = () => {
             {profile?.role === 'ORGANIZER' && (
               <>
                 <button onClick={handleOpenEditEventModal} className="glass-action-btn edit-btn" disabled={planPageLoading}>
-                   <FaEdit /> Edit Info
+                   <FaEdit /> Edit
                 </button>
                 <button onClick={handleDeleteCurrentPlan} className="glass-action-btn delete-btn" disabled={planPageLoading}>
                    <FaTrash /> Delete
