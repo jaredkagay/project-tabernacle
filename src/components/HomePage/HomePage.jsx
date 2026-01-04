@@ -213,7 +213,7 @@ const HomePage = () => {
               {profile?.role === 'MUSICIAN' && musicianRequests.length > 0 && (
                 <section className="dashboard-panel alert-panel">
                   <div className="panel-header">
-                    <h2><FaExclamationCircle /> Pending Requests</h2>
+                    <h2><FaExclamationCircle /> Pending Invitations</h2>
                   </div>
                   <div className="requests-list">
                     {musicianRequests.map(plan => (

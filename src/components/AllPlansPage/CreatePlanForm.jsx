@@ -43,7 +43,6 @@ const CreatePlanForm = ({ onCreatePlan, onCancel }) => {
           id="plan-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g., Sunday Morning Worship, Youth Night"
           required
         />
       </div>
@@ -59,40 +58,39 @@ const CreatePlanForm = ({ onCreatePlan, onCancel }) => {
       </div>
       {/* --- ADD TIME FIELD --- */}
       <div className="form-group">
-        <label htmlFor="plan-time">Time (Optional):</label>
+        <label htmlFor="plan-time">Time:</label>
         <input
           type="time" // Input type for time
           id="plan-time"
           value={time}
           onChange={(e) => setTime(e.target.value)}
+          required
         />
       </div>
       {/* --- END TIME FIELD --- */}
       <div className="form-group">
-        <label htmlFor="plan-theme">Theme (Optional):</label>
+        <label htmlFor="plan-theme">Theme:</label>
         <input
           type="text"
           id="plan-theme"
           value={theme}
           onChange={(e) => setTheme(e.target.value)}
-          placeholder="e.g., Love & Grace"
         />
       </div>
       <div className="form-group">
-        <label htmlFor="plan-notes">Notes (Optional):</label>
+        <label htmlFor="plan-notes">Notes:</label>
         <textarea
           id="plan-notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Any initial notes for this plan..."
         />
       </div>
       <div className="form-actions">
-        <button type="submit" className="submit-btn" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Plan'}
-        </button>
         <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>
           Cancel
+        </button>
+        <button type="submit" className="submit-btn" disabled={isSubmitting}>
+          {isSubmitting ? 'Creating...' : 'Create Plan'}
         </button>
       </div>
     </form>
