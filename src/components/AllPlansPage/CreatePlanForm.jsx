@@ -1,11 +1,10 @@
-// src/components/AllPlansPage/CreatePlanForm.js
+// src/components/AllPlansPage/CreatePlanForm.jsx
 import React, { useState } from 'react';
-import './CreatePlanForm.css';
 
 const CreatePlanForm = ({ onCreatePlan, onCancel }) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
-  const [time, setTime] = useState(''); // <--- ADD STATE FOR TIME
+  const [time, setTime] = useState('');
   const [theme, setTheme] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -13,86 +12,85 @@ const CreatePlanForm = ({ onCreatePlan, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() || !date) {
-      alert('Please provide at least a title and a date for the new plan.');
+      alert('Please provide at least a title and a date.');
       return;
     }
     setIsSubmitting(true);
     try {
-      await onCreatePlan({ title, date, time, theme, notes }); // <--- INCLUDE TIME HERE
-      // Reset form or expect modal to close
-      setTitle('');
-      setDate('');
-      setTime(''); // <--- RESET TIME
-      setTheme('');
-      setNotes('');
+      await onCreatePlan({ title, date, time, theme, notes });
+      setTitle(''); setDate(''); setTime(''); setTheme(''); setNotes('');
     } catch (error) {
-      // Error handling might be done in the parent or here
-      // alert(`Failed to create plan: ${error.message}`); // Parent handles alert now
+      // Parent handles error
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // UPDATED: Changed className to "glass-form"
   return (
-    <form onSubmit={handleSubmit} className="create-plan-form">
+    <form onSubmit={handleSubmit} className="glass-form">
       <h3>Create New Event Plan</h3>
+      
       <div className="form-group">
-        <label htmlFor="plan-title">Title:</label>
+        <label htmlFor="plan-title">Title</label>
         <input
           type="text"
           id="plan-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g., Sunday Morning Worship, Youth Night"
           required
         />
       </div>
-      <div className="form-group">
-        <label htmlFor="plan-date">Date:</label>
-        <input
-          type="date"
-          id="plan-date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
+      
+      {/* Group Date and Time in one row for a better look */}
+      <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div>
+            <label htmlFor="plan-date">Date</label>
+            <input
+              type="date"
+              id="plan-date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+        </div>
+        <div>
+            <label htmlFor="plan-time">Time</label>
+            <input
+              type="time"
+              id="plan-time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+            />
+        </div>
       </div>
-      {/* --- ADD TIME FIELD --- */}
+
       <div className="form-group">
-        <label htmlFor="plan-time">Time (Optional):</label>
-        <input
-          type="time" // Input type for time
-          id="plan-time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-        />
-      </div>
-      {/* --- END TIME FIELD --- */}
-      <div className="form-group">
-        <label htmlFor="plan-theme">Theme (Optional):</label>
+        <label htmlFor="plan-theme">Theme</label>
         <input
           type="text"
           id="plan-theme"
           value={theme}
           onChange={(e) => setTheme(e.target.value)}
-          placeholder="e.g., Love & Grace"
         />
       </div>
+
       <div className="form-group">
-        <label htmlFor="plan-notes">Notes (Optional):</label>
+        <label htmlFor="plan-notes">Notes</label>
         <textarea
           id="plan-notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Any initial notes for this plan..."
         />
       </div>
+
       <div className="form-actions">
-        <button type="submit" className="submit-btn" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Plan'}
-        </button>
         <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>
           Cancel
+        </button>
+        <button type="submit" className="submit-btn" disabled={isSubmitting}>
+          {isSubmitting ? 'Creating...' : 'Create Plan'}
         </button>
       </div>
     </form>

@@ -1,20 +1,21 @@
 /* src/components/PlanPage/AssignedPeople.css */
 
+/* Parent handles panel style */
 .assigned-people-card {
-  background-color: #ffffff;
-  padding: 20px 20px 5px 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: 20px; /* Or as needed */
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 
 .assigned-people-card h2 {
   margin-top: 0;
-  color: #34495e;
-  border-bottom: 2px solid #ecf0f1;
-  padding-bottom: 10px;
-  font-size: 1.5em;
-  margin-bottom: 15px;
+  color: #0f172a;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
 }
 
 .assigned-people-card ul {
@@ -25,127 +26,97 @@
 
 .team-member {
   display: flex;
-  flex-direction: column; /* Stack info, instruments, status, actions */
+  flex-direction: column;
   align-items: flex-start;
-  padding: 12px 0; /* Increased padding for better spacing */
-  border-bottom: 1px solid #f0f0f0;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
-.team-member:last-child {
-  border-bottom: none;
-}
+.team-member:last-child { border-bottom: none; }
 
 .member-details-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
-  /* margin-bottom: 6px; Spacing between main details and instruments/actions */
 }
 
 .member-info {
-  flex-grow: 1; /* Allow name/role to take space */
-  margin-right: 10px; /* Space before status badge */
+  flex-grow: 1;
+  margin-right: 10px;
 }
 
 .member-name strong {
-  font-size: 1.05em;
-  color: #2c3e50;
-}
-
-.member-role {
-  font-size: 0.9em;
-  color: #555;
-  margin-left: 5px;
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 600;
 }
 
 .member-instruments {
-  font-size: 0.9em;
-  color: #3498db; /* Blue for instruments */
-  margin-top: 8px; /* Space before actions if they are on new line */
+  font-size: 0.85rem;
+  color: #3b82f6; /* Modern Blue */
+  margin-top: 4px;
+  font-weight: 500;
 }
 
-/* --- Status Badge Styling --- */
+/* --- Status Badge (Modern Pills) --- */
 .member-status-badge {
-  font-size: 0.8em; /* Slightly smaller text */
-  font-weight: bold;
-  padding: 4px 10px; /* Padding for the badge */
-  border-radius: 12px; /* Pill shape */
-  color: white; /* Default text color for badges */
-  white-space: nowrap; /* Prevent wrapping */
-  border: 1px solid transparent; /* Base for border */
-  text-transform: capitalize; /* e.g. Pending, Accepted */
-  margin-top: 1px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px; /* Pill */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: none;
 }
 
-/* Consistent styling for different statuses, similar to 'accepted' */
+/* Consistent Theme-Matching Colors */
 .member-status-badge.status-accepted { 
-  background-color: #2ecc71; /* Green */
-  border-color: #27ae60; /* Darker green border */
+  background-color: #dbeafe; /* Soft Blue/Green context */
+  color: #166534; /* Green Text */
+  border: 1px solid #bbf7d0;
 }
-
 .member-status-badge.status-pending { 
-  background-color: #f39c12; /* Orange/Yellow */
-  border-color: #d68910; /* Darker orange/yellow border */
+  background-color: #ffedd5; /* Soft Orange */
+  color: #9a3412; 
+  border: 1px solid #fed7aa;
 }
-
 .member-status-badge.status-declined { 
-  background-color: #e74c3c; /* Red */
-  border-color: #c0392b; /* Darker red border */
+  background-color: #fee2e2; /* Soft Red */
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
-
-/* Default/fallback style if status doesn't match above (e.g., new status value) */
-.member-status-badge:not(.status-accepted):not(.status-pending):not(.status-declined) {
-  background-color: #bdc3c7; /* Neutral gray */
-  color: #2c3e50; /* Darker text for light background */
-  border-color: #95a5a6;
-}
-
 
 /* --- Action Buttons --- */
 .assignment-actions {
-  margin-top: 8px; /* Space above action buttons */
+  margin-top: 10px;
   display: flex;
-  gap: 10px; /* Space between buttons */
-  width: 100%; /* Allow actions to align if needed */
-}
-
-.assignment-actions.organizer-actions {
-  /* Styles specific to organizer action row if needed, e.g., justify-content: flex-end; */
+  gap: 8px;
+  width: 100%;
 }
 
 .action-btn {
-  padding: 6px 12px;
-  font-size: 0.85em;
-  font-weight: bold;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-  color: white; /* Default text color for action buttons */
-}
-.action-btn:hover {
-  opacity: 0.85;
-}
-.action-btn:active {
-  transform: translateY(1px);
+  transition: all 0.2s ease;
 }
 
-.accept-btn {
-  background-color: #2ecc71; /* Green */
-}
-
-.decline-btn {
-  background-color: #e74c3c; /* Red */
-}
-
-.edit-assignment-btn {
-  background-color: #3498db; /* Blue */
-}
+.accept-btn { background-color: #22c55e; color: white; }
+.decline-btn { background-color: #ef4444; color: white; }
+.edit-assignment-btn { background-color: #cbd5e1; color: #334155; }
+.edit-assignment-btn:hover { background-color: #94a3b8; color: white; }
 
 .rescind-btn {
-  background-color: #95a5a6; /* Gray for remove/rescind */
+  background-color: transparent;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
 }
 .rescind-btn:hover {
-  background-color: #7f8c8d;
+  border-color: #ef4444;
+  color: #ef4444;
+  background-color: #fef2f2;
 }

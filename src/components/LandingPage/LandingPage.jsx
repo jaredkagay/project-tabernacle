@@ -1,5 +1,5 @@
 // src/components/LandingPage/LandingPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './LandingPage.css'; // Create this CSS file
@@ -57,10 +57,9 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth(); // Get user and loading state
 
-  // Effect to redirect if user becomes available (e.g. already logged in from a previous session)
-  // This is handled by PublicRoute now, but good to be aware of.
-  // if (loading) return <div>Loading...</div>; // Handled by PublicRoute
-  // if (user) return <Navigate to="/plans" replace />; // Handled by PublicRoute
+  useEffect(() => {
+    document.title = 'tabernacle';
+  }, []);
 
   const openLoginModal = () => setIsLoginModalOpen(true);
   const closeLoginModal = () => setIsLoginModalOpen(false);

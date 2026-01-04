@@ -14,6 +14,7 @@ import WeeklyChecklist from './WeeklyChecklist';
 import InviteMemberForm from './InviteMemberForm';
 import EditAssignmentForm from './EditAssignmentForm';
 import { logActivity } from '../../utils/activityLogger';
+import { FaEdit, FaTrash, FaPlus, FaUserPlus } from 'react-icons/fa';
 
 import './PlanPage.css';
 
@@ -56,6 +57,14 @@ const PlanPage = () => {
   const [editingAssignment, setEditingAssignment] = useState(null);
 
   const orderOfServiceRole = profile?.role === 'ORGANIZER' && isEditMode ? 'ORGANIZER' : 'MUSICIAN';
+
+  useEffect(() => {
+    if (eventDetails && eventDetails.title) {
+      document.title = `tabernacle - ${eventDetails.title}`;
+    } else {
+      document.title = 'tabernacle - Plan';
+    }
+  }, [eventDetails]);
 
   const orderOfServiceWithTimes = React.useMemo(() => {
     let runningTimeInMinutes = 0;
@@ -153,7 +162,6 @@ const PlanPage = () => {
 
   const toggleAddItemForm = () => setIsAddItemFormVisible(prev => !prev);
   
-  // NEW: Updated handler to switch to edit mode if necessary
   const handleToggleAddItem = () => {
     if (!isAddItemFormVisible && !isEditMode) {
         setIsEditMode(true);
@@ -276,7 +284,6 @@ const PlanPage = () => {
         setPlanPageLoading(true); setError(null);
         const { error: deleteError } = await supabase.from('events').delete().eq('id', planId);
         if (deleteError) throw deleteError;
-        alert(`Plan "${eventDetails.title}" has been deleted.`);
         navigate('/plans');
       } catch (err) {
         setError(`Failed to delete plan: ${err.message}`);
@@ -305,7 +312,6 @@ const PlanPage = () => {
     try {
       const { error } = await supabase.from('event_assignments').update({ status: 'ACCEPTED', responded_at: new Date().toISOString() }).eq('id', assignmentId);
       if (error) throw error;
-      alert("Invitation accepted!");
       logActivity(user, profile, 'INVITE_ACCEPTED', `${profile.first_name} accepted the invite for ${eventDetails.title}.`);
       fetchPlanDataAndOrgMembers();
     } catch (err) { alert(`Failed to accept: ${err.message}`); }
@@ -318,7 +324,6 @@ const PlanPage = () => {
       const { error } = await supabase.from('event_assignments').update({ status: 'DECLINED', responded_at: new Date().toISOString() }).eq('id', assignmentId);
       if (error) throw error;
       if (assignment?.id && planId) await unassignSingerFromSongs(assignment.id, planId);
-      alert("Invitation declined.");
       logActivity(user, profile, 'INVITE_DECLINED', `${profile.first_name} declined the invite for ${eventDetails.title}.`);
       fetchPlanDataAndOrgMembers();
       navigate('/plans');
@@ -333,7 +338,6 @@ const PlanPage = () => {
       const { error } = await supabase.from('event_assignments').delete().eq('id', assignmentId);
       if (error) throw error;
       if (assignment?.id && planId) await unassignSingerFromSongs(assignment.id, planId);
-      alert(`${musicianName} has been removed from the plan.`);
       fetchPlanDataAndOrgMembers();
     } catch (err) { alert(`Failed to remove: ${err.message}`);}
     finally { setPlanPageLoading(false); }
@@ -352,7 +356,6 @@ const PlanPage = () => {
       if (error) throw error;
       fetchPlanDataAndOrgMembers();
       toggleInviteModal();
-      alert("Invitation sent successfully!");
     } catch (err) {
       alert(`Failed to send invitation: ${err.message}`);
       throw err;
@@ -364,7 +367,6 @@ const PlanPage = () => {
       setPlanPageLoading(true);
       const { error: updateError } = await supabase.from('event_assignments').update(updatedData).eq('id', assignmentId);
       if (updateError) throw updateError;
-      alert('Assignment updated successfully.');
       fetchPlanDataAndOrgMembers();
       handleCloseEditAssignmentModal();
     } catch (err) {
@@ -385,88 +387,127 @@ const PlanPage = () => {
   );
 
   if (authIsLoading || (planPageLoading && !eventDetails && !error)) {
-    return <p className="page-status-message">Loading plan...</p>;
+    return <div className="page-status-message loading-state">Loading plan details...</div>;
   }
   if (error) {
-    return <p className="page-status-message error-message">Error: {error}</p>;
+    return <div className="page-status-message error-message">Error: {error}</div>;
   }
   if (!eventDetails) {
-    return <p className="page-status-message">Plan not found or access denied for ID: {planId}.</p>;
+    return <div className="page-status-message">Plan not found or access denied for ID: {planId}.</div>;
   }
 
   return (
-    <div className="plan-page-container">
-      <header className="plan-header">
-        <div className="plan-header-title-group"><h1>{eventDetails.title}</h1></div>
-        <div className="plan-header-actions">
-          {profile?.role === 'ORGANIZER' && (
-            <>
-              <button onClick={handleOpenEditEventModal} className="edit-event-info-btn page-header-action-btn" disabled={planPageLoading}>Edit Event Info</button>
-              <button onClick={handleDeleteCurrentPlan} className="delete-current-plan-btn page-header-action-btn" disabled={planPageLoading}>Delete Plan</button>
-            </>
-          )}
-        </div>
-      </header>
-      
-      {eventDetails && (
-        <div className="plan-main-content">
-          <div className="plan-left-column">
-            <div className="order-of-service-header">
-              <h2>Order of Service</h2>
+    <div className="plan-page-wrapper">
+      <div className="plan-content-container">
+        
+        {/* Header Glass Panel */}
+        <header className="plan-glass-header">
+          <div className="plan-header-title-group">
+            <h1>{eventDetails.title}</h1>
+            <span className="plan-date-subtitle">
+              {new Date(eventDetails.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </span>
+          </div>
+          <div className="plan-header-actions">
+            {profile?.role === 'ORGANIZER' && (
+              <>
+                <button onClick={handleOpenEditEventModal} className="glass-action-btn edit-btn" disabled={planPageLoading}>
+                   <FaEdit /> Edit
+                </button>
+                <button onClick={handleDeleteCurrentPlan} className="glass-action-btn delete-btn" disabled={planPageLoading}>
+                   <FaTrash /> Delete
+                </button>
+              </>
+            )}
+          </div>
+        </header>
+        
+        {eventDetails && (
+          <div className="plan-grid">
+            
+            {/* Left Column: Order of Service (Single Panel) */}
+            <div className="plan-panel left-panel">
+              <div className="panel-header-row">
+                <h2>Order of Service</h2>
+                {profile?.role === 'ORGANIZER' && (
+                  <div className="view-mode-toggle">
+                    <span>Edit Mode</span>
+                    <label className="switch">
+                      <input type="checkbox" checked={isEditMode} onChange={() => setIsEditMode(!isEditMode)} />
+                      <span className="slider round"></span>
+                    </label>
+                  </div>
+                )}
+              </div>
+              
+              <div className="order-of-service-content">
+                 <OrderOfService 
+                    items={orderOfServiceWithTimes} 
+                    onOrderChange={handleOrderOfServiceChange} 
+                    onDeleteItem={orderOfServiceRole === 'ORGANIZER' ? handleDeleteItem : undefined} 
+                    onEditItem={orderOfServiceRole === 'ORGANIZER' ? handleOpenEditModal : undefined} 
+                    assignedPeople={assignedPeople} 
+                    onUpdateKey={orderOfServiceRole === 'ORGANIZER' ? handleUpdateMusicalKey : undefined} 
+                    userRole={profile?.role === 'ORGANIZER' ? orderOfServiceRole : 'MUSICIAN'}
+                  />
+                  {profile?.role === 'ORGANIZER' && (
+                    <button onClick={handleToggleAddItem} className={`glass-btn-block ${isAddItemFormVisible ? 'cancel-style' : ''}`}>
+                      {isAddItemFormVisible ? 'Cancel Adding Item' : <>Add Service Item</>}
+                    </button>
+                  )}
+              </div>
+            </div>
+
+            {/* Right Column Stack */}
+            <div className="right-panel-stack">
+              
+              {/* Panel 1: Event Info */}
+              <div className="plan-panel">
+                <ServiceDetails details={eventDetails} />
+              </div>
+              
+              {/* Panel 2: Assigned People */}
+              <div className="plan-panel">
+                <AssignedPeople 
+                  people={assignedPeople} 
+                  onAccept={handleAcceptInvitation} 
+                  onDecline={handleDeclineInvitation} 
+                  onRescind={profile?.role === 'ORGANIZER' ? handleRescindInvitation : undefined} 
+                  onOpenEditAssignment={profile?.role === 'ORGANIZER' ? handleOpenEditAssignmentModal : undefined}
+                />
+                {profile?.role === 'ORGANIZER' && (
+                  <button onClick={toggleInviteModal} className="glass-btn-block action-accent">
+                    <FaUserPlus /> Invite Musician
+                  </button>
+                )}
+              </div>
+
+              {/* Panel 3: Checklist (Organizer Only) */}
               {profile?.role === 'ORGANIZER' && (
-                <div className="view-mode-toggle">
-                  <span>Edit Mode</span>
-                  <label className="switch">
-                    <input type="checkbox" checked={isEditMode} onChange={() => setIsEditMode(!isEditMode)} />
-                    <span className="slider round"></span>
-                  </label>
+                <div className="plan-panel">
+                  <WeeklyChecklist 
+                    tasks={currentChecklistTasks} 
+                    checkedStatuses={checklistStatus} 
+                    onTaskToggle={profile?.role === 'ORGANIZER' ? handleChecklistToggle : undefined} 
+                  />
                 </div>
               )}
             </div>
-             <OrderOfService 
-                items={orderOfServiceWithTimes} 
-                onOrderChange={handleOrderOfServiceChange} 
-                onDeleteItem={orderOfServiceRole === 'ORGANIZER' ? handleDeleteItem : undefined} 
-                onEditItem={orderOfServiceRole === 'ORGANIZER' ? handleOpenEditModal : undefined} 
-                assignedPeople={assignedPeople} 
-                onUpdateKey={orderOfServiceRole === 'ORGANIZER' ? handleUpdateMusicalKey : undefined} 
-                userRole={profile?.role === 'ORGANIZER' ? orderOfServiceRole : 'MUSICIAN'}
-              />
-              {/* UPDATED: Check only for ORGANIZER role, remove isEditMode requirement */}
-              {profile?.role === 'ORGANIZER' && (
-                <button onClick={handleToggleAddItem} className={`toggle-add-item-form-btn ${isAddItemFormVisible ? 'cancel-style' : ''}`} style={{marginTop: '20px', width: '100%'}}>
-                  {isAddItemFormVisible ? 'Cancel Adding Item' : '+ Add Service Item'}
-                </button>
-              )}
-          </div>
-          <div className="plan-right-column">
-            <ServiceDetails details={eventDetails} />
-            <AssignedPeople 
-              people={assignedPeople} 
-              onAccept={handleAcceptInvitation} 
-              onDecline={handleDeclineInvitation} 
-              onRescind={profile?.role === 'ORGANIZER' ? handleRescindInvitation : undefined} 
-              onOpenEditAssignment={profile?.role === 'ORGANIZER' ? handleOpenEditAssignmentModal : undefined}
-            />
-            {profile?.role === 'ORGANIZER' && (<button onClick={toggleInviteModal} className="invite-member-btn page-action-btn " style={{marginTop: '15px', width: '100%'}}>+ Invite/Assign Musician</button>)}
-            {profile?.role === 'ORGANIZER' && <WeeklyChecklist 
-              tasks={currentChecklistTasks} 
-              checkedStatuses={checklistStatus} 
-              onTaskToggle={profile?.role === 'ORGANIZER' ? handleChecklistToggle : undefined} 
-            />
-            }
-          </div>
-        </div>
-      )}
 
+          </div>
+        )}
+      </div>
+
+      {/* Modals - Standard Overlay logic */}
       {isAddItemFormVisible && profile?.role === 'ORGANIZER' && (
         <div className="modal-overlay" onClick={toggleAddItemForm}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={toggleAddItemForm}>&times;</button>
             <AddItemForm 
               onAddItem={handleAddItem} 
-              assignedPeopleForSingerRole={potentialSingersForSongs}
-              allAssignedPeople={assignedPeople}
+              onCancel={toggleAddItemForm} /* <--- ADD THIS LINE */
+              assignedPeopleForSingerRole={potentialSingersForSongs} 
+              allAssignedPeople={assignedPeople} 
             />
           </div>
         </div>
@@ -475,13 +516,7 @@ const PlanPage = () => {
         <div className="modal-overlay" onClick={handleCloseEditModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={handleCloseEditModal}>&times;</button>
-            <EditServiceItemForm 
-              itemToEdit={editingItem} 
-              onUpdateItem={handleUpdateItem} 
-              onCancel={handleCloseEditModal} 
-              assignedPeopleForSingerRole={potentialSingersForSongs}
-              allAssignedPeople={assignedPeople}
-            />
+            <EditServiceItemForm itemToEdit={editingItem} onUpdateItem={handleUpdateItem} onCancel={handleCloseEditModal} assignedPeopleForSingerRole={potentialSingersForSongs} allAssignedPeople={assignedPeople} />
           </div>
         </div>
       )}

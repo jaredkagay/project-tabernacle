@@ -1,5 +1,5 @@
+// src/components/SettingsPage/DefaultPlanEditItemForm.jsx
 import React, { useState } from 'react';
-import '../PlanPage/AddItemForm.css';
 
 const DefaultPlanEditItemForm = ({ itemToEdit, onUpdateItem, onCancel }) => {
   const [title, setTitle] = useState(itemToEdit?.title || '');
@@ -19,23 +19,22 @@ const DefaultPlanEditItemForm = ({ itemToEdit, onUpdateItem, onCancel }) => {
   const isRestricted = itemToEdit.type === 'Song' || itemToEdit.type === 'Bible Verse';
 
   return (
-    <form onSubmit={handleSubmit} className="add-item-form edit-item-form">
+    <form onSubmit={handleSubmit} className="glass-form">
       <h3>Edit Template Item</h3>
       
       {isRestricted ? (
-          <p>
-              <strong>{itemToEdit.type}</strong> items are placeholders in the default plan and cannot be customized here. 
-              They will be editable once a real plan is created.
+          <p style={{marginBottom: '1rem'}}>
+              <strong>{itemToEdit.type}</strong> items will be editable once a real plan is created.
           </p>
       ) : (
         <>
             <div className="form-group">
-                <label>Title:</label>
+                <label>Title</label>
                 <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             {itemToEdit.type !== 'Divider' && (
                 <div className="form-group">
-                    <label>Duration:</label>
+                    <label>Duration</label>
                     <input type="text" value={duration} onChange={(e) => setDuration(e.target.value)} />
                 </div>
             )}
@@ -43,10 +42,10 @@ const DefaultPlanEditItemForm = ({ itemToEdit, onUpdateItem, onCancel }) => {
       )}
 
       <div className="form-actions">
-        {!isRestricted && <button type="submit" className="submit-btn">Save Changes</button>}
         <button type="button" className="cancel-btn" onClick={onCancel}>
             {isRestricted ? 'Close' : 'Cancel'}
         </button>
+        {!isRestricted && <button type="submit" className="submit-btn">Save Changes</button>}
       </div>
     </form>
   );

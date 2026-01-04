@@ -1,731 +1,360 @@
 // src/components/TasksPage/TaskDetailPage.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import './TaskDetailPage.css';
 import { DAYS_OF_WEEK } from '../../constants';
 import { logActivity } from '../../utils/activityLogger';
 
+import { FaCheckDouble } from 'react-icons/fa';
+
 const formatTaskType = (type) => {
   if (!type) return '';
-  return type
-    .toLowerCase()
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  return type.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 };
 
 const formatTime = (timeStr) => {
     if (!timeStr) return '';
     const [hours, minutes] = timeStr.split(':');
-    const hour = parseInt(hours, 10);
-    const minute = parseInt(minutes, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
-    const formattedMinute = minute < 10 ? '0' + minute : minute;
-    return `${formattedHour}:${formattedMinute} ${ampm}`;
+    const h = parseInt(hours, 10);
+    return `${h % 12 || 12}:${minutes} ${h >= 12 ? 'PM' : 'AM'}`;
 };
 
-const generateTimeSlots = (startTimeStr, endTimeStr, intervalMinutes) => {
+const generateTimeSlots = (start, end, interval) => {
     const slots = [];
-    if (!startTimeStr || !endTimeStr || !intervalMinutes) return slots;
-
-    let [startHours, startMinutes] = startTimeStr.split(':').map(Number);
-    const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
-
-    let currentMinutes = startHours * 60 + startMinutes;
-    const totalEndMinutes = endHours * 60 + endMinutes;
-
-    while (currentMinutes < totalEndMinutes) {
-        const hours = Math.floor(currentMinutes / 60);
-        const minutes = currentMinutes % 60;
-        slots.push(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
-        currentMinutes += intervalMinutes;
+    if (!start || !end || !interval) return slots;
+    let [sH, sM] = start.split(':').map(Number);
+    const [eH, eM] = end.split(':').map(Number);
+    let cur = sH * 60 + sM;
+    const endMin = eH * 60 + eM;
+    while (cur < endMin) {
+        slots.push(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`);
+        cur += interval;
     }
-
     return slots;
 };
 
+// ... Helper functions summarizeSlots and renderSubmittedResponseData ...
 const summarizeSlots = (selectedSlots, intervalMinutes = 30) => {
-    if (!selectedSlots || selectedSlots.length === 0) {
-        return {};
-    }
-
+    if (!selectedSlots?.length) return {};
     const slotsByDay = {};
     selectedSlots.forEach(slot => {
-        if (!slotsByDay[slot.day]) {
-            slotsByDay[slot.day] = [];
-        }
-        const [hours, minutes] = slot.time.split(':').map(Number);
-        slotsByDay[slot.day].push(hours * 60 + minutes);
+        // Handle potential string vs object mismatch for resilience
+        let d, t;
+        if (typeof slot === 'string') { [d, t] = slot.split('-'); }
+        else { d = slot.day; t = slot.time; }
+        
+        if (!slotsByDay[d]) slotsByDay[d] = [];
+        const [h, m] = t.split(':').map(Number);
+        slotsByDay[d].push(h * 60 + m);
     });
-
     const summary = {};
-
     for (const day in slotsByDay) {
-        const minutesList = slotsByDay[day].sort((a, b) => a - b);
-        if (minutesList.length === 0) continue;
-
+        const mins = slotsByDay[day].sort((a,b)=>a-b);
         summary[day] = [];
-        let startMin = minutesList[0];
-        let endMin = minutesList[0];
-
-        for (let i = 1; i < minutesList.length; i++) {
-            if (minutesList[i] === endMin + intervalMinutes) {
-                endMin = minutesList[i];
-            } else {
-                summary[day].push({ start: startMin, end: endMin + intervalMinutes });
-                startMin = minutesList[i];
-                endMin = minutesList[i];
-            }
+        let s = mins[0], e = mins[0];
+        for(let i=1; i<mins.length; i++){
+            if(mins[i] === e + intervalMinutes) e = mins[i];
+            else { summary[day].push({s, e: e+intervalMinutes}); s=mins[i]; e=mins[i]; }
         }
-        summary[day].push({ start: startMin, end: endMin + intervalMinutes });
+        summary[day].push({s, e: e+intervalMinutes});
     }
-
-    const formatMinutes = (totalMinutes) => {
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const formattedHour = hours % 12 === 0 ? 12 : hours % 12;
-        const formattedMinute = minutes === 0 ? '' : `:${String(minutes).padStart(2, '0')}`;
-        return `${formattedHour}${formattedMinute}${ampm}`;
-    };
-
-    const finalSummary = {};
-    for (const day in summary) {
-        finalSummary[day] = summary[day].map(range => {
-            const startTime = formatMinutes(range.start);
-            const endTime = formatMinutes(range.end);
-            return `${startTime} - ${endTime}`;
-        });
-    }
-
-    return finalSummary;
+    const fmt = (tm) => `${(Math.floor(tm/60)%12||12)}${tm%60===0?'':':'+String(tm%60).padStart(2,'0')}${Math.floor(tm/60)>=12?'PM':'AM'}`;
+    const ret = {};
+    for(const d in summary) ret[d] = summary[d].map(r => `${fmt(r.s)} - ${fmt(r.e)}`);
+    return ret;
 };
-
-// Helper to render response data (can be shared or adapted from TaskResultsPage)
-const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDetailsForTaskConfig) => {
+<FaCheckDouble />
+const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDetails) => {
   if (!responseData) return <p className="no-response-display"><em>No response was recorded.</em></p>;
-
   if (taskType === 'ACKNOWLEDGEMENT') {
-    return responseData.acknowledged
-      ? <p>You acknowledged this task on: {responseData.acknowledged_at ? new Date(responseData.acknowledged_at).toLocaleString() : 'N/A'}</p>
-      : <p>Acknowledgement not recorded.</p>;
+    return <div className="submitted-response-details" style={{fontStyle: 'italic', color: '#166534'}}><FaCheckDouble /> Acknowledged</div>;
   }
   if (taskType === 'EVENT_AVAILABILITY') {
-    if (responseData.availabilities && Object.keys(responseData.availabilities).length > 0) {
-      const getEventInfo = (eventId) => {
-        if (!eventDetailsForTaskConfig || eventDetailsForTaskConfig.length === 0) return { title: `Event ID: ${eventId.substring(0,8)}...`, date: '', time: '' };
-        const event = eventDetailsForTaskConfig.find(e => e.id === eventId);
-        return event ? { title: event.title || 'Untitled Event', date: event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A', time: event.time || '' } : { title: `Event (ID: ${eventId.substring(0,8)}...) - Details Missing`, date: '', time: '' };
-      };
-
-      // Determine order: Use eventDetailsForTaskConfig order if available (as it is sorted by date), otherwise fallback
-      let orderedEventIds = taskConfig?.event_ids || Object.keys(responseData.availabilities);
-      
-      if (eventDetailsForTaskConfig && eventDetailsForTaskConfig.length > 0) {
-          // Create a map of ID -> Date for sorting
-          const dateMap = {};
-          eventDetailsForTaskConfig.forEach(e => dateMap[e.id] = e.date);
-          
-          orderedEventIds = [...orderedEventIds].sort((a, b) => {
-              const dateA = dateMap[a] || '9999-99-99';
-              const dateB = dateMap[b] || '9999-99-99';
-              return dateA.localeCompare(dateB);
-          });
-      }
-
+      const ids = taskConfig?.event_ids || Object.keys(responseData.availabilities || {});
       return (
         <div className="submitted-response-details">
-          <h4>Your Submitted Availability:</h4>
+          <h4>Availability:</h4>
           <ul className="availability-response-list view-only">
-            {orderedEventIds.map(eventId => {
-              const availability = responseData.availabilities[eventId];
-              const eventInfo = getEventInfo(eventId);
-              return (
-                <li key={eventId}>
-                  <strong>{eventInfo.title}</strong> ({eventInfo.date}{eventInfo.time ? `, ${eventInfo.time}` : ''}):
-                  <span className={`response-value availability-${availability?.toLowerCase()}`}>
-                    {availability === 'YES' ? 'Available' : availability === 'NO' ? 'Unavailable' : availability === 'MAYBE' ? 'Maybe' : (availability || 'Not specified')}
-                  </span>
-                </li>);
+            {ids.map(id => {
+               const ans = responseData.availabilities?.[id];
+               const evt = eventDetails?.find(e => e.id === id);
+               return <li key={id}><strong>{evt?.title || 'Event'}</strong>: {ans === 'YES' ? 'Available' : ans === 'NO' ? 'Unavailable' : 'Maybe'}</li>;
             })}
           </ul>
         </div>
       );
-    } else { return <p className="no-response-display"><em>No availability data submitted.</em></p>; }
   }
-  if (taskType === 'REHEARSAL_POLL') {
-    if (responseData.selected_slots && responseData.selected_slots.length > 0) {
-      const summarized = summarizeSlots(responseData.selected_slots);
+  if (taskType === 'REHEARSAL_POLL' && responseData.selected_slots) {
+      const sum = summarizeSlots(responseData.selected_slots, taskConfig?.interval_minutes || 30);
       return (
         <div className="submitted-response-details">
-          {Object.entries(summarized).map(([day, slots]) => (
-            <div key={day}>
-                <strong>{day}:</strong>
-                <ul className="raw-slot-list view-only" style={{ marginTop: '5px' }}>
-                    {slots.map((line, index) => (<li key={index}>{line}</li>))}
-                </ul>
-            </div>
-          ))}
+            {Object.entries(sum).map(([d, times]) => (
+                <div key={d}><strong>{d}:</strong> {times.join(', ')}</div>
+            ))}
         </div>
       );
-    } else { return <p className="no-response-display"><em>No rehearsal slots submitted.</em></p>; }
   }
-  return <pre className="response-data-raw">{JSON.stringify(responseData, null, 2)}</pre>;
+  return <pre>{JSON.stringify(responseData, null, 2)}</pre>;
 };
 
 const TaskDetailPage = () => {
   const { assignmentId } = useParams();
-  const { user, profile, loading: authIsLoading } = useAuth(); // Get authLoading state
-  const navigate = useNavigate();
-
+  const { user, profile, loading: authIsLoading } = useAuth();
+  
   const [assignment, setAssignment] = useState(null);
   const [task, setTask] = useState(null);
-  const [loading, setLoading] = useState(true); // Page-specific loading
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isCompletingOrEditing, setIsCompletingOrEditing] = useState(false); // Combined loading state for submission/update
+  const [isCompletingOrEditing, setIsCompletingOrEditing] = useState(false);
 
-
-  // State for Event Availability Task (if needed for complex UI, otherwise handled in submit)
   const [eventDetailsForTask, setEventDetailsForTask] = useState([]);
   const [availabilityResponses, setAvailabilityResponses] = useState({});
-  // --- NEW State for Rehearsal Poll Task ---
-  const [allPossibleRehearsalSlots, setAllPossibleRehearsalSlots] = useState([]); // Structure: [{day: 'Monday', time: '18:00', id: 'Monday-18:00'}, ...]
-  const [selectedRehearsalSlots, setSelectedRehearsalSlots] = useState([]); // Array of slot IDs like "Monday-18:00"
-
+  const [allPossibleRehearsalSlots, setAllPossibleRehearsalSlots] = useState([]);
+  const [selectedRehearsalSlots, setSelectedRehearsalSlots] = useState([]);
   const [isEditingResponse, setIsEditingResponse] = useState(false);
+  
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStartInfo, setDragStartInfo] = useState(null); // { id: string, initiallySelected: boolean }
+  const [dragStartInfo, setDragStartInfo] = useState(null);
   const [slotsToUpdate, setSlotsToUpdate] = useState(new Set());
 
+  useEffect(() => {
+    if (task && task.title) {
+      document.title = `tabernacle - ${task.title}`;
+    } else {
+      document.title = 'tabernacle - Task';
+    }
+  }, [task]);
+
   const fetchTaskAssignmentDetails = useCallback(async () => {
-    if (!assignmentId) {
-      setError("Assignment ID is missing from the URL.");
-      setLoading(false);
-      return;
-    }
-    if (!user?.id) {
-      setError("User information is not available. Cannot fetch task.");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setAssignment(null); // Reset previous state
-    setTask(null);       // Reset previous state
-    setEventDetailsForTask([]);
-    setAvailabilityResponses({});
-
+    if (!assignmentId || !user?.id) return;
+    setLoading(true); setError('');
     try {
       const { data, error: fetchError } = await supabase
         .from('task_assignments')
-        .select(`
-          id, 
-          status, 
-          response_data, 
-          assigned_to_user_id, 
-          task:tasks!inner ( 
-            id, 
-            title, 
-            type,
-            task_config, 
-            due_date,
-            is_active
-          )
-        `)
+        .select(`id, status, response_data, completed_at, assigned_to_user_id, task:tasks!inner ( id, title, type, task_config, due_date, is_active )`)
         .eq('id', assignmentId)
-        .eq('assigned_to_user_id', user.id) // Security: ensure current user is assigned this task
+        .eq('assigned_to_user_id', user.id)
         .single();
 
-      if (fetchError) {
-        // This includes errors from .single() if >1 row found, or RLS errors
-        throw fetchError;
-      }
-      if (!data) {
-        // .single() returns null if 0 rows match all criteria
-        throw new Error("Task assignment not found for you, or it does not exist.");
-      }
-      if (!data.task) {
-        // Assignment found, but the INNER JOIN to tasks yielded no task (e.g., task deleted, RLS on tasks)
-        throw new Error("The task associated with this assignment could not be loaded. It might be missing or inaccessible.");
-      }
-      
-      setAssignment(data);
-      setTask(data.task);
+      if (fetchError || !data) throw new Error("Task assignment not found.");
+      setAssignment(data); setTask(data.task);
 
-      // Pre-populate form states if response_data exists (for editing or resuming)
       if (data.response_data) {
-        if (data.task.type === 'EVENT_AVAILABILITY' && data.response_data.availabilities) {
-          setAvailabilityResponses(data.response_data.availabilities);
-        }
-        if (data.task.type === 'REHEARSAL_POLL' && data.response_data.selected_slots) {
-          // Convert {day, time} objects back to "Day-Time" string IDs for state
-          setSelectedRehearsalSlots(
-            (data.response_data.selected_slots || []).map(slot => 
-              typeof slot === 'string' ? slot : `${slot.day}-${slot.time}`
-            )
-          );
-        }
+        if (data.task.type === 'EVENT_AVAILABILITY') setAvailabilityResponses(data.response_data.availabilities || {});
+        if (data.task.type === 'REHEARSAL_POLL') setSelectedRehearsalSlots((data.response_data.selected_slots || []).map(s => typeof s==='string'?s:`${s.day}-${s.time}`));
       }
 
-      // Fetch event details if it's an EVENT_AVAILABILITY task
-      if (data.task.type === 'EVENT_AVAILABILITY' && data.task.task_config?.event_ids?.length > 0) {
-        const { data: eventsData, error: eventsError } = await supabase
-            .from('events')
-            .select('id, title, date, time')
-            .in('id', data.task.task_config.event_ids)
-            .order('date', { ascending: true }); // Ensure sorted by date (Ascending)
-
-        if (eventsError) { setError(prev => prev + " (Could not load event details for availability)"); }
-        setEventDetailsForTask(eventsData || []);
-        // Initialize responses if not already pre-filled from response_data
+      if (data.task.type === 'EVENT_AVAILABILITY' && data.task.task_config?.event_ids?.length) {
+        const { data: evts } = await supabase.from('events').select('id, title, date, time').in('id', data.task.task_config.event_ids).order('date');
+        setEventDetailsForTask(evts || []);
         if (!data.response_data?.availabilities) {
-            const initialResponses = {};
-            (eventsData || []).forEach(event => { initialResponses[event.id] = ''; });
-            setAvailabilityResponses(initialResponses);
+             const init = {}; (evts||[]).forEach(e => init[e.id] = ''); setAvailabilityResponses(init);
         }
       }
 
-      // Generate slots if it's a REHEARSAL_POLL task
       if (data.task.type === 'REHEARSAL_POLL' && data.task.task_config) {
         const { days, time_start, time_end, interval_minutes } = data.task.task_config;
-        if (days && time_start && time_end && interval_minutes) {
-            const timeLabels = generateTimeSlots(time_start, time_end, interval_minutes);
-            const generatedSlots = [];
-            days.forEach(day => timeLabels.forEach(time => generatedSlots.push({ day, time, id: `${day}-${time}` })));
-            setAllPossibleRehearsalSlots(generatedSlots);
-
-            // If there is no response data, pre-select all slots to be available
-            if (!data.response_data?.selected_slots) {
-              setSelectedRehearsalSlots(generatedSlots.map(slot => slot.id));
-            }
-        } else { setError(prev => prev + " (Rehearsal poll config incomplete)"); }
+        if (days && time_start) {
+            const times = generateTimeSlots(time_start, time_end, interval_minutes);
+            const slots = [];
+            days.forEach(d => times.forEach(t => slots.push({ day: d, time: t, id: `${d}-${t}` })));
+            setAllPossibleRehearsalSlots(slots);
+            // Default select all if no response yet
+            if (!data.response_data?.selected_slots) setSelectedRehearsalSlots(slots.map(s => s.id));
+        }
       }
+    } catch (err) { setError(err.message); } 
+    finally { setLoading(false); }
+  }, [assignmentId, user?.id]);
 
-    } catch (err) {
-      console.error("Error in fetchTaskAssignmentDetails CATCH block:", err);
-      setError(err.message || "Failed to load task details. It may have been removed or permissions changed.");
-      // Ensure assignment and task are null if any critical error occurs
-      setAssignment(null);
-      setTask(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [assignmentId, user?.id]); // user.id ensures re-fetch if user changes, though unlikely on this page
+  useEffect(() => { if (!authIsLoading) fetchTaskAssignmentDetails(); }, [authIsLoading, assignmentId, fetchTaskAssignmentDetails]);
 
-  useEffect(() => {
-    if (!authIsLoading) { // Wait for AuthContext to finish its loading
-      if (user?.id && assignmentId) {
-        fetchTaskAssignmentDetails();
-      } else if (!user?.id) {
-        setError("Cannot load task: User not authenticated.");
-        setLoading(false);
-      } else if (!assignmentId) {
-        setError("Cannot load task: Assignment ID missing from URL.");
-        setLoading(false);
-      }
-    }
-  }, [authIsLoading, user?.id, assignmentId, fetchTaskAssignmentDetails]);
-
-  const handleSlotSelection = (slotId) => {
-    setSelectedRehearsalSlots(prevSelected =>
-      prevSelected.includes(slotId)
-        ? prevSelected.filter(id => id !== slotId)
-        : [...prevSelected, slotId]
-    );
+  const handleSlotSelection = (slotId, selectMode) => {
+    setSelectedRehearsalSlots(prev => selectMode ? [...new Set([...prev, slotId])] : prev.filter(id => id !== slotId));
   };
-
-  const isTaskOpenForSubmission = useMemo(() => { // Renamed from isTaskOpenForSubmissionOrEdit
-    if (!task) return false;
-    const isActive = task.is_active;
-    const now = new Date();
-    const dueDate = task.due_date ? new Date(task.due_date + 'T23:59:59.999') : null; 
-    return isActive && (!dueDate || now <= dueDate);
-  }, [task]);
-
-  const handleAvailabilityChange = (eventId, availability) => {
-    setAvailabilityResponses(prev => ({ ...prev, [eventId]: availability }));
+  
+  const handleMouseDownOnSlot = (slot) => {
+      if (!slot || isCompletingOrEditing) return;
+      setIsDragging(true);
+      setDragStartInfo({ id: slot.id, initiallySelected: slot.selected });
+      setSlotsToUpdate(new Set([slot.id]));
+      document.body.style.userSelect = 'none';
   };
+  const handleMouseEnterSlot = (slot) => { if (isDragging && slot) setSlotsToUpdate(prev => new Set(prev).add(slot.id)); };
+  const handleMouseUpGlobal = useCallback(() => {
+      if (!isDragging || !dragStartInfo) return;
+      const selectMode = !dragStartInfo.initiallySelected;
+      slotsToUpdate.forEach(id => handleSlotSelection(id, selectMode));
+      setIsDragging(false); setDragStartInfo(null); setSlotsToUpdate(new Set());
+      document.body.style.userSelect = '';
+  }, [isDragging, dragStartInfo, slotsToUpdate]);
 
-   const completeTaskAssignment = async (responsePayload, taskTitle) => {
-    setIsCompletingOrEditing(true); setError('');
+  useEffect(() => { window.addEventListener('mouseup', handleMouseUpGlobal); return () => { window.removeEventListener('mouseup', handleMouseUpGlobal); document.body.style.userSelect = ''; }; }, [handleMouseUpGlobal]);
+
+  const completeTaskAssignment = async (responsePayload, taskTitle) => {
+    setIsCompletingOrEditing(true);
     try {
-      const { error: updateError } = await supabase
-        .from('task_assignments')
-        .update({
-          status: 'COMPLETED',
-          completed_at: new Date().toISOString(),
-          response_data: responsePayload,
-        })
-        .eq('id', assignment.id);
-      if (updateError) throw updateError;
-      alert(`Response for "${taskTitle}" submitted successfully!`);
-      logActivity(user, profile, 'TASK_COMPLETED', `${profile.first_name} completed the task: ${taskTitle}`);
-      setIsEditingResponse(false); // If was editing, turn it off
-      fetchTaskAssignmentDetails(); // Re-fetch to show updated status and read-only response
-      // navigate('/tasks'); // Optional: navigate back immediately or let user see completed state
-    } catch (err) {
-      console.error("Error submitting task response:", err);
-      setError(err.message || "Failed to submit response.");
-    } finally {
-      setIsCompletingOrEditing(false);
-    }
+        await supabase.from('task_assignments').update({ status: 'COMPLETED', completed_at: new Date().toISOString(), response_data: responsePayload }).eq('id', assignment.id);
+        logActivity(user, profile, 'TASK_COMPLETED', `${profile.first_name} completed: ${taskTitle}`);
+        setIsEditingResponse(false);
+        fetchTaskAssignmentDetails();
+    } catch (e) { alert(e.message); } finally { setIsCompletingOrEditing(false); }
   };
 
-  const handleCompleteAcknowledgement = async () => {
-    if (!task || !window.confirm(`Acknowledge and complete task: "${task.title}"?`)) return;
-    const payload = { acknowledged: true, acknowledged_at: new Date().toISOString() };
-    await completeTaskAssignment(payload, task.title);
-  };
-
-  const handleCompleteEventAvailability = async () => {
-    if (!task) return;
-    const requiredEventIds = task.task_config?.event_ids || [];
-    const unanswered = requiredEventIds.filter(id => !availabilityResponses[id]?.trim());
-    if (unanswered.length > 0) { alert("Please provide availability for all events."); return; }
-    if (!window.confirm(`Submit availability for "${task.title}"?`)) return;
-    await completeTaskAssignment({ availabilities: availabilityResponses }, task.title);
-  };
-
-  const handleCompleteRehearsalPoll = async () => {
-    if (!task) return;
-    if (!window.confirm(`Submit rehearsal availability for "${task.title}"?`)) return;
-    const payload = { selected_slots: selectedRehearsalSlots.map(id => { const [day,time] = id.split('-'); return {day,time}; }) };
-    await completeTaskAssignment(payload, task.title);
-  };
-
-  // Group slots by time for grid display
+  const isTaskOpen = useMemo(() => task && task.is_active && (!task.due_date || new Date() <= new Date(task.due_date + 'T23:59:59')), [task]);
   const pollGrid = useMemo(() => {
-    if (task?.type !== 'REHEARSAL_POLL' || !task.task_config || allPossibleRehearsalSlots.length === 0) {
-      return { timeLabels: [], days: [], slotsByTime: {} };
-    }
+    if (task?.type !== 'REHEARSAL_POLL' || !allPossibleRehearsalSlots.length) return { times: [], days: [], slots: {} };
     const { days, time_start, time_end, interval_minutes } = task.task_config;
-    const timeLabels = generateTimeSlots(time_start, time_end, interval_minutes);
-    const slotsByTime = {};
-    timeLabels.forEach(time => {
-      slotsByTime[time] = {};
-      days.forEach(day => {
-        const slotId = `${day}-${time}`;
-        slotsByTime[time][day] = {
-          id: slotId,
-          selected: selectedRehearsalSlots.includes(slotId)
-        };
-      });
-    });
-    return { timeLabels, days: days.sort((a,b) => DAYS_OF_WEEK.indexOf(a) - DAYS_OF_WEEK.indexOf(b)), slotsByTime }; // Sort days for display
+    const times = generateTimeSlots(time_start, time_end, interval_minutes);
+    const slots = {};
+    times.forEach(t => { slots[t] = {}; days.forEach(d => { const id = `${d}-${t}`; slots[t][d] = { id, selected: selectedRehearsalSlots.includes(id) }; }); });
+    return { times, days: days.sort((a,b) => DAYS_OF_WEEK.indexOf(a) - DAYS_OF_WEEK.indexOf(b)), slots };
   }, [task, allPossibleRehearsalSlots, selectedRehearsalSlots]);
 
-  const handleMouseDownOnSlot = (slot) => {
-    // Don't start drag if the slot is invalid, or if editing/completing
-    if (!slot || isCompletingOrEditing) {
-      return;
-    }
+  if (authIsLoading || loading) return <div className="task-detail-wrapper"><p style={{color:'white', textAlign:'center'}}>Loading...</p></div>;
+  if (error || !assignment) return <div className="task-detail-wrapper"><p className="page-level-error">{error || "Task not found"}</p></div>;
 
-    setIsDragging(true);
-    setDragStartInfo({ id: slot.id, initiallySelected: slot.selected });
-    setSlotsToUpdate(new Set([slot.id])); // Start with the clicked slot
-
-    // Prevent default text selection behavior while dragging
-    document.body.style.userSelect = 'none';
-  };
-
-  const handleMouseEnterSlot = (slot) => {
-    if (!isDragging || !slot || isCompletingOrEditing) {
-      return;
-    }
-    // Add the slot to the set of slots to be updated
-    setSlotsToUpdate(prevSlots => new Set(prevSlots).add(slot.id));
-  };
-
-  const handleMouseUpGlobal = useCallback(() => {
-    if (!isDragging || !dragStartInfo) {
-      return;
-    }
-
-    const selectMode = !dragStartInfo.initiallySelected; // If started on unselected, we select. If on selected, we deselect.
-
-    // Call your primary slot update function for all affected slots
-    // This assumes handleSlotSelection(slotId, targetState) exists
-    // and updates your main pollGrid data, triggering a re-render.
-    slotsToUpdate.forEach(slotId => {
-      // You might need to fetch the full slot object if handleSlotSelection needs it,
-      // or adapt handleSlotSelection to work with just the ID and target state.
-      handleSlotSelection(slotId, selectMode); // Pass true to select, false to deselect
-    });
-
-    setIsDragging(false);
-    setDragStartInfo(null);
-    setSlotsToUpdate(new Set());
-    document.body.style.userSelect = ''; // Re-enable text selection
-  }, [isDragging, dragStartInfo, slotsToUpdate, handleSlotSelection]); // Include dependencies
-
-  useEffect(() => {
-    // handleMouseUpGlobal should be wrapped in useCallback or defined
-    // such that its reference is stable if not all dependencies change.
-    window.addEventListener('mouseup', handleMouseUpGlobal);
-
-    return () => {
-      window.removeEventListener('mouseup', handleMouseUpGlobal);
-      document.body.style.userSelect = ''; // Cleanup on unmount
-    };
-  }, [handleMouseUpGlobal]); // Dependency array is important here
-
-  const showCompletionForm = 
-    isTaskOpenForSubmission && 
-    (assignment.status === 'PENDING' || (assignment.status === 'COMPLETED' && isEditingResponse));
-
-  // --- Render Logic ---
-  if (authIsLoading || loading) { // Show loading if either auth context or this page is loading
-    return <p className="page-status">Loading task details...</p>;
-  }
-  if (error) { // If there's an error string set, display it
-    return <p className="page-status error">{error}</p>;
-  }
-  // This specific message should only appear if loading is done, no error, but still no assignment/task
-  if (!assignment || !task) { 
-    return <p className="page-status">Task details not found. It might have been removed or is no longer assigned to you.</p>;
-  }
-
-  // If task is COMPLETED and NO LONGER OPEN FOR EDITING, show read-only response and different message.
-  if (assignment.status === 'COMPLETED' && !isTaskOpenForSubmission) {
-    return (
-      <div className="task-detail-page-container">
-        <Link to="/tasks" className="back-to-tasks-btn" style={{marginBottom: '20px', display: 'inline-block'}}>&larr; Back to My Tasks</Link>
-        <h1>{task.title}</h1>
-        <div className="task-already-completed">
-          <h3 className="form-success">This task was completed.</h3>
-          {assignment.completed_at && <p>Completed on: {new Date(assignment.completed_at).toLocaleString()}</p>}
-          <h4>Your Submitted Response:</h4>
-          {renderSubmittedResponseData(assignment.response_data, task.type, task.task_config, eventDetailsForTask)}
-          <p style={{marginTop: '15px', fontStyle: 'italic', color: '#777'}}>This task is no longer open for new responses or edits.</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // If task is PENDING but NOT OPEN for submission
-  if (assignment.status === 'PENDING' && !isTaskOpenForSubmission) {
-    return (
-      <div className="task-detail-page-container">
-        <Link to="/tasks" className="back-to-tasks-btn" style={{marginBottom: '20px', display: 'inline-block'}}>&larr; Back to My Tasks</Link>
-        <h1>{task.title}</h1>
-        <div className="task-closed-message">
-            <h3>Task Closed</h3>
-            <p>This task is either past its due date or has been deactivated by the organizer. You can no longer submit a response.</p>
-        </div>
-      </div>
-    );
-  }
+  const showForm = isTaskOpen && (assignment.status === 'PENDING' || isEditingResponse);
 
   return (
-    <div className="task-detail-page-container">
-      <Link to="/tasks" className="back-to-tasks-btn" style={{marginBottom: '20px', display: 'inline-block'}}>&larr; Back to My Tasks</Link>
-      
-      <div className="task-header-details">
-        <h1>{task.title}</h1>
-        <p className="task-page-type">Type: {formatTaskType(task.type)}</p>
-        {task.due_date && <p className="task-page-due-date"><strong>Due:</strong> {new Date(task.due_date + 'T00:00:00').toLocaleDateString()} {!isTaskOpenForSubmission && task.is_active && <span className="task-status-chip past-due-chip">(Past Due)</span>}</p>}
-        {!task.is_active && <p className="task-status-chip inactive-chip">(Task Inactive)</p>}
-      </div>
+    <div className="task-detail-wrapper">
+      <div className="task-detail-card">
+        
+        <Link to="/tasks" className="back-to-tasks-btn">&larr; Back to My Tasks</Link>
 
-      {error && <p className="form-error" style={{textAlign:'center', marginBottom: '15px'}}>{error}</p>}
-
-      <div className="task-completion-area">
-        {/* Case 1: Task is COMPLETED and user is NOT currently editing it */}
-        {assignment.status === 'COMPLETED' && !isEditingResponse && (
-          <div className="task-already-completed">
-            <h3 className="form-success" style={{color: '#155724', marginBottom: '10px'}}>This task was completed!</h3>
-            {assignment.completed_at && <p>Completed on: {new Date(assignment.completed_at).toLocaleString()}</p>}
-            
-            {assignment.task.type != 'ACKNOWLEDGEMENT' && (
-            <h4 style={{marginTop: '15px', marginBottom: '5px'}}>Your Submitted Response:</h4>)}
-            {renderSubmittedResponseData(assignment.response_data, task.type, task.task_config, eventDetailsForTask)}
-            
-            {/* THIS IS THE "Edit Response" BUTTON LOGIC */}
-            {isTaskOpenForSubmission && assignment.task.type != 'ACKNOWLEDGEMENT' && ( 
-              <button 
-                onClick={() => {
-                  setIsEditingResponse(true);
-                  // Pre-fill form states again based on existing response
-                  if (task.type === 'EVENT_AVAILABILITY' && assignment.response_data?.availabilities) {
-                    setAvailabilityResponses(assignment.response_data.availabilities);
-                  }
-                  if (task.type === 'REHEARSAL_POLL' && assignment.response_data?.selected_slots) {
-                    setSelectedRehearsalSlots((assignment.response_data.selected_slots || []).map(slot => typeof slot === 'string' ? slot : `${slot.day}-${slot.time}`));
-                  }
-                }} 
-                className="submit-btn edit-response-btn" 
-                style={{marginTop: '20px'}}
-                disabled={isCompletingOrEditing}
-              >
-                {isCompletingOrEditing ? 'Loading...' : 'Edit Response'}
-              </button>
-            )}
-            {!isTaskOpenForSubmission && (
-              <p style={{marginTop: '15px', fontStyle: 'italic', color: '#777'}}>
-                This task is no longer open for editing (past due or inactive).
-              </p>
-            )}
+        <header className="task-detail-header">
+          <h1>{task.title}</h1>
+          <div className="task-detail-meta">
+             <div className="meta-item">
+                 <span className="meta-label">Type</span>
+                 <span className="meta-value">{formatTaskType(task.type)}</span>
+             </div>
+             {task.due_date && (
+                 <div className="meta-item">
+                     <span className="meta-label">Due Date</span>
+                     <span className="meta-value">
+                        {new Date(task.due_date).toLocaleDateString()}
+                        {!isTaskOpen && <span className="chip-status past-due" style={{marginLeft:'8px'}}>Closed</span>}
+                     </span>
+                 </div>
+             )}
           </div>
-        )}
+        </header>
 
-        {/* Case 2: Task is PENDING and NOT open for submission */}
-        {assignment.status === 'PENDING' && !isTaskOpenForSubmission && (
-            <div className="task-closed-message">
-                <h3>Task Closed</h3>
-                <p>This task is either past its due date or has been deactivated by the organizer. You can no longer submit a response.</p>
+        <div className="task-completion-area">
+          
+          {assignment.status === 'COMPLETED' && !isEditingResponse && (
+            <div className="task-already-completed">
+              <h3>Task Completed</h3>
+              <p>Submitted on: {new Date(assignment.completed_at).toLocaleString()}</p>
+              {renderSubmittedResponseData(assignment.response_data, task.type, task.task_config, eventDetailsForTask)}
+              
+              {isTaskOpen && (
+                  <button onClick={() => setIsEditingResponse(true)} className="submit-btn edit-response-btn" style={{marginTop:'1rem'}}>
+                      Edit Response
+                  </button>
+              )}
             </div>
-        )}
+          )}
 
-        {/* Case 3: Show Completion/Editing Form if:
-            - Task is PENDING AND OPEN, OR
-            - Task is COMPLETED AND OPEN AND isEditingResponse is true 
-        */}
-        {showCompletionForm && (
-          <>
-            {task.type === 'ACKNOWLEDGEMENT' && (
-              <div className="task-specific-form acknowledgement-form">
-                <h3>{isEditingResponse ? 'Edit Your Acknowledgement' : 'Please Read and Acknowledge:'}</h3>
-                <div className="acknowledgement-text-box">
-                  {(task.task_config?.body_text || "No acknowledgement text provided.").split('\n').map((paragraph, index) => (
-                      <p key={index}>{paragraph || <br />}</p>
-                  ))}
-                </div>
-                <div className="form-actions" style={{justifyContent: 'flex-start'}}>
-                    <button 
-                    onClick={handleCompleteAcknowledgement}
-                    className="submit-btn complete-task-btn"
-                    disabled={isCompletingOrEditing}
-                    >
-                    {isCompletingOrEditing ? 'Submitting...' : (isEditingResponse ? 'Update Acknowledgement' : 'I Acknowledge & Complete Task')}
-                    </button>
-                    {isEditingResponse && (
-                        <button type="button" onClick={() => setIsEditingResponse(false)} className="cancel-btn" disabled={isCompletingOrEditing}>
-                            Cancel Edit
-                        </button>
-                    )}
-                </div>
+          {assignment.status === 'PENDING' && !isTaskOpen && (
+              <div className="task-closed-message">
+                  <h3>Task Closed</h3>
+                  <p>The deadline has passed or this task is no longer active.</p>
               </div>
-            )}
+          )}
 
-            {task.type === 'EVENT_AVAILABILITY' && (
-              <div className="task-specific-form event-availability-form">
-                <h3>{isEditingResponse ? 'Edit Your Availability' : (task.task_config?.prompt || "Indicate Your Availability:")}</h3>
-                {eventDetailsForTask.length === 0 && !error && <p>Loading event details for this task...</p>}
-                
-                {/* eventDetailsForTask is already sorted by the updated fetch query.
-                    This loop will now render events in Ascending order (oldest/closest -> newest/furthest).
-                */}
-                {eventDetailsForTask.map(event => (
-                  <div key={event.id} className="event-availability-item form-group">
-                    <h4>{event.title} - {event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString() : 'Date N/A'} {event.time || ''}</h4>
-                    <div className="availability-options">
-                      {['YES', 'NO', 'MAYBE'].map(option => (
-                        <label key={option} className="radio-label">
-                          <input 
-                            type="radio" 
-                            name={`event-${event.id}-availability`} 
-                            value={option} 
-                            checked={availabilityResponses[event.id] === option} 
-                            onChange={() => handleAvailabilityChange(event.id, option)} 
-                            disabled={isCompletingOrEditing} 
-                          />
-                          {option === 'YES' ? 'Available' : option === 'NO' ? 'Unavailable' : 'Maybe'}
-                        </label>
-                      ))}
+          {showForm && (
+            <>
+               {task.type === 'ACKNOWLEDGEMENT' && (
+                 <div className="glass-form">
+                    <h3>Please Acknowledge:</h3>
+                    <div className="acknowledgement-text-box">
+                        {task.task_config?.body_text?.split('\n').map((p,i)=><p key={i}>{p}</p>)}
                     </div>
-                  </div>
-                ))}
-                {eventDetailsForTask.length > 0 && (
-                  <div className="form-actions" style={{justifyContent: 'flex-start'}}>
-                    <button 
-                      onClick={handleCompleteEventAvailability}
-                      className="submit-btn complete-task-btn"
-                      disabled={isCompletingOrEditing}
-                    >
-                      {isCompletingOrEditing ? 'Submitting...' : (isEditingResponse ? 'Update Availability' : 'Submit Availability')}
+                    <button onClick={() => { if(window.confirm('Confirm?')) completeTaskAssignment({ acknowledged: true, acknowledged_at: new Date() }, task.title)}} className="complete-task-btn" disabled={isCompletingOrEditing}>
+                        {isCompletingOrEditing ? 'Submitting...' : 'I Acknowledge'}
                     </button>
-                    {isEditingResponse && (
-                        <button type="button" onClick={() => setIsEditingResponse(false)} className="cancel-btn" disabled={isCompletingOrEditing}>
-                            Cancel Edit
-                        </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+                    {isEditingResponse && <button onClick={()=>setIsEditingResponse(false)} className="cancel-btn">Cancel</button>}
+                 </div>
+               )}
 
-            {task.type === 'REHEARSAL_POLL' && task.task_config && (
-              <div className="task-specific-form rehearsal-poll-form">
-                <h3>{isEditingResponse ? 'Edit Your Rehearsal Availability' : (task.task_config.prompt || "Indicate Your Rehearsal Availability:")}</h3>
-                {(allPossibleRehearsalSlots.length === 0 && task.task_config.days && task.task_config.time_start && task.task_config.time_end && !error) && 
-                    <p>Generating time slots...</p>}
-                {(allPossibleRehearsalSlots.length === 0 && !(task.task_config.days && task.task_config.time_start && task.task_config.time_end) && !error) && 
-                    <p>Time slot configuration is missing or incomplete for this poll.</p>}
-                
-                {pollGrid.timeLabels.length > 0 && pollGrid.days.length > 0 && (
-                  <div className="rehearsal-poll-grid-container">
-                    <table className="rehearsal-poll-grid">
-                      <thead><tr><th>Time</th>{pollGrid.days.map(day => <th key={day}>{day.substring(0,3)}</th>)}</tr></thead>
-                      <tbody>
-                        {pollGrid.timeLabels.map(time => (
-                          <tr key={time}>
-                            <td>{formatTime(time)}
-                            </td>
-                            {pollGrid.days.map(day => {
-                              const slot = pollGrid.slotsByTime[time]?.[day];
-                              const isCurrentlyDraggedOver = isDragging && slotsToUpdate.has(slot?.id);
-                              const dragIntentIsToSelect = isDragging && dragStartInfo && !dragStartInfo.initiallySelected;
-                              return (
-                                <td 
-                                  key={slot?.id || `${day}-${time}-empty`}
-                                  className={`
-                                    poll-slot
-                                    ${slot ? (slot.selected ? 'selected' : 'available') : 'unavailable-slot-placeholder'}
-                                    ${isCurrentlyDraggedOver ? (dragIntentIsToSelect ? 'dragging-to-select' : 'dragging-to-deselect') : ''}
-                                    ${isCompletingOrEditing && !slot?.id ? 'disabled-placeholder' : ''} 
-                                    // Add a class if the slot itself is disabled for dragging
-                                    ${isCompletingOrEditing && slot?.id ? 'disabled-interaction' : ''} 
-                                  `}
-                                  onMouseDown={() => slot && handleMouseDownOnSlot(slot)} // Only allow mousedown on actual slots
-                                  onMouseEnter={() => slot && handleMouseEnterSlot(slot)} // Only track mouseenter on actual slots
-                                  // Keep existing onClick if you want single-click toggle, but ensure it uses the new handleSlotSelection signature
-                                  aria-disabled={isCompletingOrEditing || !slot}
-                                ></td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                {allPossibleRehearsalSlots.length > 0 && (
-                  <div className="form-actions" style={{justifyContent: 'flex-start'}}>
-                    <button 
-                      onClick={handleCompleteRehearsalPoll}
-                      className="submit-btn complete-task-btn"
-                      disabled={isCompletingOrEditing}
-                    >
-                      {isCompletingOrEditing ? 'Submitting...' : (isEditingResponse ? 'Update Rehearsal Availability' : 'Submit Rehearsal Availability')}
+               {task.type === 'EVENT_AVAILABILITY' && (
+                 <div className="glass-form">
+                    <h3>Indicate Availability</h3>
+                    {eventDetailsForTask.map(evt => (
+                        <div key={evt.id} className="event-availability-item">
+                            <h4>{evt.title} — {new Date(evt.date).toLocaleDateString()} {evt.time}</h4>
+                            <div className="availability-options">
+                                {['YES', 'NO', 'MAYBE'].map(opt => (
+                                    <label key={opt} className="radio-label">
+                                        <input type="radio" name={evt.id} checked={availabilityResponses[evt.id]===opt} onChange={()=>setAvailabilityResponses(prev=>({...prev, [evt.id]:opt}))} />
+                                        {opt === 'YES' ? 'Available' : opt === 'NO' ? 'Unavailable' : 'Maybe'}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                    <button onClick={() => completeTaskAssignment({ availabilities: availabilityResponses }, task.title)} className="complete-task-btn" disabled={isCompletingOrEditing}>
+                        {isCompletingOrEditing ? 'Submitting...' : 'Submit Availability'}
                     </button>
-                     {isEditingResponse && (
-                        <button type="button" onClick={() => setIsEditingResponse(false)} className="cancel-btn" disabled={isCompletingOrEditing}>
-                            Cancel Edit
-                        </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
+                    {isEditingResponse && <button onClick={()=>setIsEditingResponse(false)} className="cancel-btn">Cancel</button>}
+                 </div>
+               )}
+
+               {task.type === 'REHEARSAL_POLL' && (
+                   <div className="glass-form">
+                       <h3>Select Available Times</h3>
+                       <p style={{marginBottom:'1rem', color:'#64748b'}}>
+                         <div><strong>Legend:</strong></div>
+                          <span style={{display:'inline-block', width:'12px', height:'12px', background:'#2ecc71', marginRight:'4px', borderRadius:'2px'}}></span> Green slots indicate you are <strong>available</strong>.<br/>
+                           <span style={{display:'inline-block', width:'12px', height:'12px', background:'#ffffffff', marginRight:'4px', borderRadius:'2px'}}></span> White slots indicate you are <strong>unavailable</strong>.
+                       </p>
+                       <p style={{marginBottom:'1rem', color:'#64748b'}}>Click and drag to select/deselect multiple slots.</p>
+                       <div className="rehearsal-poll-grid-container">
+                           <table className="rehearsal-poll-grid">
+                               <thead>
+                                   <tr>
+                                       <th>Time</th>
+                                       {pollGrid.days.map(d => <th key={d}>{d.substring(0,3)}</th>)}
+                                   </tr>
+                               </thead>
+                               <tbody>
+                                   {pollGrid.times.map(t => (
+                                       <tr key={t}>
+                                           <td>{formatTime(t)}</td>
+                                           {pollGrid.days.map(d => {
+                                               const s = pollGrid.slots[t][d];
+                                               const dragSelect = isDragging && dragStartInfo && !dragStartInfo.initiallySelected;
+                                               const dragging = isDragging && slotsToUpdate.has(s.id);
+                                               return (
+                                                   <td 
+                                                    key={s.id} 
+                                                    className={`poll-slot ${s.selected?'selected':''} ${dragging ? (dragSelect ? 'dragging-to-select' : 'dragging-to-deselect') : ''}`}
+                                                    onMouseDown={()=>handleMouseDownOnSlot(s)}
+                                                    onMouseEnter={()=>handleMouseEnterSlot(s)}
+                                                   />
+                                               );
+                                           })}
+                                       </tr>
+                                   ))}
+                               </tbody>
+                           </table>
+                       </div>
+                       <button onClick={() => completeTaskAssignment({ selected_slots: selectedRehearsalSlots.map(id=>{const [d,t]=id.split('-'); return {day:d, time:t}}) }, task.title)} className="complete-task-btn" disabled={isCompletingOrEditing}>
+                            {isCompletingOrEditing ? 'Submitting...' : 'Submit Availability'}
+                       </button>
+                       {isEditingResponse && <button onClick={()=>setIsEditingResponse(false)} className="cancel-btn">Cancel</button>}
+                   </div>
+               )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
-}
+};
 
 export default TaskDetailPage;

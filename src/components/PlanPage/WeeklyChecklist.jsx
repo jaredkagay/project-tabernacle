@@ -14,7 +14,7 @@ const WeeklyChecklist = ({ tasks, checkedStatuses, onTaskToggle }) => {
     return (
       <div className="weekly-checklist-card">
         <h3>Pre-Service Checklist</h3>
-        <p>No default checklist tasks defined for this organization yet.</p>
+        <p>No tasks defined for this organization yet.</p>
       </div>
     );
   }

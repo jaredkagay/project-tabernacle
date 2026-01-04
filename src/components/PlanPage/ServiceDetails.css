@@ -1,37 +1,44 @@
 /* src/components/PlanPage/ServiceDetails.css */
+
+/* Remove card wrapper since parent provides it */
 .service-details-card {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 
 .service-details-card h2 {
   margin-top: 0;
-  color: #34495e;
-  border-bottom: 2px solid #ecf0f1;
-  padding-bottom: 10px;
-  font-size: 1.5em;
+  color: #0f172a; /* Dark Slate */
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
 }
 
 .service-details-card p {
-  margin: 8px 0;
+  margin: 10px 0;
   line-height: 1.6;
-  color: #555;
+  color: #334155; /* Slate 700 */
+  font-size: 0.95rem;
 }
 
 .service-details-card strong {
-  color: #2c3e50;
+  color: #1e293b; /* Slate 800 */
+  font-weight: 600;
+  margin-right: 5px;
 }
 
 .service-notes {
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px dashed #bdc3c7;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(0,0,0,0.15);
 }
 
 .service-notes p {
-  margin-top: 5px;
+  margin-top: 0.5rem;
   font-style: italic;
-  color: #7f8c8d;
+  color: #64748b; /* Slate 500 */
 }

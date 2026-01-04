@@ -1,121 +1,245 @@
 /* src/components/AllPlansPage/AllPlansPage.css */
-.all-plans-container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 20px;
-  font-family: sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* --- MAIN WRAPPER --- */
+.all-plans-page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  
+  /* Layout */
+  padding: 6rem 2rem 4rem 2rem; 
+  box-sizing: border-box;
+  color: #e2e8f0;
+  
+  /* Create stacking context for the fixed background */
+  position: relative;
+  z-index: 0;
 }
 
-.all-plans-container h1 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 30px;
+/* --- FIXED BACKGROUND (The "Magic Fix") --- */
+/* This element stays pinned to the window, covering the gray body background 
+   completely, regardless of how long the content is. */
+.all-plans-page-wrapper::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Deep Ocean Gradient */
+  background: linear-gradient(10deg, #020617 0%, #312e81 45%, #1e1b4b 100%);
+  z-index: -1; /* Puts it behind the content */
+}
+
+.all-plans-content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 0 4px 0;
+
+}
+
+/* --- HEADER --- */
+.all-plans-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.all-plans-header h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.create-new-plan-btn {
+  background: #3b82f6;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.create-new-plan-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.create-new-plan-btn:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --- GLASSY PANELS --- */
+.plans-section-panel {
+  background: rgba(255, 255, 255, 0.85); 
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  color: #1e293b;
+}
+
+.plans-section-panel h2 {
+  font-size: 1.25rem;
+  margin: 0 0 1.25rem 0;
+  color: #0f172a;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 0.75rem;
+  
+  /* Flex for aligning icons */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* --- CARD GRID --- */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.plan-card {
+  background: white;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 1.25rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.plan-card:hover { 
+    transform: translateY(-4px); 
+    border-color: #3b82f6; 
+    box-shadow: 0 12px 24px -6px rgba(59, 130, 246, 0.15);
+}
+
+.plan-card-date { 
+    font-size: 0.8rem; 
+    color: #64748b; 
+    margin-bottom: 0.5rem; 
+    text-transform: uppercase; 
+    font-weight: 700; 
+    letter-spacing: 0.05em; 
+}
+
+.plan-card-title { 
+    font-weight: 700; 
+    color: #0f172a; 
+    margin-bottom: 0.4rem; 
+    font-size: 1.1rem; 
+}
+
+.plan-card-theme { 
+  font-size: 0.9rem; 
+  color: #64748b; 
+  font-style: italic;
+  margin-top: auto;
+}
+
+/* --- STATES --- */
+.empty-state-text {
+  color: #cbd5e1;
+  font-style: italic;
+  font-size: 1.1rem;
 }
 
 .page-status {
   text-align: center;
-  font-size: 1.2em;
-  margin-top: 40px;
+  margin-top: 100px;
+  color: #cbd5e1;
 }
+
 .page-status.error {
-  color: #e74c3c;
+  color: #fca5a5;
 }
 
-.plans-list {
-  list-style-type: none;
-  padding: 0;
-}
-
-.plan-item-card {
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transition: box-shadow 0.3s ease;
-}
-
-.plan-item-card:hover {
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
-.plan-item-card a {
-  display: block;
-  padding: 20px;
-  text-decoration: none;
-  color: inherit;
-}
-
-.plan-item-card h2 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #2c3e50;
-}
-
-.plan-date {
-  font-size: 0.95em;
-  color: #555;
-  margin-bottom: 5px;
-}
-
-.plan-theme {
-  font-size: 0.9em;
-  color: #777;
-  font-style: italic;
-}
-
-/* Optional: Style for a create new plan button */
-
-.create-plan-btn {
-  display: inline-block;
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #2ecc71;
-  color: white;
-  text-decoration: none;
-  border-radius: 5px;
-  font-weight: bold;
-}
-
-.create-plan-btn:hover {
-  background-color: #27ae60;
-}
-
-/* src/components/AllPlansPage/AllPlansPage.css */
-/* ... existing styles ... */
-
-.all-plans-header {
+/* --- MODAL --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.65); 
+  backdrop-filter: blur(8px);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 30px;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
 }
 
-.all-plans-header h1 {
-  margin: 0; /* Reset margin if it's part of a flex container */
+.modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  color: #1e293b;
+  padding: 2.5rem;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  transform: translateY(0);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.create-new-plan-btn {
-  padding: 10px 20px;
-  font-size: 1em;
-  font-weight: bold;
-  color: white;
-  background-color: #3498db; /* Blue */
+.modal-close-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: rgba(241, 245, 249, 0.5);
   border: none;
-  border-radius: 5px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  color: #64748b;
+  transition: all 0.2s;
 }
 
-.create-new-plan-btn:hover {
-  background-color: #2980b9;
+.modal-close-btn:hover {
+  background: #ef4444; 
+  color: white;
+  transform: rotate(90deg);
 }
 
-/* Ensure modal styles are available.
-   If you haven't already, you might want to move the .modal-overlay,
-   .modal-content, .modal-close-btn styles from PlanPage.css
-   to a more global CSS file (like App.css or a dedicated modal.css)
-   and import it in both PlanPage.js and AllPlansPage.js,
-   or just ensure PlanPage.css is imported here as a temporary measure.
-   I added `import '../PlanPage/PlanPage.css';` as a placeholder for this.
-*/
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

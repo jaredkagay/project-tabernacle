@@ -5,24 +5,26 @@ import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import CreatePlanForm from './CreatePlanForm';
 import './AllPlansPage.css';
-import '../PlanPage/PlanPage.css'; 
 import { logActivity } from '../../utils/activityLogger';
+import { FaPlus, FaExclamationCircle } from 'react-icons/fa'; // Added FaExclamationCircle
 
 // Fallback items in case the organization hasn't set up a default plan yet
 const DEFAULT_SERVICE_ITEMS = [
   { type: 'Generic', title: 'Welcome', duration: '5 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
-  { type: 'Generic', title: 'Announcements', duration: '5 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
+  { type: 'Generic', title: 'Game', duration: '5 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
   { type: 'Divider', title: 'Worship', duration: null, details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
-  { type: 'Song', title: 'Song 1', duration: '4 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
-  { type: 'Song', title: 'Song 2', duration: '4 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
-  { type: 'Song', title: 'Song 3', duration: '4 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
+  { type: 'Song', title: 'Worship Song', duration: '3 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
+  { type: 'Bible Verse', title: 'Scripture Reading', duration: '1 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
+  { type: 'Song', title: 'Worship Song', duration: '3 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
+  { type: 'Song', title: 'Worship Song', duration: '3 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
   { type: 'Divider', title: '---', duration: null, details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
   { type: 'Generic', title: 'Message', duration: '15 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
   { type: 'Divider', title: 'Response', duration: null, details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
-  { type: 'Song', title: 'Song 4', duration: '4 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
+  { type: 'Song', title: 'Worship Song', duration: '3 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
   { type: 'Divider', title: '---', duration: null, details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
+  { type: 'Generic', title: 'Announcements', duration: '5 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
   { type: 'Generic', title: 'Community Builder', duration: '20 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, },
-  { type: 'Generic', title: 'Dismissal', duration: '0 min', details: 'Go in Peace. Serve the Lord.', artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, }
+  { type: 'Generic', title: 'Dismissal', duration: '1 min', details: null, artist: null, chord_chart_url: null, youtube_url: null, assigned_singer_ids: [], musical_key: null, bible_book: null, bible_chapter: null, bible_verse_range: null, }
 ];
 
 const AllPlansPage = () => {
@@ -32,6 +34,10 @@ const AllPlansPage = () => {
   const [error, setError] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'tabernacle - Plans';
+  }, []);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -122,19 +128,12 @@ const AllPlansPage = () => {
       const upcoming = []; 
       const archived = [];
       
-      // fetchedData is Descending (2026, 2025...)
       (fetchedData || []).forEach(plan => {
         const planDate = new Date(plan.date + 'T00:00:00'); planDate.setHours(0,0,0,0);
         if (planDate >= today) upcoming.push(plan);
         else archived.push(plan);
       });
       
-      // Archived: Desired Order is Descending (Most Recent -> Least Recent). 
-      // fetchedData is already Descending, so `archived` is correct.
-
-      // Upcoming: Desired Order is Ascending (Closest to Present -> Furthest).
-      // fetchedData is Descending, so `upcoming` is [Furthest ... Closest].
-      // We need to reverse it to be [Closest ... Furthest].
       return { 
         upcomingOrganizerPlans: upcoming.reverse(), 
         archivedOrganizerPlans: archived, 
@@ -143,7 +142,6 @@ const AllPlansPage = () => {
       };
 
     } else if (profile.role === 'MUSICIAN') {
-      // fetchedData is Ascending (Closest -> Furthest). This matches requirements.
       const pending = (fetchedData || []).filter(plan => plan.assignment_status === 'PENDING');
       const accepted = (fetchedData || []).filter(plan => plan.assignment_status === 'ACCEPTED');
       
@@ -228,101 +226,117 @@ const AllPlansPage = () => {
   const renderPlanListCards = (plansToRender) => {
     if (!plansToRender || plansToRender.length === 0) return null; 
     return (
-      <ul className="plans-list">
+      <div className="plans-grid">
         {plansToRender.map(plan => (
-          <li key={plan.id} className="plan-item-card">
-            <div className="plan-card-content">
-              <Link to={`/plan/${plan.id}`} className="plan-link">
-                <h2>{plan.title || 'Untitled Plan'}</h2>
-                <p className="plan-date">Date: {plan.date ? new Date(plan.date + 'T00:00:00').toLocaleDateString() : 'Not set'}</p>
-                {plan.theme && <p className="plan-theme">Theme: {plan.theme}</p>}
-              </Link>
-            </div>
-          </li>
+          <Link to={`/plan/${plan.id}`} key={plan.id} className="plan-card">
+             <div className="plan-card-date">
+                {plan.date ? new Date(plan.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' }) : 'Date Not Set'}
+             </div>
+             <div className="plan-card-title">{plan.title || 'Untitled Plan'}</div>
+             <div className="plan-card-theme">{plan.theme || ""}</div>
+          </Link>
         ))}
-      </ul>
+      </div>
     );
   };
 
-  if (authIsLoading) { return <p className="page-status">Initializing authentication...</p>; }
-  if (!user || !profile) { return <p className="page-status">User data not fully loaded. Try logging in again.</p>; }
+  if (authIsLoading) { return <div className="all-plans-page-wrapper"><p className="page-status">Initializing...</p></div>; }
+  if (!user || !profile) { return <div className="all-plans-page-wrapper"><p className="page-status">User data not fully loaded.</p></div>; }
+  
   if (profile.role === 'ORGANIZER' && !profile.organization_id && !plansLoading) {
-      return ( <div className="all-plans-container"><h1>Event Plans</h1><p className="page-status error">Your organizer profile is not associated with an organization.</p></div> );
+      return ( 
+        <div className="all-plans-page-wrapper">
+            <div className="all-plans-content-container">
+                <h1>Event Plans</h1>
+                <p className="page-status error">Your organizer profile is not associated with an organization.</p>
+            </div>
+        </div> 
+      );
   }
-  if (error && !plansLoading) { return <p className="page-status error">{error}</p>; }
-  if (plansLoading) { return <p className="page-status">Loading plans...</p>; }
+  if (error && !plansLoading) { return <div className="all-plans-page-wrapper"><p className="page-status error">{error}</p></div>; }
+  if (plansLoading) { return <div className="all-plans-page-wrapper"><p className="page-status">Loading plans...</p></div>; }
 
-  // Helpers to determine empty states
   const hasOrganizerPlans = upcomingOrganizerPlans.length > 0 || archivedOrganizerPlans.length > 0;
   const hasMusicianPlans = pendingMusicianPlans.length > 0 || acceptedMusicianPlans.length > 0;
 
   return (
-    <div className="all-plans-container">
-      <div className="all-plans-header">
-        <h1>{profile.role === 'MUSICIAN' ? "Your Plan Invitations & Assignments" : "All Event Plans"}</h1>
-        {profile.role === 'ORGANIZER' && (
-          <button onClick={toggleCreateModal} className="create-new-plan-btn" disabled={!profile.organization_id}>
-            + Create New Plan
-          </button>
-        )}
-      </div>
-
-      {profile.role === 'ORGANIZER' && (
-        <>
-          {!hasOrganizerPlans && (
-            <p>No plans have been scheduled for your organization.</p>
-          )}
-
-          {upcomingOrganizerPlans.length > 0 && (
-            <div className="plans-section">
-              <h2>Upcoming Plans</h2>
-              {renderPlanListCards(upcomingOrganizerPlans)}
-            </div>
-          )}
-          
-          {archivedOrganizerPlans.length > 0 && (
-            <div className="plans-section">
-              <h2>Archived Plans</h2>
-              {renderPlanListCards(archivedOrganizerPlans)}
-            </div>
-          )}
-        </>
-      )}
-
-      {profile.role === 'MUSICIAN' && (
-        <>
-          {!hasMusicianPlans && (
-            <p>You have not been placed on the schedule for your organization.</p>
-          )}
-
-          {pendingMusicianPlans.length > 0 && (
-            <div className="plans-section">
-              <h2>Pending Invitations</h2>
-              {renderPlanListCards(pendingMusicianPlans)}
-            </div>
-          )}
-          
-          {acceptedMusicianPlans.length > 0 && (
-            <div className="plans-section">
-              <h2>Upcoming Plans</h2>
-              {renderPlanListCards(acceptedMusicianPlans)}
-            </div>
-          )}
-        </>
-      )}
-      
-      {!profile.role && (
-          <p className="page-status error">Your user role is not defined. Cannot display plans.</p>
-      )}
-
-      {isCreateModalOpen && profile.role === 'ORGANIZER' && (
-        <div className="modal-overlay" onClick={toggleCreateModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={toggleCreateModal}>&times;</button>
-            <CreatePlanForm onCreatePlan={handleCreatePlan} onCancel={toggleCreateModal} />
-          </div>
+    <div className="all-plans-page-wrapper">
+      <div className="all-plans-content-container">
+        
+        {/* HEADER */}
+        <div className="all-plans-header">
+            <h1>{profile.role === 'MUSICIAN' ? "Your Schedule" : "All Events"}</h1>
+            {profile.role === 'ORGANIZER' && (
+            <button onClick={toggleCreateModal} className="create-new-plan-btn" disabled={!profile.organization_id}>
+                Create Plan
+            </button>
+            )}
         </div>
-      )}
+
+        {/* ORGANIZER VIEW */}
+        {profile.role === 'ORGANIZER' && (
+            <>
+            {!hasOrganizerPlans && (
+                <p className="empty-state-text">No plans have been scheduled for your organization.</p>
+            )}
+
+            {upcomingOrganizerPlans.length > 0 && (
+                <div className="plans-section-panel">
+                <h2>Upcoming Plans</h2>
+                {renderPlanListCards(upcomingOrganizerPlans)}
+                </div>
+            )}
+            
+            {archivedOrganizerPlans.length > 0 && (
+                <div className="plans-section-panel">
+                <h2>Past Plans</h2>
+                {renderPlanListCards(archivedOrganizerPlans)}
+                </div>
+            )}
+            </>
+        )}
+
+        {/* MUSICIAN VIEW */}
+        {profile.role === 'MUSICIAN' && (
+            <>
+            {!hasMusicianPlans && (
+                <p className="empty-state-text">You have not been placed on the schedule for your organization.</p>
+            )}
+
+            {pendingMusicianPlans.length > 0 && (
+                <div className="plans-section-panel" style={{ borderColor: '#fecdd3' }}>
+                  {/* UPDATED HEADER WITH ICON */}
+                  <h2 style={{ color: '#be123c' }}>
+                    <FaExclamationCircle /> Pending Invitations
+                  </h2>
+                  {renderPlanListCards(pendingMusicianPlans)}
+                </div>
+            )}
+            
+            {acceptedMusicianPlans.length > 0 && (
+                <div className="plans-section-panel">
+                <h2>Upcoming Plans</h2>
+                {renderPlanListCards(acceptedMusicianPlans)}
+                </div>
+            )}
+            </>
+        )}
+        
+        {!profile.role && (
+            <p className="page-status error">Your user role is not defined. Cannot display plans.</p>
+        )}
+
+        {/* MODAL */}
+        {isCreateModalOpen && profile.role === 'ORGANIZER' && (
+            <div className="modal-overlay" onClick={toggleCreateModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <button className="modal-close-btn" onClick={toggleCreateModal}>&times;</button>
+                <CreatePlanForm onCreatePlan={handleCreatePlan} onCancel={toggleCreateModal} />
+            </div>
+            </div>
+        )}
+
+      </div>
     </div>
   );
 };
