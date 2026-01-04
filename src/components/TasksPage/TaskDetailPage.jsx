@@ -5,6 +5,7 @@ import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import './TaskDetailPage.css';
 import { DAYS_OF_WEEK } from '../../constants';
+import { logActivity } from '../../utils/activityLogger';
 
 const formatTaskType = (type) => {
   if (!type) return '';
@@ -177,7 +178,7 @@ const renderSubmittedResponseData = (responseData, taskType, taskConfig, eventDe
 
 const TaskDetailPage = () => {
   const { assignmentId } = useParams();
-  const { user, loading: authIsLoading } = useAuth(); // Get authLoading state
+  const { user, profile, loading: authIsLoading } = useAuth(); // Get authLoading state
   const navigate = useNavigate();
 
   const [assignment, setAssignment] = useState(null);
@@ -362,6 +363,7 @@ const TaskDetailPage = () => {
         .eq('id', assignment.id);
       if (updateError) throw updateError;
       alert(`Response for "${taskTitle}" submitted successfully!`);
+      logActivity(user, profile, 'TASK_COMPLETED', `${profile.first_name} completed the task: ${taskTitle}`);
       setIsEditingResponse(false); // If was editing, turn it off
       fetchTaskAssignmentDetails(); // Re-fetch to show updated status and read-only response
       // navigate('/tasks'); // Optional: navigate back immediately or let user see completed state

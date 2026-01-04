@@ -67,7 +67,6 @@ const LandingPage = () => {
 
   const handleLoginSuccess = () => {
     closeLoginModal();
-    navigate('/plans'); // Navigate after successful login
   };
 
   return (
