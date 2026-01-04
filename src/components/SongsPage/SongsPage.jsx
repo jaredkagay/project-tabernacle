@@ -3,11 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../supabaseClient';
 import SongForm from './SongForm';
-import './SongsPage.css';
-import '../PlanPage/PlanPage.css'; // For modal styles
 import { Link } from 'react-router-dom';
-import { FaMusic, FaYoutube, FaPencilAlt, FaTrashAlt } from 'react-icons/fa';
+import { FaMusic, FaYoutube, FaPencilAlt, FaTrashAlt, FaPlus, FaSearch } from 'react-icons/fa';
 import { logActivity } from '../../utils/activityLogger';
+import './SongsPage.css';
 
 const SongsPage = () => {
   const { user, profile, loading: authIsLoading } = useAuth();
@@ -26,6 +25,9 @@ const SongsPage = () => {
   const [viewingMusicianSecondarySongs, setViewingMusicianSecondarySongs] = useState([]);
   const [isLoadingViewingMusicianSongs, setIsLoadingViewingMusicianSongs] = useState(false);
   const [isSecondaryEditMode, setIsSecondaryEditMode] = useState(false);
+
+  // Search Filter State
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchPageData = useCallback(async () => {
     if (!profile?.organization_id) {
@@ -162,19 +164,33 @@ const SongsPage = () => {
     return 'secondary';
   };
 
-  const renderSongList = (songsToRender, listTitle, isOrganizerViewingSpecificMusicianSecondary = false) => {
+  const filterSongs = (songs) => {
+      if(!searchTerm) return songs;
+      return songs.filter(s => 
+          s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+          (s.artist && s.artist.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+  }
+
+  const renderSongList = (songsToRenderRaw, listTitle, isOrganizerViewingSpecificMusicianSecondary = false) => {
     let isLoadingState = false;
     if (listTitle.includes("Primary")) isLoadingState = isLoadingPrimary;
     else if (listTitle.includes("My Secondary")) isLoadingState = isLoadingSecondary;
     else if (listTitle.includes("Selected Musician")) isLoadingState = isLoadingViewingMusicianSongs;
 
-    if (isLoadingState) return <p>Loading {listTitle.toLowerCase()}...</p>;
+    if (isLoadingState) return <div className="loading-spinner">Loading...</div>;
+
+    const songsToRender = filterSongs(songsToRenderRaw);
+
     if (songsToRender.length === 0) {
-      if (listTitle.includes("Selected Musician") && !selectedMusicianIdForOrgView && profile.role === 'ORGANIZER') return <p>Select a musician above to view their secondary songs.</p>;
-      return <p>No {listTitle.toLowerCase()} found.</p>;
+      if (listTitle.includes("Selected Musician") && !selectedMusicianIdForOrgView && profile.role === 'ORGANIZER') 
+          return <div className="empty-list-state">Select a musician above to view their song requests.</div>;
+      if (searchTerm) return <div className="empty-list-state">No songs match your search.</div>;
+      return <div className="empty-list-state">No songs in this collection yet.</div>;
     }
+
     return (
-      <ul className="songs-list">
+      <div className="glass-songs-grid">
         {songsToRender.map(song => {
           let canEditOrDelete = false;
           if (profile.role === 'ORGANIZER') {
@@ -186,26 +202,49 @@ const SongsPage = () => {
           const editMode = song.is_primary ? 'editPrimary' : (profile.role === 'ORGANIZER' ? 'editSecondaryByOrg' : 'editSecondary');
 
           return (
-            <li key={song.id} className="song-item-card">
-              <div className="song-info">
-                <h3>{song.title}</h3>
-                {song.artist && <p className="song-artist-display">{song.artist}</p>}
+            <div key={song.id} className="song-card-glass">
+              <div className="song-card-main">
+                <div className="song-info">
+                  <h3>{song.title}</h3>
+                  {song.artist && <p className="song-artist">{song.artist}</p>}
+                </div>
               </div>
-              <div className="song-actions-wrapper">
-                {song.chord_chart_url && <a href={song.chord_chart_url} target="_blank" rel="noopener noreferrer" className="item-action-btn link-btn" title="Chord Chart"><FaMusic /></a>}
-                {song.youtube_url && <a href={song.youtube_url} target="_blank" rel="noopener noreferrer" className="item-action-btn link-btn" title="YouTube Video"><FaYoutube /></a>}
-                {!song.is_primary && song.default_key && (<div className="song-key-label" title={`Default Key: ${song.default_key}`}><span>{song.default_key}</span></div>)}
-                {canEditOrDelete && (
-                  <>
-                    <button onClick={() => openSongModal(editMode, song)} className="item-action-btn edit-btn" title="Edit Song" disabled={isSubmittingSong}><FaPencilAlt /></button>
-                    <button onClick={() => handleDeleteSong(song.id, song.title, song.is_primary)} className="item-action-btn delete-btn" title="Delete Song" disabled={isSubmittingSong}><FaTrashAlt /></button>
-                  </>
-                )}
+              
+              <div className="song-card-footer">
+                <div className="song-badges">
+                    {!song.is_primary && song.default_key && (
+                        <span className="key-badge" title="Default Key">{song.default_key}</span>
+                    )}
+                </div>
+                <div className="song-actions">
+                    {song.chord_chart_url && (
+                        <a href={song.chord_chart_url} target="_blank" rel="noopener noreferrer" className="action-icon-btn link" title="Chord Chart">
+                            <FaMusic />
+                        </a>
+                    )}
+                    {song.youtube_url && (
+                        <a href={song.youtube_url} target="_blank" rel="noopener noreferrer" className="action-icon-btn youtube" title="YouTube Video">
+                            <FaYoutube />
+                        </a>
+                    )}
+                    
+                    {canEditOrDelete && (
+                    <>
+                        <div className="divider-vertical"></div>
+                        <button onClick={() => openSongModal(editMode, song)} className="action-icon-btn edit" title="Edit">
+                            <FaPencilAlt />
+                        </button>
+                        <button onClick={() => handleDeleteSong(song.id, song.title, song.is_primary)} className="action-icon-btn delete" title="Delete">
+                            <FaTrashAlt />
+                        </button>
+                    </>
+                    )}
+                </div>
               </div>
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
     );
   };
 
@@ -213,59 +252,116 @@ const SongsPage = () => {
   if (!profile) return <p className="page-status">Loading user profile...</p>;
   if (!profile.organization_id && !authIsLoading) {
     return (
-      <div className="songs-page-container">
-        <h1>Song Library</h1>
-        <p className="page-status error">You must be part of an organization to view or manage songs.</p>
-        <Link to="/settings" className="submit-btn" style={{marginTop: '20px'}}>Go to Settings</Link>
+      <div className="songs-page-wrapper">
+        <div className="songs-content-container">
+            <div className="glass-panel error-panel">
+                <h1>Song Library</h1>
+                <p>You must be part of an organization to view or manage songs.</p>
+                <Link to="/settings" className="submit-btn" style={{marginTop: '20px', display: 'inline-block'}}>Go to Settings</Link>
+            </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="songs-page-container">
-      <div className="songs-header">
-        <h1>Song Library</h1>
-        {profile.role === 'ORGANIZER' && (<button onClick={() => openSongModal('createPrimary')} className="add-song-btn" disabled={isSubmittingSong}>+ Add Primary Song</button>)}
-        {profile.role === 'MUSICIAN' && (<button onClick={() => openSongModal('createSecondary')} className="add-song-btn" disabled={isSubmittingSong}>+ Add My Song</button>)}
-      </div>
-      {error && <p className="form-error page-level-error">{error}</p>}
-      <div className="songs-section">
-        <h2>Primary Songs</h2>
-        {renderSongList(primarySongs, "Primary Organization Songs")}
-      </div>
-      {profile.role === 'MUSICIAN' && (
-        <div className="songs-section">
-          <h2>My Secondary Songs</h2>
-          {renderSongList(mySecondarySongs, "My Secondary Songs")}
+    <div className="songs-page-wrapper">
+      <div className="songs-content-container">
+        
+        {/* Header Section */}
+        <div className="songs-page-header">
+            <div className="header-left">
+                <h1>Song Library</h1>
+                <p>Manage your musical repertoire.</p>
+            </div>
+            <div className="header-actions">
+                 {/* Search Input */}
+                 <div className="glass-search-wrapper">
+                    <FaSearch className="search-icon"/>
+                    <input 
+                        type="text" 
+                        placeholder="Search songs..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                 </div>
+
+                {profile.role === 'ORGANIZER' && (
+                    <button onClick={() => openSongModal('createPrimary')} className="glass-add-btn">
+                        Add Organization Song
+                    </button>
+                )}
+                {profile.role === 'MUSICIAN' && (
+                    <button onClick={() => openSongModal('createSecondary')} className="glass-add-btn">
+                        Add Song Request
+                    </button>
+                )}
+            </div>
         </div>
-      )}
-      {profile.role === 'ORGANIZER' && (
-        <div className="songs-section organizer-view-secondary">
-          <div className="secondary-songs-header">
-            <h2>View Musician's Secondary Songs</h2>
-            {selectedMusicianIdForOrgView && (
-              <div className="view-mode-toggle">
-                <span>Edit Mode</span>
-                <label className="switch">
-                  <input type="checkbox" checked={isSecondaryEditMode} onChange={() => setIsSecondaryEditMode(!isSecondaryEditMode)} />
-                  <span className="slider round"></span>
-                </label>
-              </div>
-            )}
-          </div>
-          <div className="musician-select-container">
-            <select id="select-musician-view" value={selectedMusicianIdForOrgView} onChange={(e) => setSelectedMusicianIdForOrgView(e.target.value)}>
-              <option value="">-- Select Musician --</option>
-              {organizationMusicians.map(musician => (<option key={musician.id} value={musician.id}>{musician.first_name} {musician.last_name}</option>))}
-            </select>
-          </div>
-          {renderSongList(viewingMusicianSecondarySongs, `Selected Musician's Secondary Songs`, true)}
+
+        {error && <div className="form-error page-level-error">{error}</div>}
+
+        {/* Primary Songs Panel */}
+        <div className="glass-panel">
+            <div className="panel-header-simple">
+                <h2>Organization Songs</h2>
+                <span className="count-badge-glass">{primarySongs.length}</span>
+            </div>
+            {renderSongList(primarySongs, "Primary Organization Songs")}
         </div>
-      )}
+
+        {/* Musician's Personal Songs Panel */}
+        {profile.role === 'MUSICIAN' && (
+          <div className="glass-panel">
+            <div className="panel-header-simple">
+                <h2>My Song Requests</h2>
+                <span className="count-badge-glass">{mySecondarySongs.length}</span>
+            </div>
+            {renderSongList(mySecondarySongs, "My Songs Requests")}
+          </div>
+        )}
+
+        {/* Organizer View of Musician Songs */}
+        {profile.role === 'ORGANIZER' && (
+          <div className="glass-panel organizer-view-panel">
+            <div className="panel-header-complex">
+                <h2>Musician Songs</h2>
+                
+                {selectedMusicianIdForOrgView && (
+                  <div className="view-mode-toggle">
+                    <span>Edit Mode</span>
+                    <label className="switch">
+                      <input type="checkbox" checked={isSecondaryEditMode} onChange={() => setIsSecondaryEditMode(!isSecondaryEditMode)} />
+                      <span className="slider round"></span>
+                    </label>
+                  </div>
+                )}
+            </div>
+            
+            <div className="musician-select-wrapper">
+                <select 
+                    id="select-musician-view" 
+                    value={selectedMusicianIdForOrgView} 
+                    onChange={(e) => setSelectedMusicianIdForOrgView(e.target.value)}
+                    className="glass-select"
+                >
+                <option value="">Select</option>
+                {organizationMusicians.map(musician => (
+                    <option key={musician.id} value={musician.id}>{musician.first_name} {musician.last_name}</option>
+                ))}
+                </select>
+            </div>
+            {renderSongList(viewingMusicianSecondarySongs, `Selected Musician's Songs`, true)}
+          </div>
+        )}
+
+      </div>
+
+      {/* Modal - utilizing global glass styling */}
       {isSongModalOpen && (
-        <div className="modal-overlay" onClick={closeSongModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={closeSongModal}>×</button>
+        <div className="modal-overlay-glass" onClick={closeSongModal}>
+          <div className="modal-content-glass" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-icon" onClick={closeSongModal}>×</button>
             <SongForm 
               initialData={editingSong || {}} 
               onSubmit={handleSongSubmit} 

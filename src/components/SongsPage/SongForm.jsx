@@ -32,46 +32,53 @@ const SongForm = ({ initialData = {}, onSubmit, onCancel, isSubmitting, formType
     });
   };
 
+  // Replaced "create-plan-form" with "glass-form" to match App.css styles
   return (
-    <form onSubmit={handleSubmit} className="create-plan-form song-form">
-      <h3>{formType} {songType === 'primary' ? 'Primary' : 'Secondary'} Song</h3>
+    <form onSubmit={handleSubmit} className="glass-form">
+      <h3>{formType} {songType === 'primary' ? 'Organization' : 'Musician'} Song</h3>
+      
       <div className="form-group">
-        <label htmlFor="song-title">Title:</label>
+        <label htmlFor="song-title">Name</label>
         <input type="text" id="song-title" value={title} onChange={(e) => setTitle(e.target.value)} required disabled={isSubmitting} />
       </div>
+
       <div className="form-group">
-        <label htmlFor="song-artist">Artist (Optional):</label>
-        <input type="text" id="song-artist" value={artist} onChange={(e) => setArtist(e.target.value)} disabled={isSubmitting} />
+        <label htmlFor="song-artist">Artist</label>
+        <input type="text" id="song-artist" value={artist} onChange={(e) => setArtist(e.target.value)} disabled={isSubmitting}  />
       </div>
+
       {songType === 'secondary' && (
         <div className="form-group">
-          <label htmlFor="song-default-key">Ideal Key (Optional):</label>
-          {/* Changed to a dropdown select */}
+          <label htmlFor="song-default-key">Key</label>
           <select 
             id="song-default-key" 
             value={defaultKey} 
             onChange={(e) => setDefaultKey(e.target.value)} 
             disabled={isSubmitting}
           >
-            <option value="">-- Select Key --</option>
+            <option value="">Select</option>
             {MUSICAL_KEYS.map(k => <option key={k} value={k}>{k}</option>)}
           </select>
         </div>
       )}
+
       <div className="form-group">
-        <label htmlFor="song-chord-chart-url">Chord Chart URL (Optional):</label>
-        <input type="url" id="song-chord-chart-url" value={chordChartUrl} onChange={(e) => setChordChartUrl(e.target.value)} placeholder="https://..." disabled={isSubmitting} />
+        <label htmlFor="song-chord-chart-url">Chord Chart</label>
+        <input type="url" id="song-chord-chart-url" value={chordChartUrl} onChange={(e) => setChordChartUrl(e.target.value)} disabled={isSubmitting} />
       </div>
+
       <div className="form-group">
-        <label htmlFor="song-youtube-url">YouTube URL (Optional):</label>
-        <input type="url" id="song-youtube-url" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/..." disabled={isSubmitting} />
+        <label htmlFor="song-youtube-url">Music Video</label>
+        <input type="url" id="song-youtube-url" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} disabled={isSubmitting} />
       </div>
+
       <div className="form-actions">
-        <button type="submit" className="submit-btn" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : (formType === "Edit" ? "Save Changes" : "Add Song")}
-        </button>
+        {/* Buttons now use App.css styles .submit-btn and .cancel-btn automatically inside glass-form */}
         <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>
           Cancel
+        </button>
+        <button type="submit" className="submit-btn" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : (formType === "Edit" ? "Save Changes" : "Add Song")}
         </button>
       </div>
     </form>
