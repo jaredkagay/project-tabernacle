@@ -9,11 +9,12 @@ import StartPage from './components/StartPage/StartPage';
 import SettingsPage from './components/SettingsPage/SettingsPage';
 import TasksPage from './components/TasksPage/TasksPage';
 import SongsPage from './components/SongsPage/SongsPage';
-import './App.css';
 import TaskDetailPage from './components/TasksPage/TaskDetailPage';
 import TaskResultsPage from './components/TasksPage/TaskResultsPage';
 import DefaultPlanPage from './components/SettingsPage/DefaultPlanPage';
-import { FaCog } from 'react-icons/fa'; // Import the gear icon
+import HomePage from './components/HomePage/HomePage'; // <--- IMPORT HERE
+import { FaCog } from 'react-icons/fa';
+import './App.css';
 
 // Component to protect routes
 const ProtectedRoute = ({ children }) => {
@@ -26,7 +27,8 @@ const ProtectedRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading application...</div>;
-  return !user ? children : <Navigate to="/plans" replace />;
+  // UPDATED: Redirect to /home instead of /plans
+  return !user ? children : <Navigate to="/home" replace />;
 }
 
 function App() {
@@ -50,7 +52,8 @@ function App() {
         {user && (
           <nav className="main-nav">
             <div className="nav-links">
-              <Link to="/plans">
+              {/* UPDATED: Logo now links to /home */}
+              <Link to="/home">
                 <img src="/logo.png" alt="App Logo" className="nav-logo" />
               </Link>
               <Link to="/plans">Plans</Link>
@@ -70,6 +73,10 @@ function App() {
         <Routes>
           <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
           <Route path="/start" element={<PublicRoute><StartPage /></PublicRoute>} />
+          
+          {/* ADDED: New Home Route */}
+          <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          
           <Route path="/plans" element={<ProtectedRoute><AllPlansPage /></ProtectedRoute>} />
           <Route path="/plan/:planId" element={<ProtectedRoute><PlanPage /></ProtectedRoute>} />
           <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
@@ -78,7 +85,9 @@ function App() {
           <Route path="/songs" element={<ProtectedRoute><SongsPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/settings/default-plan" element={<ProtectedRoute><DefaultPlanPage /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to={user ? "/plans" : "/"} replace />} />
+          
+          {/* UPDATED: Default fallback redirects to /home */}
+          <Route path="*" element={<Navigate to={user ? "/home" : "/"} replace />} />
         </Routes>
       </div>
     </Router>

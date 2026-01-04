@@ -1,0 +1,263 @@
+/* src/components/HomePage/HomePage.css */
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Inter', sans-serif;
+  color: #333;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.dashboard-header h1 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: #111;
+}
+
+.dashboard-subtitle {
+  margin: 0.2rem 0 0 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.header-date {
+  color: #888;
+  font-weight: 500;
+  display: none; /* Hidden on mobile */
+}
+
+@media (min-width: 768px) {
+  .header-date { display: block; }
+}
+
+/* Main Grid Layout */
+.dashboard-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 2fr 1fr; /* 2/3 Main, 1/3 Sidebar */
+    align-items: start;
+  }
+}
+
+/* Panel Common Styles */
+.dashboard-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  border: 1px solid #f0f0f0;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.panel-header h2 {
+  font-size: 1.1rem;
+  margin: 0;
+  color: #444;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Alert Panel (Requests) */
+.alert-panel {
+  background: #fff8f8;
+  border-color: #ffeaea;
+}
+.alert-panel h2 { color: #d93025; }
+
+.request-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #fce8e6;
+}
+.request-title { font-weight: 600; display: block; }
+.request-date { font-size: 0.85rem; color: #666; }
+
+/* Featured Panel (Next Up) */
+.featured-panel {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+.featured-panel h2 { color: rgba(255,255,255,0.9); }
+.next-up-content {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+.date-badge {
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 0.8rem 1.2rem;
+  text-align: center;
+  backdrop-filter: blur(5px);
+}
+.date-badge .month { display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+.date-badge .day { display: block; font-size: 1.8rem; font-weight: 700; line-height: 1; }
+.next-up-details h3 { margin: 0; font-size: 1.4rem; color: white; }
+.next-up-details p { margin: 0.2rem 0 0.8rem 0; opacity: 0.9; }
+.btn-text { color: white; text-decoration: none; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.5); }
+
+/* Standard Lists */
+.list-group { display: flex; flex-direction: column; gap: 0; }
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f5f5f5;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+}
+.list-item:hover { background: #fafafa; padding-left: 0.5rem; padding-right: 0.5rem; border-radius: 6px; }
+.list-item:last-child { border-bottom: none; }
+.list-item-title { font-weight: 600; display: block; }
+.list-item-sub { font-size: 0.85rem; color: #777; }
+.icon-success { color: #16a34a; }
+
+/* Organizer Card Grid */
+.card-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.modern-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.modern-card:hover { transform: translateY(-3px); border-color: #3b82f6; }
+.modern-card-date { font-size: 0.8rem; color: #6b7280; margin-bottom: 0.3rem; text-transform: uppercase; font-weight: 600; }
+.modern-card-title { font-weight: 700; color: #1f2937; margin-bottom: 0.3rem; }
+.modern-card-theme { font-size: 0.9rem; color: #4b5563; font-style: italic; }
+
+/* Status Table */
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  text-decoration: none;
+  color: inherit;
+}
+.status-pill { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 99px; font-weight: 600; }
+.pill-success { background: #dcfce7; color: #166534; }
+.pill-warning { background: #fef9c3; color: #854d0e; }
+
+/* Task Widget (Sidebar) */
+.count-badge { background: #ef4444; color: white; font-size: 0.75rem; padding: 0.1rem 0.5rem; border-radius: 10px; }
+.task-item-small {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0;
+  text-decoration: none;
+  color: #444;
+  font-size: 0.9rem;
+}
+.checkbox-visual { width: 16px; height: 16px; border: 2px solid #ccc; border-radius: 4px; }
+.task-item-small:hover .checkbox-visual { border-color: #3b82f6; }
+
+/* Quick Actions */
+.action-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    padding: 1rem 0.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #4b5563;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+.action-btn svg { font-size: 1.2rem; margin-bottom: 0.4rem; color: #3b82f6; }
+.action-btn:hover { background: #e5e7eb; color: #1f2937; }
+
+/* Misc */
+.btn-primary-small {
+  background: #2563eb; color: white; padding: 0.4rem 0.8rem; border-radius: 4px; text-decoration: none; font-size: 0.85rem;
+}
+.empty-state, .empty-state-small { color: #9ca3af; font-style: italic; font-size: 0.9rem; padding: 1rem 0; }
+.see-all-link { font-size: 0.85rem; color: #3b82f6; text-decoration: none; }
+
+/* Add this to your HomePage.css */
+
+/* Verse Panel */
+.verse-panel {
+    background: linear-gradient(to right, #4f46e5, #4338ca);
+    color: white;
+    border: none;
+}
+
+.verse-content {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.verse-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+}
+
+.verse-text {
+    font-size: 1.1rem;
+    font-style: italic;
+    line-height: 1.5;
+    margin: 0 0 0.5rem 0;
+    font-family: 'Georgia', serif; /* Serif font for scripture often looks nice */
+}
+
+.verse-ref {
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.verse-context {
+    font-weight: 400;
+    opacity: 0.7;
+    margin-left: 0.5rem;
+}
