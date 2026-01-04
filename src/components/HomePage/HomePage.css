@@ -4,11 +4,30 @@
 /* --- MAIN WRAPPER --- */
 .dashboard-page-wrapper {
   min-height: 100vh;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  
+  /* Pushes content down below the fixed navbar */
+  padding: 6rem 2rem 4rem 2rem; 
+  box-sizing: border-box;
+  
+  /* Context for the fixed background */
+  position: relative;
+  z-index: 0;
+}
+
+/* --- FIXED BACKGROUND (The Fix) --- */
+/* This pins the ocean gradient to the screen so it never scrolls away */
+.dashboard-page-wrapper::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   /* Deep Ocean Gradient */
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%);
-  font-family: 'Inter', sans-serif;
-  padding: 6rem 2rem 2rem 2rem; 
-  box-sizing: border-box;
+  z-index: -1; /* Puts it behind the content */
 }
 
 .dashboard-content-container {
@@ -214,22 +233,19 @@
 
 .modern-card-theme { font-size: 0.9rem; color: #64748b; }
 
-/* --- TASK WIDGET SPECIFIC (2-COLUMN LAYOUT) --- */
-
+/* --- TASK WIDGET SPECIFIC --- */
 .task-card-list {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-/* Base card modification for Tasks */
 .task-card-modern {
     display: flex;
     flex-direction: column;
-    padding: 1rem 1.25rem; /* Slightly tighter top/bottom padding */
+    padding: 1rem 1.25rem;
 }
 
-/* The wrapper that holds "Left Info" and "Right Button" */
 .task-content-row {
     display: flex;
     justify-content: space-between;
@@ -238,45 +254,39 @@
     width: 100%;
 }
 
-/* Left Column: Title and Type */
 .task-info-col {
     display: flex;
     flex-direction: column;
-    flex: 1; /* Takes available space */
+    flex: 1; 
 }
 
 .task-card-modern .modern-card-title {
-    margin-bottom: 0.1rem; /* Very tight spacing to the type text */
+    margin-bottom: 0.1rem; 
     font-size: 1rem;
 }
 
-/* The new text style replacing the pill */
 .task-type-text {
     font-size: 0.85rem;
-    color: #64748b; /* Slate-500 */
+    color: #64748b; 
     font-weight: 500;
     text-transform: capitalize;
 }
 
-/* Right Column: Button */
 .task-action-col {
     flex-shrink: 0;
 }
 
-/* Button Adjustments */
 .view-task-btn {
     display: inline-block;
     white-space: nowrap;
     padding: 0.45rem 0.85rem;
     font-size: 0.8rem;
-    pointer-events: none; /* Allows click to pass through to Link */
+    pointer-events: none;
 }
 
-/* Highlight button on card hover */
 .modern-card:hover .view-task-btn {
     background: #1d4ed8; 
 }
-
 
 /* --- STATUS TABLE --- */
 .status-row {
@@ -284,11 +294,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.9rem 0.5rem;
-  /* Removed border-bottom to get rid of the lines */
   text-decoration: none;
   color: inherit;
   transition: background 0.2s;
-  border-radius: 8px; /* Added rounded corners for hover state */
+  border-radius: 8px;
 }
 
 .status-row:hover { 
@@ -297,24 +306,20 @@
 
 .status-pill { 
   font-size: 0.75rem; 
-  padding: 0.35rem 0.8rem; /* Slightly larger pill for modern look */
+  padding: 0.35rem 0.8rem;
   border-radius: 99px; 
   font-weight: 600; 
   letter-spacing: 0.02em;
 }
 
-/* New Theme-Matching Colors */
-
-/* Complete: Ocean Blue (Matches your theme better than Green) */
 .pill-success { 
-  background: #dbeafe; /* Soft Blue */
-  color: #1e40af;      /* Deep Blue Text */
+  background: #dbeafe; 
+  color: #1e40af; 
 }
 
-/* Waiting: Soft Amber (Warmer and less harsh than Neon Yellow) */
 .pill-warning { 
-  background: #ffedd5; /* Soft Peach/Amber */
-  color: #9a3412;      /* Burnt Orange Text */
+  background: #ffedd5;
+  color: #9a3412;
 }
 
 /* --- ACTIVITY FEED --- */
