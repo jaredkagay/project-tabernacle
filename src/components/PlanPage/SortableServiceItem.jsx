@@ -120,21 +120,6 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
         </div>
         <div className="item-actions-and-time">
           <div className="item-actions">
-            {item.type === 'Song' && item.chord_chart_url && (
-              <a href={item.chord_chart_url} target="_blank" rel="noopener noreferrer" className="item-action-btn link-btn" title="Chord Chart" onClick={(e) => e.stopPropagation()}>
-                <FaMusic />
-              </a>
-            )}
-            {item.type === 'Song' && item.youtube_url && (
-              <a href={item.youtube_url} target="_blank" rel="noopener noreferrer" className="item-action-btn link-btn" title="YouTube Video" onClick={(e) => e.stopPropagation()}>
-                <FaYoutube />
-              </a>
-            )}
-            {item.type === 'Bible Verse' && bibleLink && (
-              <a href={bibleLink} target="_blank" rel="noopener noreferrer" className="item-action-btn link-btn bible-link-btn" title={`Read ${bibleReferenceText} on Bible Gateway`} onClick={(e) => e.stopPropagation()}>
-                <FaBookOpen />
-              </a>
-            )}
             
             {/* KEY LOGIC: Only show if showTimes is TRUE (Real Plan), otherwise hide (Default Plan) */}
             {showTimes && item.type === 'Song' && (
@@ -154,6 +139,22 @@ export const SortableServiceItem = ({ item, index, onDelete, onEdit, assignedPeo
                       <span>N/A</span>
                   </div>
               ) : null
+            )}
+            
+            {item.type === 'Song' && item.chord_chart_url && (
+              <a href={item.chord_chart_url} target="_blank" rel="noopener noreferrer" className="item-action-btn link-btn" title="Chord Chart" onClick={(e) => e.stopPropagation()}>
+                <FaMusic />
+              </a>
+            )}
+            {item.type === 'Song' && item.youtube_url && (
+              <a href={item.youtube_url} target="_blank" rel="noopener noreferrer" className="item-action-btn link-btn" title="YouTube Video" onClick={(e) => e.stopPropagation()}>
+                <FaYoutube />
+              </a>
+            )}
+            {item.type === 'Bible Verse' && bibleLink && (
+              <a href={bibleLink} target="_blank" rel="noopener noreferrer" className="item-action-btn link-btn bible-link-btn" title={`Read ${bibleReferenceText} on Bible Gateway`} onClick={(e) => e.stopPropagation()}>
+                <FaBookOpen />
+              </a>
             )}
 
             {onEdit && <button onClick={handleEditClick} className="item-action-btn edit-btn"><FaPencilAlt /></button>}
