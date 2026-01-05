@@ -326,3 +326,95 @@
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+  /* Wrapper Adjustments */
+  .songs-page-wrapper {
+    padding: 5.5rem 1rem 2rem 1rem;
+  }
+
+  /* Header Stacking */
+  .songs-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-left h1 {
+    font-size: 1.75rem;
+  }
+
+  /* Make Actions Area Stack */
+  .header-actions {
+    width: 100%;
+    flex-direction: column; /* Stack Search on top of Add Button */
+    gap: 1rem;
+  }
+
+  /* Full Width Search Bar */
+  .glass-search-wrapper {
+    width: 100%;
+  }
+
+  .glass-search-wrapper input {
+    width: 100%; /* Force full width */
+    box-sizing: border-box;
+  }
+
+  /* Prevent the "focus expands width" animation from breaking mobile layout */
+  .glass-search-wrapper input:focus {
+    width: 100%; 
+  }
+
+  /* Full Width Add Button */
+  .glass-add-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.8rem; /* Larger touch target */
+  }
+
+  /* Cards: Force Single Column */
+  .glass-songs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .glass-panel {
+    padding: 1.25rem;
+  }
+
+  /* Song Card Adjustments */
+  .song-card-footer {
+    /* Allow wrapping if a song has a Key Badge AND many buttons */
+    flex-wrap: wrap; 
+    gap: 0.5rem;
+  }
+  
+  .song-actions {
+    margin-left: auto; /* Keep buttons pushed right */
+  }
+
+  .action-icon-btn {
+    padding: 0.6rem; /* Good touch size */
+    font-size: 1.1rem;
+  }
+
+  /* Organizer View: Musician Select */
+  .musician-select-wrapper {
+    width: 100%;
+  }
+  
+  .glass-select {
+    padding: 0.8rem; /* Larger touch target */
+  }
+
+  /* Modal Adjustments */
+  .modal-content-glass {
+    width: 95%;
+    padding: 1.5rem;
+    max-height: 85vh;
+    overflow-y: auto;
+    /* Ensure it doesn't get hidden behind the mobile address bar */
+    margin: 4rem auto 2rem auto; 
+  }
+}

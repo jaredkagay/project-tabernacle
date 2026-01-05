@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../supabaseClient';
-import { FaExclamationCircle, FaBible, FaChevronRight } from 'react-icons/fa';
+import { FaExclamationCircle, FaBible, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -14,11 +14,12 @@ const HomePage = () => {
   const [musicianRequests, setMusicianRequests] = useState([]);
   const [upcomingPlans, setUpcomingPlans] = useState([]); 
   const [incompleteTasks, setIncompleteTasks] = useState([]); 
-  const [activeTasks, setActiveTasks] = useState([]); // Organizer view
-  const [recentActivity, setRecentActivity] = useState([]); // Activity Feed
+  const [activeTasks, setActiveTasks] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
   
   // New State for Verse
   const [verseData, setVerseData] = useState(null);
+  const [isVerseExpanded, setIsVerseExpanded] = useState(false); // Mobile toggle state
 
   useEffect(() => {
     document.title = 'tabernacle - Home';
@@ -72,7 +73,6 @@ const HomePage = () => {
 
         // --- 2. MUSICIAN DATA ---
         if (profile.role === 'MUSICIAN') {
-          // Fetch Requests & Upcoming Plans
           const { data: assignments, error: planError } = await supabase
             .from('event_assignments')
             .select(`status, events!inner (id, title, date, theme)`)
@@ -93,7 +93,6 @@ const HomePage = () => {
           setMusicianRequests(requests);
           setUpcomingPlans(upcoming);
 
-          // Fetch Tasks
           const { data: tasks, error: taskError } = await supabase
             .from('task_assignments')
             .select(`id, status, task:tasks!inner (id, title, is_active, due_date, type)`)
@@ -107,7 +106,6 @@ const HomePage = () => {
 
         // --- 3. ORGANIZER DATA ---
         if (profile.role === 'ORGANIZER') {
-          // Fetch All Upcoming Plans
           const { data: events, error: eventError } = await supabase
             .from('events')
             .select('id, title, date, theme')
@@ -118,7 +116,6 @@ const HomePage = () => {
           if (eventError) throw eventError;
           setUpcomingPlans(events || []);
 
-          // Fetch Active Tasks Overview
           const { data: tasks, error: taskError } = await supabase
             .from('tasks')
             .select(`id, title, task_assignments (status)`)
@@ -138,7 +135,6 @@ const HomePage = () => {
           });
           setActiveTasks(processedTasks);
 
-          // Fetch Recent Activity
           const { data: logs } = await supabase
              .from('activity_logs')
              .select('*')
@@ -198,11 +194,21 @@ const HomePage = () => {
               
               {/* 1. VERSE OF THE WEEK PANEL */}
               {verseData && (
-                  <section className="dashboard-panel verse-panel">
+                  <section 
+                    className={`dashboard-panel verse-panel ${isVerseExpanded ? 'expanded' : ''}`}
+                    onClick={() => setIsVerseExpanded(!isVerseExpanded)}
+                  >
                       <div className="verse-content">
                           <FaBible className="verse-icon" />
-                          <div>
+                          <div className="verse-text-wrapper">
+                              {/* Mobile: Shows reference prominently when collapsed */}
+                              <div className="verse-header-mobile">
+                                <span className="verse-ref-mobile">{verseData.reference}</span>
+                                {isVerseExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                              </div>
+
                               <p className="verse-text">"{verseData.text ? verseData.text.trim() : '...'}"</p>
+                              
                               <div className="verse-details">
                                   <span className="verse-ref">{verseData.reference}</span>
                                   <span className="verse-separator">•</span>
@@ -237,7 +243,6 @@ const HomePage = () => {
               <section className="dashboard-panel">
                   <div className="panel-header">
                       <h2>Upcoming Plans</h2>
-                      {/* UPDATED: "See All" is now visible for everyone */}
                       <Link to="/plans" className="see-all-link">See All</Link>
                   </div>
                   {upcomingPlans.length === 0 ? (
@@ -260,7 +265,6 @@ const HomePage = () => {
                   <section className="dashboard-panel">
                       <div className="panel-header">
                           <h2>Assigned Tasks</h2>
-                          {/* UPDATED: Added "See All" for Organizer Tasks */}
                           <Link to="/tasks" className="see-all-link">See All</Link>
                       </div>
                        {activeTasks.length === 0 ? (
@@ -294,7 +298,7 @@ const HomePage = () => {
                
               {/* Organizer: Recent Activity */}
               {profile?.role === 'ORGANIZER' && (
-                  <section className="dashboard-panel">
+                  <section className="dashboard-panel recent-activity-panel">
                       <div className="panel-header">
                           <h2>Recent Activity</h2>
                       </div>
@@ -338,28 +342,24 @@ const HomePage = () => {
                           key={assignment.id} 
                           className="modern-card task-card-modern"
                         >
-                          {/* 1. Date Header (Only if due date exists) */}
+                          {/* Date Header */}
                           {assignment.task.due_date && (
                             <div className="modern-card-date">
                               Due {new Date(assignment.task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </div>
                           )}
 
-                          {/* 2. Content Row: Left (Info) vs Right (Button) */}
+                          {/* Content Row */}
                           <div className="task-content-row">
-                            
-                            {/* Left Col: Title & Type */}
                             <div className="task-info-col">
                               <div className="modern-card-title">
                                 {assignment.task.title}
                               </div>
-                              {/* Changed from Pill to subtle text */}
                               <div className="task-type-text">
                                 {formatTaskType(assignment.task.type)}
                               </div>
                             </div>
 
-                            {/* Right Col: Action Button */}
                             <div className="task-action-col">
                               <span className="btn-primary-small view-task-btn">
                                 View Task

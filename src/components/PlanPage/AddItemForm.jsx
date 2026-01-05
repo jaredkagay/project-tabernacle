@@ -266,7 +266,7 @@ const AddItemForm = ({ onAddItem, onCancel, assignedPeopleForSingerRole, allAssi
       <div className="form-actions">
           {type === 'Song' && (
              <button type="button" className="cancel-btn" onClick={handleStartImport} style={{marginRight:'auto'}}>
-                 Import Info
+                 Import
               </button>
           )}
         <button type="button" className="cancel-btn" onClick={onCancel}>Cancel</button>

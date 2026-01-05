@@ -120,3 +120,38 @@
   color: #ef4444;
   background-color: #fef2f2;
 }
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+  .team-member {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .member-details-row {
+    align-items: center; /* Center vertically */
+  }
+
+  /* Force Action Buttons to full width or nice grid */
+  .assignment-actions {
+    margin-top: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Equal split */
+    gap: 0.75rem;
+  }
+  
+  /* If there is only one button (e.g. Remove), let it span full width? 
+     Or keep grid. Grid is safer for consistency. */
+
+  .action-btn {
+    padding: 0.75rem;
+    justify-content: center;
+    display: flex;
+    font-size: 0.9rem;
+  }
+  
+  /* Organizer View: Edit/Remove specific tweaking */
+  .assignment-actions.organizer-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}

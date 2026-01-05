@@ -266,3 +266,46 @@ html, body, #root, .App {
   background: #f1f5f9;
   color: #0f172a;
 }
+
+/* --- MOBILE NAVIGATION --- */
+@media (max-width: 768px) {
+  .glass-nav {
+    padding: 0.8rem 1rem; /* Reduce side padding */
+    gap: 0.5rem;
+  }
+
+  /* Hide the "Hello, Name" text on mobile to save space */
+  .hello-message {
+    display: none;
+  }
+
+  /* Bring icons closer together */
+  .nav-left {
+    gap: 1.5rem;
+  }
+  
+  .nav-right {
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+  
+  .nav-icon-link {
+    padding: 0.5rem; /* Smaller touch targets */
+    font-size: 1.2rem;
+  }
+
+  /* Ensure forms use full width on mobile */
+  .glass-form {
+    width: 100%;
+  }
+  
+  /* Fix Date/Time Inputs in Modals to never overflow */
+  .glass-form input[type="date"],
+  .glass-form input[type="time"],
+  .glass-form input[type="datetime-local"] {
+    width: 100%;
+    max-width: 100%; /* Force stop at edge */
+    box-sizing: border-box; /* Include padding in width calculation */
+    min-width: 0;
+  }
+}
