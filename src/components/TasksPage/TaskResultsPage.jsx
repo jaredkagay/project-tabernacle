@@ -278,7 +278,7 @@ const TaskResultsPage = () => {
                         <div key={evt.id} className="event-detail-card">
                             <div className="event-detail-header">
                                 <h4>{evt.title}</h4>
-                                <div className="event-detail-date">{new Date(evt.date).toLocaleDateString()}</div>
+                                <div className="event-detail-date">{new Date(evt.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
                             </div>
                             <div className="event-detail-body">
                                 <div className="response-group group-yes">
