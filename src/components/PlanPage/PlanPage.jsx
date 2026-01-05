@@ -405,7 +405,7 @@ const PlanPage = () => {
           <div className="plan-header-title-group">
             <h1>{eventDetails.title}</h1>
             <span className="plan-date-subtitle">
-              {new Date(eventDetails.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date(eventDetails.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </span>
           </div>
           <div className="plan-header-actions">

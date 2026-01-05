@@ -235,10 +235,10 @@ const TaskDetailPage = () => {
                  <div className="meta-item">
                      <span className="meta-label">Due Date</span>
                      <span className="meta-value">
-                        {new Date(task.due_date).toLocaleDateString()}
-                        {!isTaskOpen && <span className="chip-status past-due" style={{marginLeft:'8px'}}>Closed</span>}
-                     </span>
-                 </div>
+                      {new Date(task.due_date).toLocaleDateString()}
+                      {!isTaskOpen && <span className="chip-status past-due" style={{marginLeft:'8px'}}>Closed</span>}
+                    </span>
+                  </div>
              )}
           </div>
         </header>
@@ -286,7 +286,7 @@ const TaskDetailPage = () => {
                     <h3>Indicate Availability</h3>
                     {eventDetailsForTask.map(evt => (
                         <div key={evt.id} className="event-availability-item">
-                            <h4>{evt.title} — {new Date(evt.date).toLocaleDateString()} {evt.time}</h4>
+                            <h4>{evt.title} — {new Date(evt.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h4>
                             <div className="availability-options">
                                 {['YES', 'NO', 'MAYBE'].map(opt => (
                                     <label key={opt} className="radio-label">

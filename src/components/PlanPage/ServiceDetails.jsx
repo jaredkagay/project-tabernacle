@@ -10,12 +10,7 @@ const ServiceDetails = ({ details }) => {
   return (
     <div className="service-details-card">
       <h2>Event Information</h2>
-      <p><strong>Date:</strong> {new Date(details.date).toLocaleDateString(undefined, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })}</p>
+      <p><strong>Date:</strong> {new Date(details.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
       <p><strong>Time:</strong> {new Date(`1970-01-01T${details.time}`).toLocaleTimeString(undefined, {
         hour: '2-digit',
