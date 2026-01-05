@@ -321,3 +321,133 @@ p.item-details,
   white-space: nowrap;
   margin-right: 0; 
 }
+
+/* --- MOBILE RESPONSIVENESS (Ultra-Compact Fit) --- */
+@media (max-width: 768px) {
+  
+  /* 1. Stack the Item Internally */
+  .service-item {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    max-width: 100%; 
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  /* 2. Unwrap content for reordering */
+  .item-main-info {
+    display: contents; 
+  }
+
+  /* 3. ORDER 1: Drag Handle + Title */
+  .item-drag-handle {
+    order: 1;
+    width: 100%;
+    margin-bottom: 0.25rem;
+    box-sizing: border-box; 
+  }
+  .item-content { width: 100%; }
+
+  /* 4. ORDER 2: Details */
+  .item-details,
+  .song-extra-details,
+  .general-details {
+    order: 2;
+    padding-left: 0 !important;
+    margin-bottom: 0.5rem !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .song-extra-details p {
+    padding-left: 8px !important;
+  }
+
+  /* 5. ORDER 3: Actions + Time (The Bottom Row) */
+  .item-actions-and-time {
+    order: 3;
+    width: 100%;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+    margin-left: 0;
+    justify-content: space-between;
+    align-items: center; 
+    box-sizing: border-box;
+  }
+
+  .item-start-time {
+    text-align: left;
+    background: rgba(0,0,0,0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    margin-right: 4px; /* Ensure space between time and buttons */
+  }
+
+  /* --- ULTRA COMPACT BUTTONS FIX --- */
+  .item-actions {
+    margin-left: auto;
+    gap: 3px; /* Very tight gap */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    /* Allow wrapping only if absolutely necessary */
+    flex-wrap: wrap; 
+  }
+
+  /* Shrink buttons drastically to 28px and force it */
+  .item-action-btn {
+    width: 38px !important; 
+    height: 38px !important;
+    font-size: 1rem !important; /* Smaller icon */
+    border-radius: 5px;
+  }
+  
+  /* Shrink Key Selector to match 28px height */
+  .service-item select {
+    height: 38px !important;
+    padding: 0 16px 0 4px !important; /* Tighter internal padding */
+    font-size: 0.8em !important;
+    line-height: 28px;
+    background-position: right 0.1rem center;
+    background-size: 0.9em;
+  }
+  
+  /* Shrink Key Label (View Mode) */
+  .song-key-label {
+    height: 22px; 
+    padding: 0 6px;
+    font-size: 0.75em;
+    margin-right: 2px;
+  }
+
+  /* 6. DIVIDER FIXES */
+  .item-type-divider {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .divider-draggable-content {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .divider-title-text {
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: center;
+  }
+
+  .item-type-divider .item-actions {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+}

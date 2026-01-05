@@ -333,4 +333,21 @@
     max-height: 85vh; /* Ensure it doesn't go off screen */
     overflow-y: auto;
   }
+
+  
+  /* --- FIX MODAL INPUT OVERFLOW --- */
+  .glass-form input[type="date"],
+  .glass-form input[type="time"],
+  .glass-form input[type="datetime-local"] {
+    width: 100%;
+    min-width: 0; /* Crucial: Allows flex items to shrink below content size */
+    box-sizing: border-box;
+    appearance: none; /* Removes default OS styling that might add width */
+  }
+  
+  /* Ensure the row of inputs stacks if needed */
+  .form-row, .form-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }

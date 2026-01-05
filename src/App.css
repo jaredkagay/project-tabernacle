@@ -298,4 +298,14 @@ html, body, #root, .App {
   .glass-form {
     width: 100%;
   }
+  
+  /* Fix Date/Time Inputs in Modals to never overflow */
+  .glass-form input[type="date"],
+  .glass-form input[type="time"],
+  .glass-form input[type="datetime-local"] {
+    width: 100%;
+    max-width: 100%; /* Force stop at edge */
+    box-sizing: border-box; /* Include padding in width calculation */
+    min-width: 0;
+  }
 }
