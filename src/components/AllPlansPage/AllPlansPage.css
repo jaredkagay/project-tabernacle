@@ -243,3 +243,94 @@
   from { opacity: 0; transform: translateY(20px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+  /* Wrapper Adjustments */
+  .all-plans-page-wrapper {
+    padding: 5.5rem 1rem 2rem 1rem; /* Less padding */
+  }
+
+  .all-plans-content-container {
+    width: 100%;
+  }
+
+  /* Header Stacking */
+  .plans-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .plans-header h1 {
+    font-size: 2rem;
+  }
+  
+  .create-plan-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.8rem;
+  }
+
+  /* Stack the Plan Cards */
+  .modern-plan-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  /* Make the Date Box a horizontal strip or full width */
+  .card-date-box {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding-right: 0;
+    padding-bottom: 0.75rem;
+    margin-right: 0;
+  }
+
+  /* Adjust Text Sizes in Date Box */
+  .date-month { font-size: 1rem; }
+  .date-day { font-size: 1.2rem; }
+  .date-weekday { font-size: 0.9rem; font-weight: 400; color: #64748b; margin-left: auto;}
+
+  .card-info {
+    width: 100%;
+    padding-left: 0; /* Remove the padding from the desktop layout */
+  }
+
+  .plan-title-large {
+    font-size: 1.2rem;
+  }
+
+  /* Stack Actions and make buttons full width */
+  .card-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .view-plan-btn, 
+  .delete-plan-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 0.8rem;
+  }
+
+  /* Modal Mobile Fixes */
+  .modal-content {
+    width: 95%; /* Use almost full width */
+    padding: 1.5rem;
+    margin: 1rem;
+    max-height: 85vh; /* Ensure it doesn't go off screen */
+    overflow-y: auto;
+  }
+}

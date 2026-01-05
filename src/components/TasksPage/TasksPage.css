@@ -293,3 +293,142 @@
   padding: 2rem;
   border-radius: 12px;
 }
+
+/* --- MOBILE RESPONSIVENESS (3-Row Grid Layout) --- */
+@media (max-width: 768px) {
+  /* Wrapper Adjustments */
+  .tasks-page-wrapper {
+    padding: 5.5rem 1rem 2rem 1rem;
+  }
+
+  .task-item-card {
+    padding: 12px 12px 12px 18px;
+  }
+
+  /* Header Stacking (Updated to be Side-by-Side) */
+  .tasks-header {
+    flex-direction: row; /* Keep them in a line */
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tasks-header div {
+    /* Ensure the text container can shrink if needed */
+    min-width: 0; 
+  }
+
+  .tasks-header h1 {
+    font-size: 1.5rem; /* Slightly smaller to fit next to button */
+    margin: 0;
+    white-space: nowrap; /* Prevent "Task Manager" from wrapping */
+  }
+
+  /* Optional: Hide subtitle on mobile if it feels too crowded */
+  .tasks-subtitle {
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .create-task-btn {
+    width: auto; /* Stop stretching! */
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    white-space: nowrap; /* Keep "Create Task" on one line */
+    flex-shrink: 0; /* Don't let the button get squished */
+  }
+
+  /* --- ORGANIZER VIEW (List Cards) --- */
+  .task-list-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  .task-main-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  /* Hide the large left icon */
+  .task-icon { display: none; }
+
+  .task-details h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  /* --- ACTIONS AREA (Right Aligned Grid) --- */
+  .task-status-and-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* This pushes the whole grid to the RIGHT */
+    gap: 0.75rem;
+    width: 100%;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 1rem;
+    margin-top: 0.25rem;
+  }
+  
+  .task-actions {
+    display: grid;
+    /* Strict 2-column grid */
+    grid-template-columns: 1fr 1fr; 
+    gap: 0.5rem;
+    
+    /* Crucial: Shrink the grid to fit the buttons, don't stretch to screen width */
+    width: fit-content; 
+  }
+
+  /* ROW 1: View Results Link */
+  .task-actions a {
+    grid-column: 1 / -1; /* Spans both columns */
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 0.6rem 0.5rem; /* Reduced padding to match compact look */
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    white-space: nowrap;
+  }
+
+  /* ROWS 2 & 3: The Icon Buttons */
+  .task-actions button {
+    width: 100%;
+    aspect-ratio: 1; /* Forces them to remain PERFECT SQUARES */
+    padding: 0;      /* Let flex center the icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  /* --- MUSICIAN VIEW --- */
+  .tasks-grid { grid-template-columns: 1fr; }
+  .musician-task-card { min-height: auto; }
+
+  /* --- MODALS --- */
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+    max-height: 85vh;
+  }
+  
+  .glass-form input, .glass-form select, .glass-form textarea {
+    font-size: 16px; 
+  }
+}

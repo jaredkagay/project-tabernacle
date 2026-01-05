@@ -372,3 +372,104 @@
     background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%); 
     font-family: 'Inter', sans-serif; 
 }
+
+.verse-header-mobile {
+  display: none; /* Hidden on Desktop */
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.verse-text-wrapper {
+  width: 100%;
+}
+
+/* --- MOBILE DASHBOARD (Updated) --- */
+@media (max-width: 768px) {
+  .dashboard-page-wrapper {
+    padding: 5rem 1rem 2rem 1rem;
+  }
+
+  /* Reduce gap between panels */
+  .dashboard-panel {
+    margin-bottom: 1rem; /* Reduced from 1.5rem */
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0; /* Let individual panel margins handle spacing */
+  }
+
+  /* --- VERSE WIDGET MOBILE --- */
+  .verse-content {
+    flex-direction: column;
+    gap: 0; 
+  }
+
+  /* Hide the big icon on mobile to save space */
+  .verse-icon {
+    display: none;
+  }
+
+  /* Show the Mobile Header (Reference + Arrow) */
+  .verse-header-mobile {
+    display: flex;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Hide detailed text by default */
+  .verse-text, 
+  .verse-details {
+    display: none;
+  }
+
+  /* Show text ONLY when expanded */
+  .verse-panel.expanded .verse-text,
+  .verse-panel.expanded .verse-details {
+    display: block;
+    margin-top: 0.5rem;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .verse-panel.expanded .verse-header-mobile {
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 0.5rem;
+  }
+
+  /* --- ACTIVITY TIMELINE FIX --- */
+  .activity-feed {
+    margin-left: 0;
+    /* Reset padding to match desktop so the relative math works */
+    padding-left: 0.5rem; 
+  }
+  
+  /* Modern Card Grid -> Single Column */
+  .card-grid-modern {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Status Table Stack */
+  .status-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
