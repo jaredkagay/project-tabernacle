@@ -557,4 +557,8 @@ input:checked + .slider:before { transform: translateX(22px); }
     padding: 1.5rem;
     max-height: 80vh; /* Ensure keyboard doesn't hide it */
   }
+
+  .right-panel-stack {
+    margin: 0 0 25px 0;
+  }
 }
